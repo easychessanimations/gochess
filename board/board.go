@@ -6,207 +6,49 @@ package board
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 )
 
 /////////////////////////////////////////////////////////////////////
 
 /////////////////////////////////////////////////////////////////////
-// about
-
-func AboutStr() string {
-	return "\n--------------\ngo chess board\n--------------\n"
-}
-
-func About() {
-	fmt.Println(AboutStr())
-}
-
-/////////////////////////////////////////////////////////////////////
-
-/////////////////////////////////////////////////////////////////////
-// global functions
-
-func PieceLetterToPiece(pieceLetter string) Piece {
-	pieceKind, _ := PIECE_LETTER_TO_PIECE_KIND[strings.ToLower((pieceLetter[0:1]))]
-
-	color := WHITE
-	if pieceLetter >= "a" {
-		color = BLACK
-	}
-
-	dirStr := ""
-	if pieceKind == Lancer {
-		dirStr = pieceLetter[1:]
-	}
-
-	return Piece{pieceKind, color, DirectionStringToPieceDirection(dirStr)}
-}
-
-func DirectionStringToPieceDirection(dirStr string) PieceDirection {
-	dir, ok := DIRECTION_STRING_TO_PIECE_DIRECTION[dirStr]
-
-	if ok {
-		return dir
-	}
-
-	return PieceDirection{}
-}
-
-func NumFiles(variantKey VariantKey) int8 {
-	return 8
-}
-
-func NumRanks(variantKey VariantKey) int8 {
-	return 8
-}
-
-/////////////////////////////////////////////////////////////////////
-
-/////////////////////////////////////////////////////////////////////
 // member functions
-
-func (pd PieceDirection) ToString() string {
-	dirStr, ok := PIECE_DIRECTION_TO_DIRECTION_STRING[pd]
-
-	if ok {
-		return dirStr
-	}
-
-	return ""
-}
-
-func (p *Piece) ToString() string {
-	letter, _ := PIECE_KIND_TO_PIECE_LETTER[p.Kind]
-
-	if p.Color {
-		letter = strings.ToUpper(letter)
-	}
-
-	return letter + p.Direction.ToString()
-}
-
-func (p *Piece) ToStringUpper() string {
-	str := p.ToString()
-	return strings.ToUpper(str[0:1]) + str[1:]
-}
-
-func (br *BoardRep) Init(variant VariantKey) {
-	br.NumFiles = NumFiles(variant)
-	br.LastFile = br.NumFiles - 1
-	br.NumRanks = NumRanks(variant)
-	br.LastRank = br.NumRanks - 1
-
-	br.Rep = make(map[Square]Piece)
-
-	var rank int8
-	var file int8
-	for rank = 0; rank < br.NumRanks; rank++ {
-		for file = 0; file < br.NumFiles; file++ {
-			br.Rep[Square{file, rank}] = Piece{}
-		}
-	}
-}
-
-func (br *BoardRep) HasSquare(sq Square) bool {
-	_, ok := br.Rep[sq]
-
-	return ok
-}
-
-func (br *BoardRep) SetPieceAtSquare(sq Square, p Piece) bool {
-	if br.HasSquare(sq) {
-		br.Rep[sq] = p
-
-		return true
-	}
-
-	return false
-}
 
 func (b *Board) SetPieceAtSquare(sq Square, p Piece) bool {
 	return b.Rep.SetPieceAtSquare(sq, p)
-}
-
-func (br *BoardRep) PieceAtSquare(sq Square) Piece {
-	p, ok := br.Rep[sq]
-
-	if ok {
-		return p
-	}
-
-	return Piece{}
 }
 
 func (b *Board) PieceAtSquare(sq Square) Piece {
 	return b.Rep.PieceAtSquare(sq)
 }
 
-func (p *Piece) IsEmpty() bool {
-	return p.Kind == NO_PIECE
-}
-
-func (br *BoardRep) SetFromFen(fen string) {
-	var file int8 = 0
-	var rank int8 = 0
-	for index := 0; index < len(fen); {
-		chr := fen[index : index+1]
-		if (chr >= "0") && (chr <= "9") {
-			for cumul := chr[0] - "0"[0]; cumul > 0; cumul-- {
-				br.SetPieceAtSquare(Square{file, rank}, Piece{})
-				file++
-			}
-		} else if chr == "/" {
-			rank++
-			file = 0
-		} else {
-			pieceLetter := chr
-			if (chr == "l") || (chr == "L") {
-				index++
-				dirFirst := fen[index : index+1]
-				dirSecond := ""
-				if (dirFirst == "n") || (dirFirst == "s") {
-					index++
-					dirSecond = fen[index : index+1]
-					if (dirSecond != "w") && (dirSecond != "e") {
-						dirSecond = ""
-					}
-				}
-				pieceLetter = chr + dirFirst + dirSecond
-			}
-			br.SetPieceAtSquare(Square{file, rank}, PieceLetterToPiece(pieceLetter))
-			file++
-		}
-		index++
-	}
-}
-
-func (br *BoardRep) ToString() string {
-	buff := ""
-
-	var rank int8
-	var file int8
-	for rank = 0; rank < br.NumRanks; rank++ {
-		for file = 0; file < br.NumFiles; file++ {
-			piece, _ := br.Rep[Square{file, rank}]
-			buff += fmt.Sprintf("%-4s", piece.ToString())
-		}
-		buff += "\n"
-	}
-
-	return buff
-}
-
 func (b *Board) SetFromFen(fen string) {
 	fenParts := strings.Split(fen, " ")
 
-	b.Rep.SetFromFen((fenParts[0]))
+	b.Rep.SetFromFen(fenParts[0])
 
-	b.Pos.Turn = WHITE
+	b.Pos.Turn.SetFromFen(fenParts[1])
+
+	b.Pos.CastlingRights.SetFromFen(fenParts[2])
+
+	b.Pos.EpSquare = b.SquareFromAlgeb(fenParts[3])
+
+	hmc, _ := strconv.ParseInt(fenParts[4], 10, 32)
+
+	b.Pos.HalfmoveClock = int(hmc)
+
+	fmn, _ := strconv.ParseInt(fenParts[5], 10, 32)
+
+	b.Pos.FullmoveNumber = int(fmn)
 }
 
 func (b *Board) ToString() string {
-	return b.Rep.ToString()
+	buff := b.Rep.ToString()
+
+	buff += "\n" + b.ReportFen() + "\n"
+
+	return buff
 }
 
 func (b *Board) Print() {
@@ -222,14 +64,29 @@ func (b *Board) Init(variant VariantKey) {
 
 	// init move stack
 	b.MoveStack = make([]MoveStackItem, 0)
-}
 
-func (sq *Square) Add(delta Square) Square {
-	return Square{sq.File + delta.File, sq.Rank + delta.Rank}
+	// init position
+	b.Pos.Init()
 }
 
 func (b *Board) HasSquare(sq Square) bool {
 	return b.Rep.HasSquare(sq)
+}
+
+func (b *Board) ReportFen() string {
+	buff := b.Rep.ReportFen()
+
+	buff += " " + b.Pos.Turn.ToString()
+
+	buff += " " + b.Pos.CastlingRights.ToString()
+
+	buff += " " + b.SquareToAlgeb(b.Pos.EpSquare)
+
+	buff += " " + fmt.Sprintf("%d", b.Pos.HalfmoveClock)
+
+	buff += " " + fmt.Sprintf("%d", b.Pos.FullmoveNumber)
+
+	return buff
 }
 
 func (b *Board) SquareToFileLetter(sq Square) string {
@@ -241,7 +98,18 @@ func (b *Board) SquareToRankLetter(sq Square) string {
 }
 
 func (b *Board) SquareToAlgeb(sq Square) string {
+	if sq.File < 0 {
+		return "-"
+	}
 	return b.SquareToFileLetter(sq) + b.SquareToRankLetter(sq)
+}
+
+func (b *Board) SquareFromAlgeb(algeb string) Square {
+	if algeb == "-" {
+		return NO_SQUARE
+	}
+
+	return Square{int8(algeb[0] - "a"[0]), int8(byte(b.Rep.LastRank) - algeb[1] - "1"[0])}
 }
 
 func (b *Board) MoveToAlgeb(move Move) string {
@@ -334,10 +202,6 @@ func (b *Board) PslmsForVectorPieceAtSquare(p Piece, sq Square) []Move {
 	return pslms
 }
 
-func (b *BoardRep) IsSquareEmpty(sq Square) bool {
-	return b.PieceAtSquare(sq).Kind == NO_PIECE
-}
-
 func (b *Board) IsSquareEmpty(sq Square) bool {
 	return b.Rep.IsSquareEmpty(sq)
 }
@@ -364,7 +228,12 @@ func (b *Board) PslmsForPawnAtSquare(p Piece, sq Square) []Move {
 
 			if b.HasSquare(pushTwoSq) {
 				if b.IsSquareEmpty(pushTwoSq) {
-					plm := Move{FromSq: sq, ToSq: pushTwoSq}
+					plm := Move{
+						FromSq:        sq,
+						ToSq:          pushTwoSq,
+						PawnPushByTwo: true,
+						EpSquare:      pushOneSq,
+					}
 
 					pslms = append(pslms, plm)
 				}
@@ -428,15 +297,29 @@ func (b *Board) MovesSortedBySan(moves []Move) MoveBuff {
 }
 
 func (b *Board) Push(move Move) {
-	b.MoveStack = append(b.MoveStack, MoveStackItem{b.Rep.Clone(), b.Pos})
+	b.MoveStack = append(b.MoveStack, MoveStackItem{b.Rep.Clone(), b.Pos.Clone()})
 
 	fromp := b.PieceAtSquare(move.FromSq)
+
+	if fromp.Kind == King {
+		b.Pos.CastlingRights[b.Pos.Turn] = SideCastlingRights{KingSide: false, QueenSide: false}
+	}
 
 	b.SetPieceAtSquare(move.FromSq, Piece{})
 
 	b.SetPieceAtSquare(move.ToSq, fromp)
 
 	b.Pos.Turn = !b.Pos.Turn
+
+	b.Pos.EpSquare = NO_SQUARE
+
+	if move.PawnPushByTwo {
+		b.Pos.EpSquare = move.EpSquare
+	}
+
+	if b.Pos.Turn {
+		b.Pos.FullmoveNumber++
+	}
 }
 
 func (b *Board) Pop() {
@@ -451,23 +334,6 @@ func (b *Board) Pop() {
 
 	b.Rep = msi.Rep
 	b.Pos = msi.Pos
-}
-
-func (br *BoardRep) Clone() BoardRep {
-	clone := BoardRep{}
-
-	clone.NumFiles = br.NumFiles
-	clone.LastFile = br.LastFile
-	clone.NumRanks = br.NumRanks
-	clone.LastRank = br.LastRank
-
-	clone.Rep = make(map[Square]Piece)
-
-	for sq, piece := range br.Rep {
-		clone.Rep[sq] = piece
-	}
-
-	return clone
 }
 
 /////////////////////////////////////////////////////////////////////

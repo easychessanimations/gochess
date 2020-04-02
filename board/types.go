@@ -27,8 +27,19 @@ type BoardRep struct {
 
 type VariantKey uint8
 
+type SideCastlingRights struct {
+	KingSide  bool
+	QueenSide bool
+}
+
+type CastlingRights map[PieceColor]SideCastlingRights
+
 type Pos struct {
-	Turn PieceColor
+	Turn           PieceColor
+	CastlingRights CastlingRights
+	EpSquare       Square
+	HalfmoveClock  int
+	FullmoveNumber int
 }
 
 type MoveStackItem struct {
@@ -51,9 +62,11 @@ type PieceDescriptor struct {
 }
 
 type Move struct {
-	FromSq  Square
-	ToSq    Square
-	Capture bool
+	FromSq        Square
+	ToSq          Square
+	Capture       bool
+	PawnPushByTwo bool
+	EpSquare      Square
 }
 
 type MoveBuffItem struct {

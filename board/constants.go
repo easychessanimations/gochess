@@ -32,6 +32,8 @@ const (
 	Lancer
 )
 
+var NO_SQUARE = Square{-1, -1}
+
 var PIECE_KIND_TO_PIECE_LETTER = map[PieceKind]string{
 	NO_PIECE: "-",
 	Pawn:     "p",
@@ -98,6 +100,58 @@ var PIECE_KIND_TO_PIECE_DESCRIPTOR = map[PieceKind]PieceDescriptor{
 		},
 		Sliding:             false,
 		CanJumpOverOwnPiece: true,
+		CanCapture:          true,
+	},
+	Bishop: PieceDescriptor{
+		Directions: []PieceDirection{
+			PieceDirection{1, 1},
+			PieceDirection{1, -1},
+			PieceDirection{-1, 1},
+			PieceDirection{-1, -1},
+		},
+		Sliding:             true,
+		CanJumpOverOwnPiece: false,
+		CanCapture:          true,
+	},
+	Rook: PieceDescriptor{
+		Directions: []PieceDirection{
+			PieceDirection{1, 0},
+			PieceDirection{-1, 0},
+			PieceDirection{0, 1},
+			PieceDirection{0, -1},
+		},
+		Sliding:             true,
+		CanJumpOverOwnPiece: false,
+		CanCapture:          true,
+	},
+	Queen: PieceDescriptor{
+		Directions: []PieceDirection{
+			PieceDirection{1, 0},
+			PieceDirection{-1, 0},
+			PieceDirection{0, 1},
+			PieceDirection{0, -1},
+			PieceDirection{1, 1},
+			PieceDirection{1, -1},
+			PieceDirection{-1, 1},
+			PieceDirection{-1, -1},
+		},
+		Sliding:             true,
+		CanJumpOverOwnPiece: false,
+		CanCapture:          true,
+	},
+	King: PieceDescriptor{
+		Directions: []PieceDirection{
+			PieceDirection{1, 0},
+			PieceDirection{-1, 0},
+			PieceDirection{0, 1},
+			PieceDirection{0, -1},
+			PieceDirection{1, 1},
+			PieceDirection{1, -1},
+			PieceDirection{-1, 1},
+			PieceDirection{-1, -1},
+		},
+		Sliding:             false,
+		CanJumpOverOwnPiece: false,
 		CanCapture:          true,
 	},
 }
