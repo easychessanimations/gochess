@@ -44,3 +44,20 @@ type Move struct {
 	ToSq    Square
 	Capture bool
 }
+
+type MoveBuffItem struct {
+	M   Move
+	Str string
+}
+
+type MoveBuff []MoveBuffItem
+
+func (mb MoveBuff) Len() int {
+	return len(mb)
+}
+func (mb MoveBuff) Swap(i, j int) {
+	mb[i], mb[j] = mb[j], mb[i]
+}
+func (mb MoveBuff) Less(i, j int) bool {
+	return mb[i].Str < mb[j].Str
+}

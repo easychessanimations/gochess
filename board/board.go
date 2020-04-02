@@ -5,6 +5,7 @@ package board
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -243,12 +244,18 @@ func (b *Board) MoveToAlgeb(move Move) string {
 }
 
 func (b *Board) MoveToSan(move Move) string {
-	fromAlgeb := b.SquareToAlgeb(move.FromSq)
+	//fromAlgeb := b.SquareToAlgeb(move.FromSq)
 	toAlgeb := b.SquareToAlgeb(move.ToSq)
 	fromPiece := b.PieceAtSquare(move.FromSq)
 	pieceLetter := fromPiece.ToStringUpper()
-	buff := pieceLetter + fromAlgeb
+	buff := pieceLetter //+ fromAlgeb
+	if fromPiece.Kind == Pawn {
+		buff = ""
+	}
 	if move.Capture {
+		if fromPiece.Kind == Pawn {
+			buff = b.SquareToFileLetter(move.FromSq)
+		}
 		buff += "x"
 	}
 	buff += toAlgeb
@@ -300,9 +307,13 @@ func (b *Board) PslmsForVectorPieceAtSquare(p Piece, sq Square) []Move {
 
 				if capture {
 					ok = false
-				}
 
-				pslm.Capture = capture
+					pslm.Capture = capture
+
+					if !pdesc.CanCapture {
+						add = false
+					}
+				}
 
 				if add {
 					pslms = append(pslms, pslm)
@@ -318,9 +329,97 @@ func (b *Board) PslmsForVectorPieceAtSquare(p Piece, sq Square) []Move {
 	return pslms
 }
 
+func (b *BoardRep) IsSquareEmpty(sq Square) bool {
+	return b.PieceAtSquare(sq).Kind == NO_PIECE
+}
+
+func (b *Board) IsSquareEmpty(sq Square) bool {
+	return b.Rep.IsSquareEmpty(sq)
+}
+
+func (b *Board) PslmsForPawnAtSquare(p Piece, sq Square) []Move {
+	pslms := make([]Move, 0)
+
+	// black pawn goes down
+	var rankDir int8 = 1
+	if p.Color {
+		// white pawn goes up
+		rankDir = -1
+	}
+
+	pushOneSq := sq.Add(Square{0, rankDir})
+
+	if b.HasSquare(pushOneSq) {
+		if b.IsSquareEmpty(pushOneSq) {
+			move := Move{FromSq: sq, ToSq: pushOneSq}
+
+			pslms = append(pslms, move)
+
+			pushTwoSq := pushOneSq.Add(Square{0, rankDir})
+
+			if b.HasSquare(pushTwoSq) {
+				if b.IsSquareEmpty(pushTwoSq) {
+					plm := Move{FromSq: sq, ToSq: pushTwoSq}
+
+					pslms = append(pslms, plm)
+				}
+			}
+		}
+	}
+
+	var fileDir int8
+	for fileDir = -1; fileDir <= 1; fileDir += 2 {
+		captureSquare := sq.Add(Square{fileDir, rankDir})
+
+		if b.HasSquare(captureSquare) {
+			top := b.PieceAtSquare(captureSquare)
+
+			if top.Color != p.Color {
+				plm := Move{FromSq: sq, ToSq: captureSquare, Capture: true}
+
+				pslms = append(pslms, plm)
+			}
+		}
+	}
+
+	return pslms
+}
+
+func (b *Board) PslmsForPieceAtSquare(p Piece, sq Square) []Move {
+	if p.Kind == Pawn {
+		return b.PslmsForPawnAtSquare(p, sq)
+	}
+
+	return b.PslmsForVectorPieceAtSquare(p, sq)
+}
+
+func (b *Board) PslmsForAllPiecesOfColor(color PieceColor) []Move {
+	pslms := make([]Move, 0)
+
+	for sq, p := range b.Rep.Rep {
+		if (p.Color == color) && (p.Kind != NO_PIECE) {
+			pslms = append(pslms, b.PslmsForPieceAtSquare(p, sq)...)
+		}
+	}
+
+	return pslms
+}
+
 func (b *Board) Reset() {
 	fen, _ := START_FENS[b.Variant]
 	b.SetFromFen(fen)
+}
+
+func (b *Board) MovesSortedBySan(moves []Move) MoveBuff {
+	mb := make(MoveBuff, 0)
+
+	for _, move := range moves {
+		mb = append(mb, MoveBuffItem{move, b.MoveToSan(move)})
+	}
+
+	sort.Sort(MoveBuff(mb))
+
+	return mb
 }
 
 /////////////////////////////////////////////////////////////////////
