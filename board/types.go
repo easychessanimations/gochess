@@ -27,9 +27,20 @@ type BoardRep struct {
 
 type VariantKey uint8
 
+type Pos struct {
+	Turn PieceColor
+}
+
+type MoveStackItem struct {
+	Rep BoardRep
+	Pos Pos
+}
+
 type Board struct {
-	Variant VariantKey
-	Rep     BoardRep
+	Variant   VariantKey
+	Rep       BoardRep
+	Pos       Pos
+	MoveStack []MoveStackItem
 }
 
 type PieceDescriptor struct {
@@ -46,8 +57,8 @@ type Move struct {
 }
 
 type MoveBuffItem struct {
-	M   Move
-	Str string
+	Move Move
+	Str  string
 }
 
 type MoveBuff []MoveBuffItem

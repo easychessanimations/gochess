@@ -201,6 +201,8 @@ func (b *Board) SetFromFen(fen string) {
 	fenParts := strings.Split(fen, " ")
 
 	b.Rep.SetFromFen((fenParts[0]))
+
+	b.Pos.Turn = WHITE
 }
 
 func (b *Board) ToString() string {
@@ -217,6 +219,9 @@ func (b *Board) Init(variant VariantKey) {
 
 	// initialize rep to size required by variant
 	b.Rep.Init(b.Variant)
+
+	// init move stack
+	b.MoveStack = make([]MoveStackItem, 0)
 }
 
 func (sq *Square) Add(delta Square) Square {
@@ -374,7 +379,7 @@ func (b *Board) PslmsForPawnAtSquare(p Piece, sq Square) []Move {
 		if b.HasSquare(captureSquare) {
 			top := b.PieceAtSquare(captureSquare)
 
-			if top.Color != p.Color {
+			if (top.Kind != NO_PIECE) && (top.Color != p.Color) {
 				plm := Move{FromSq: sq, ToSq: captureSquare, Capture: true}
 
 				pslms = append(pslms, plm)
@@ -420,6 +425,49 @@ func (b *Board) MovesSortedBySan(moves []Move) MoveBuff {
 	sort.Sort(MoveBuff(mb))
 
 	return mb
+}
+
+func (b *Board) Push(move Move) {
+	b.MoveStack = append(b.MoveStack, MoveStackItem{b.Rep.Clone(), b.Pos})
+
+	fromp := b.PieceAtSquare(move.FromSq)
+
+	b.SetPieceAtSquare(move.FromSq, Piece{})
+
+	b.SetPieceAtSquare(move.ToSq, fromp)
+
+	b.Pos.Turn = !b.Pos.Turn
+}
+
+func (b *Board) Pop() {
+	l := len(b.MoveStack)
+	if l == 0 {
+		return
+	}
+
+	msi := b.MoveStack[l-1]
+
+	b.MoveStack = b.MoveStack[0 : l-1]
+
+	b.Rep = msi.Rep
+	b.Pos = msi.Pos
+}
+
+func (br *BoardRep) Clone() BoardRep {
+	clone := BoardRep{}
+
+	clone.NumFiles = br.NumFiles
+	clone.LastFile = br.LastFile
+	clone.NumRanks = br.NumRanks
+	clone.LastRank = br.LastRank
+
+	clone.Rep = make(map[Square]Piece)
+
+	for sq, piece := range br.Rep {
+		clone.Rep[sq] = piece
+	}
+
+	return clone
 }
 
 /////////////////////////////////////////////////////////////////////
