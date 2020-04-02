@@ -13,56 +13,32 @@ func About() {
 	fmt.Println(AboutStr())
 }
 
-const STANDARD_START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+func DirectionStringToPieceDirection(dirStr string) PieceDirection {
+	dir, ok := DIRECTION_STRING_TO_PIECE_DIRECTION[dirStr]
 
-type Square struct {
-	file int8
-	rank int8
+	if ok {
+		return dir
+	}
+
+	return PieceDirection{}
 }
 
-type PieceKind uint8
+func PieceDirectionToDirectionString(pd PieceDirection) string {
+	dirStr, ok := PIECE_DIRECTION_TO_DIRECTION_STRING[pd]
 
-const (
-	NO_PIECE PieceKind = iota
-	Pawn
-	Knight
-	Bishop
-	Rook
-	Queen
-	King
-	Hawk
-	Elephant
-	Sentry
-	Jailer
-	Lancer
-)
+	if ok {
+		return dirStr
+	}
 
-type PieceColor bool
-
-const WHITE PieceColor = true
-const BLACK PieceColor = false
-
-type PieceDirection Square
-
-type Piece struct {
-	Kind      PieceKind
-	Color     PieceColor
-	Direction PieceDirection
+	return ""
 }
 
-var PIECE_KIND_TO_PIECE_LETTER map[PieceKind]string = map[PieceKind]string{
-	NO_PIECE: "-",
-	Pawn:     "p",
-	Knight:   "n",
-	Bishop:   "b",
-	Rook:     "r",
-	Queen:    "q",
-	King:     "k",
-	Hawk:     "h",
-	Elephant: "e",
-	Sentry:   "s",
-	Jailer:   "j",
-	Lancer:   "l",
+func NumFiles(variantKey VariantKey) int8 {
+	return 8
+}
+
+func NumRanks(variantKey VariantKey) int8 {
+	return 8
 }
 
 func (p *Piece) ToString() string {
@@ -70,51 +46,48 @@ func (p *Piece) ToString() string {
 	if p.Color {
 		letter = strings.ToUpper(letter)
 	}
-	return letter
+	return letter + PieceDirectionToDirectionString(p.Direction)
 }
 
-type BoardRep struct {
-	NumFiles int8
-	NumRanks int8
-	Rep      map[Square]Piece
-}
-
-func (br *BoardRep) Init(numFiles int8, numRanks int8) {
-	br.NumFiles = numFiles
-	br.NumRanks = numRanks
+func (br *BoardRep) Init(variant VariantKey) {
+	br.NumFiles = NumFiles(variant)
+	br.NumRanks = NumRanks(variant)
 
 	br.Rep = make(map[Square]Piece)
+
+	var rank int8
+	var file int8
+	for rank = 0; rank < br.NumRanks; rank++ {
+		for file = 0; file < br.NumFiles; file++ {
+			br.Rep[Square{file, rank}] = Piece{}
+		}
+	}
 }
 
-func (br *BoardRep) SquareOk(file int8, rank int8) bool {
-	return ((file >= 0) &&
-		(file < br.NumFiles) &&
-		(rank >= 0) &&
-		(rank < br.NumRanks))
-}
-
-var PIECE_LETTER_TO_PIECE_KIND map[string]PieceKind = map[string]PieceKind{
-	"-": NO_PIECE,
-	"p": Pawn,
-	"n": Knight,
-	"b": Bishop,
-	"r": Rook,
-	"q": Queen,
-	"k": King,
-	"h": Hawk,
-	"e": Elephant,
-	"s": Sentry,
-	"j": Jailer,
-	"l": Lancer,
+func (br *BoardRep) HasSquare(sq Square) bool {
+	_, ok := br.Rep[sq]
+	return ok
 }
 
 func PieceLetterToPiece(pieceLetter string) Piece {
-	pieceKind, _ := PIECE_LETTER_TO_PIECE_KIND[strings.ToLower((pieceLetter))]
+	pieceKind, _ := PIECE_LETTER_TO_PIECE_KIND[strings.ToLower((pieceLetter[0:1]))]
 	color := WHITE
 	if pieceLetter >= "a" {
 		color = BLACK
 	}
-	return Piece{pieceKind, color, PieceDirection{}}
+	dirStr := ""
+	if pieceKind == Lancer {
+		dirStr = pieceLetter[1:]
+	}
+	return Piece{pieceKind, color, DirectionStringToPieceDirection(dirStr)}
+}
+
+func (br *BoardRep) SetPieceAtSquare(sq Square, p Piece) bool {
+	if br.HasSquare(sq) {
+		br.Rep[sq] = p
+		return true
+	}
+	return false
 }
 
 func (br *BoardRep) SetFromFen(fen string) {
@@ -124,15 +97,28 @@ func (br *BoardRep) SetFromFen(fen string) {
 		chr := fen[index : index+1]
 		if (chr >= "0") && (chr <= "9") {
 			for cumul := chr[0] - "0"[0]; cumul > 0; cumul-- {
-				br.Rep[Square{file, rank}] = Piece{}
+				br.SetPieceAtSquare(Square{file, rank}, Piece{})
 				file++
 			}
 		} else if chr == "/" {
 			rank++
 			file = 0
 		} else {
-			piece := PieceLetterToPiece(chr)
-			br.Rep[Square{file, rank}] = piece
+			pieceLetter := chr
+			if (chr == "l") || (chr == "L") {
+				index++
+				dirFirst := fen[index : index+1]
+				dirSecond := ""
+				if (dirFirst == "n") || (dirFirst == "s") {
+					index++
+					dirSecond = fen[index : index+1]
+					if (dirSecond != "w") && (dirSecond != "e") {
+						dirSecond = ""
+					}
+				}
+				pieceLetter = chr + dirFirst + dirSecond
+			}
+			br.SetPieceAtSquare(Square{file, rank}, PieceLetterToPiece(pieceLetter))
 			file++
 		}
 		index++
@@ -146,33 +132,11 @@ func (br *BoardRep) ToString() string {
 	for rank = 0; rank < br.NumRanks; rank++ {
 		for file = 0; file < br.NumFiles; file++ {
 			piece, _ := br.Rep[Square{file, rank}]
-			buff += piece.ToString()
+			buff += fmt.Sprintf("%-4s", piece.ToString())
 		}
 		buff += "\n"
 	}
 	return buff
-}
-
-type VariantKey uint8
-
-const (
-	VARIANT_STANDARD VariantKey = iota
-	VARIANT_ATOMIC
-	VARIANT_SEIRAWAN
-	VARIANT_EIGHTPIECE
-)
-
-type Board struct {
-	Variant VariantKey
-	Rep     BoardRep
-}
-
-func NumFiles(variantKey VariantKey) int8 {
-	return 8
-}
-
-func NumRanks(variantKey VariantKey) int8 {
-	return 8
 }
 
 func (b *Board) SetFromFen(fen string) {
@@ -188,12 +152,10 @@ func (b *Board) Print() {
 	fmt.Println(b.ToString())
 }
 
-func (b *Board) Init(variantKey VariantKey) {
+func (b *Board) Init(variant VariantKey) {
 	// set variant
-	b.Variant = variantKey
+	b.Variant = variant
 
 	// initialize rep to size required by variant
-	b.Rep.Init(NumFiles(b.Variant), NumRanks(b.Variant))
-
-	b.SetFromFen(STANDARD_START_FEN)
+	b.Rep.Init(b.Variant)
 }
