@@ -1,8 +1,8 @@
 package board
 
 type Square struct {
-	file int8
-	rank int8
+	File int8
+	Rank int8
 }
 
 type PieceKind uint8
@@ -19,7 +19,9 @@ type Piece struct {
 
 type BoardRep struct {
 	NumFiles int8
+	LastFile int8
 	NumRanks int8
+	LastRank int8
 	Rep      map[Square]Piece
 }
 
@@ -28,4 +30,17 @@ type VariantKey uint8
 type Board struct {
 	Variant VariantKey
 	Rep     BoardRep
+}
+
+type PieceDescriptor struct {
+	Directions          []PieceDirection
+	Sliding             bool
+	CanJumpOverOwnPiece bool
+	CanCapture          bool
+}
+
+type Move struct {
+	FromSq  Square
+	ToSq    Square
+	Capture bool
 }

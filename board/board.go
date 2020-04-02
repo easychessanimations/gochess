@@ -85,9 +85,16 @@ func (p *Piece) ToString() string {
 	return letter + p.Direction.ToString()
 }
 
+func (p *Piece) ToStringUpper() string {
+	str := p.ToString()
+	return strings.ToUpper(str[0:1]) + str[1:]
+}
+
 func (br *BoardRep) Init(variant VariantKey) {
 	br.NumFiles = NumFiles(variant)
+	br.LastFile = br.NumFiles - 1
 	br.NumRanks = NumRanks(variant)
+	br.LastRank = br.NumRanks - 1
 
 	br.Rep = make(map[Square]Piece)
 
@@ -114,6 +121,28 @@ func (br *BoardRep) SetPieceAtSquare(sq Square, p Piece) bool {
 	}
 
 	return false
+}
+
+func (b *Board) SetPieceAtSquare(sq Square, p Piece) bool {
+	return b.Rep.SetPieceAtSquare(sq, p)
+}
+
+func (br *BoardRep) PieceAtSquare(sq Square) Piece {
+	p, ok := br.Rep[sq]
+
+	if ok {
+		return p
+	}
+
+	return Piece{}
+}
+
+func (b *Board) PieceAtSquare(sq Square) Piece {
+	return b.Rep.PieceAtSquare(sq)
+}
+
+func (p *Piece) IsEmpty() bool {
+	return p.Kind == NO_PIECE
 }
 
 func (br *BoardRep) SetFromFen(fen string) {
@@ -187,6 +216,111 @@ func (b *Board) Init(variant VariantKey) {
 
 	// initialize rep to size required by variant
 	b.Rep.Init(b.Variant)
+}
+
+func (sq *Square) Add(delta Square) Square {
+	return Square{sq.File + delta.File, sq.Rank + delta.Rank}
+}
+
+func (b *Board) HasSquare(sq Square) bool {
+	return b.Rep.HasSquare(sq)
+}
+
+func (b *Board) SquareToFileLetter(sq Square) string {
+	return string([]byte{"a"[0] + byte(sq.File)})
+}
+
+func (b *Board) SquareToRankLetter(sq Square) string {
+	return string([]byte{"1"[0] + byte(b.Rep.LastRank-sq.Rank)})
+}
+
+func (b *Board) SquareToAlgeb(sq Square) string {
+	return b.SquareToFileLetter(sq) + b.SquareToRankLetter(sq)
+}
+
+func (b *Board) MoveToAlgeb(move Move) string {
+	return b.SquareToAlgeb(move.FromSq) + b.SquareToAlgeb(move.ToSq)
+}
+
+func (b *Board) MoveToSan(move Move) string {
+	fromAlgeb := b.SquareToAlgeb(move.FromSq)
+	toAlgeb := b.SquareToAlgeb(move.ToSq)
+	fromPiece := b.PieceAtSquare(move.FromSq)
+	pieceLetter := fromPiece.ToStringUpper()
+	buff := pieceLetter + fromAlgeb
+	if move.Capture {
+		buff += "x"
+	}
+	buff += toAlgeb
+
+	return buff
+}
+
+func (b *Board) PslmsForVectorPieceAtSquare(p Piece, sq Square) []Move {
+	pslms := make([]Move, 0)
+
+	pdesc, ok := PIECE_KIND_TO_PIECE_DESCRIPTOR[p.Kind]
+
+	if !ok {
+		return pslms
+	}
+
+	currentSq := sq
+
+	for _, dir := range pdesc.Directions {
+		ok := true
+
+		currentSq = sq.Add(Square(dir))
+
+		for ok {
+			if b.HasSquare(currentSq) {
+				top := b.PieceAtSquare(currentSq)
+
+				capture := false
+				add := true
+
+				if !top.IsEmpty() {
+					// non empty target square is capture
+					capture = true
+
+					if top.Color == p.Color {
+						// cannot capture own piece
+						add = false
+					}
+				}
+
+				pslm := Move{
+					FromSq: sq,
+					ToSq:   currentSq,
+				}
+
+				if !pdesc.Sliding {
+					ok = false
+				}
+
+				if capture {
+					ok = false
+				}
+
+				pslm.Capture = capture
+
+				if add {
+					pslms = append(pslms, pslm)
+				}
+			} else {
+				ok = false
+			}
+
+			currentSq = currentSq.Add(Square(dir))
+		}
+	}
+
+	return pslms
+}
+
+func (b *Board) Reset() {
+	fen, _ := START_FENS[b.Variant]
+	b.SetFromFen(fen)
 }
 
 /////////////////////////////////////////////////////////////////////

@@ -32,7 +32,7 @@ const (
 	Lancer
 )
 
-var PIECE_KIND_TO_PIECE_LETTER map[PieceKind]string = map[PieceKind]string{
+var PIECE_KIND_TO_PIECE_LETTER = map[PieceKind]string{
 	NO_PIECE: "-",
 	Pawn:     "p",
 	Knight:   "n",
@@ -47,7 +47,7 @@ var PIECE_KIND_TO_PIECE_LETTER map[PieceKind]string = map[PieceKind]string{
 	Lancer:   "l",
 }
 
-var PIECE_LETTER_TO_PIECE_KIND map[string]PieceKind = map[string]PieceKind{
+var PIECE_LETTER_TO_PIECE_KIND = map[string]PieceKind{
 	"-": NO_PIECE,
 	"p": Pawn,
 	"n": Knight,
@@ -82,4 +82,22 @@ var PIECE_DIRECTION_TO_DIRECTION_STRING = map[PieceDirection]string{
 	PieceDirection{-1, 1}:  "sw",
 	PieceDirection{-1, 0}:  "w",
 	PieceDirection{-1, -1}: "nw",
+}
+
+var PIECE_KIND_TO_PIECE_DESCRIPTOR = map[PieceKind]PieceDescriptor{
+	Knight: PieceDescriptor{
+		Directions: []PieceDirection{
+			PieceDirection{1, 2},
+			PieceDirection{-1, 2},
+			PieceDirection{1, -2},
+			PieceDirection{-1, -2},
+			PieceDirection{2, 1},
+			PieceDirection{-2, 1},
+			PieceDirection{2, -1},
+			PieceDirection{-2, -1},
+		},
+		Sliding:             false,
+		CanJumpOverOwnPiece: true,
+		CanCapture:          true,
+	},
 }
