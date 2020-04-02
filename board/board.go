@@ -1,9 +1,17 @@
 package board
 
+/////////////////////////////////////////////////////////////////////
+// imports
+
 import (
 	"fmt"
 	"strings"
 )
+
+/////////////////////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////////////
+// about
 
 func AboutStr() string {
 	return "go chess board"
@@ -11,6 +19,27 @@ func AboutStr() string {
 
 func About() {
 	fmt.Println(AboutStr())
+}
+
+/////////////////////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////////////
+// global functions
+
+func PieceLetterToPiece(pieceLetter string) Piece {
+	pieceKind, _ := PIECE_LETTER_TO_PIECE_KIND[strings.ToLower((pieceLetter[0:1]))]
+
+	color := WHITE
+	if pieceLetter >= "a" {
+		color = BLACK
+	}
+
+	dirStr := ""
+	if pieceKind == Lancer {
+		dirStr = pieceLetter[1:]
+	}
+
+	return Piece{pieceKind, color, DirectionStringToPieceDirection(dirStr)}
 }
 
 func DirectionStringToPieceDirection(dirStr string) PieceDirection {
@@ -41,11 +70,18 @@ func NumRanks(variantKey VariantKey) int8 {
 	return 8
 }
 
+/////////////////////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////////////
+// member functions
+
 func (p *Piece) ToString() string {
 	letter, _ := PIECE_KIND_TO_PIECE_LETTER[p.Kind]
+
 	if p.Color {
 		letter = strings.ToUpper(letter)
 	}
+
 	return letter + PieceDirectionToDirectionString(p.Direction)
 }
 
@@ -66,27 +102,17 @@ func (br *BoardRep) Init(variant VariantKey) {
 
 func (br *BoardRep) HasSquare(sq Square) bool {
 	_, ok := br.Rep[sq]
-	return ok
-}
 
-func PieceLetterToPiece(pieceLetter string) Piece {
-	pieceKind, _ := PIECE_LETTER_TO_PIECE_KIND[strings.ToLower((pieceLetter[0:1]))]
-	color := WHITE
-	if pieceLetter >= "a" {
-		color = BLACK
-	}
-	dirStr := ""
-	if pieceKind == Lancer {
-		dirStr = pieceLetter[1:]
-	}
-	return Piece{pieceKind, color, DirectionStringToPieceDirection(dirStr)}
+	return ok
 }
 
 func (br *BoardRep) SetPieceAtSquare(sq Square, p Piece) bool {
 	if br.HasSquare(sq) {
 		br.Rep[sq] = p
+
 		return true
 	}
+
 	return false
 }
 
@@ -127,6 +153,7 @@ func (br *BoardRep) SetFromFen(fen string) {
 
 func (br *BoardRep) ToString() string {
 	buff := ""
+
 	var rank int8
 	var file int8
 	for rank = 0; rank < br.NumRanks; rank++ {
@@ -136,11 +163,13 @@ func (br *BoardRep) ToString() string {
 		}
 		buff += "\n"
 	}
+
 	return buff
 }
 
 func (b *Board) SetFromFen(fen string) {
 	fenParts := strings.Split(fen, " ")
+
 	b.Rep.SetFromFen((fenParts[0]))
 }
 
@@ -159,3 +188,5 @@ func (b *Board) Init(variant VariantKey) {
 	// initialize rep to size required by variant
 	b.Rep.Init(b.Variant)
 }
+
+/////////////////////////////////////////////////////////////////////
