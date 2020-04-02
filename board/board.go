@@ -14,7 +14,7 @@ import (
 // about
 
 func AboutStr() string {
-	return "go chess board"
+	return "\n--------------\ngo chess board\n--------------\n"
 }
 
 func About() {
@@ -52,16 +52,6 @@ func DirectionStringToPieceDirection(dirStr string) PieceDirection {
 	return PieceDirection{}
 }
 
-func PieceDirectionToDirectionString(pd PieceDirection) string {
-	dirStr, ok := PIECE_DIRECTION_TO_DIRECTION_STRING[pd]
-
-	if ok {
-		return dirStr
-	}
-
-	return ""
-}
-
 func NumFiles(variantKey VariantKey) int8 {
 	return 8
 }
@@ -75,6 +65,16 @@ func NumRanks(variantKey VariantKey) int8 {
 /////////////////////////////////////////////////////////////////////
 // member functions
 
+func (pd PieceDirection) ToString() string {
+	dirStr, ok := PIECE_DIRECTION_TO_DIRECTION_STRING[pd]
+
+	if ok {
+		return dirStr
+	}
+
+	return ""
+}
+
 func (p *Piece) ToString() string {
 	letter, _ := PIECE_KIND_TO_PIECE_LETTER[p.Kind]
 
@@ -82,7 +82,7 @@ func (p *Piece) ToString() string {
 		letter = strings.ToUpper(letter)
 	}
 
-	return letter + PieceDirectionToDirectionString(p.Direction)
+	return letter + p.Direction.ToString()
 }
 
 func (br *BoardRep) Init(variant VariantKey) {
