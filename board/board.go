@@ -400,6 +400,21 @@ func (b *Board) Push(move Move) {
 
 	b.SetPieceAtSquare(move.ToSq, fromp)
 
+	ccr := b.Pos.CastlingRights[b.Pos.Turn]
+
+	var side CastlingSide
+	for side = QUEEN_SIDE; side <= KING_SIDE; side++ {
+		cs := ccr[side]
+		if cs.CanCastle {
+			rp := b.PieceAtSquare(cs.RookOrigSquare)
+
+			if !cs.RookOrigPiece.KindColorEqualTo(rp) {
+				// rook changed, delete castling right
+				cs.CanCastle = false
+			}
+		}
+	}
+
 	b.Pos.Turn = b.Pos.Turn.Inverse()
 
 	b.Pos.EpSquare = NO_SQUARE

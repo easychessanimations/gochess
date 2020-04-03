@@ -29,4 +29,8 @@ func (p *Piece) IsEmpty() bool {
 	return p.Kind == NO_PIECE
 }
 
+func (p *Piece) KindColorEqualTo(testP Piece) bool {
+	return (p.Kind == testP.Kind) && (p.Color == testP.Color)
+}
+
 /////////////////////////////////////////////////////////////////////
