@@ -46,4 +46,18 @@ func NumRanks(variantKey VariantKey) int8 {
 	return 8
 }
 
+func CastlingLetter(color PieceColor, side CastlingSide) string {
+	letter := "k"
+
+	if side == QUEEN_SIDE {
+		letter = "q"
+	}
+
+	if color == WHITE {
+		letter = strings.ToUpper(letter)
+	}
+
+	return letter
+}
+
 /////////////////////////////////////////////////////////////////////

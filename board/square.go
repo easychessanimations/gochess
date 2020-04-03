@@ -8,7 +8,7 @@ package board
 /////////////////////////////////////////////////////////////////////
 // member functions
 
-func (sq *Square) Add(delta Square) Square {
+func (sq *Square) Add(delta PieceDirection) Square {
 	return Square{sq.File + delta.File, sq.Rank + delta.Rank}
 }
 

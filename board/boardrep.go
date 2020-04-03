@@ -160,4 +160,28 @@ func (br *BoardRep) Clone() BoardRep {
 	return clone
 }
 
+func (br *BoardRep) SquaresInDirection(origSq Square, dir PieceDirection) []Square {
+	sqs := make([]Square, 0)
+
+	currentSq := origSq.Add(dir)
+
+	for br.HasSquare(currentSq) {
+		sqs = append(sqs, currentSq)
+
+		currentSq = currentSq.Add(dir)
+	}
+
+	return sqs
+}
+
+func (br *BoardRep) WhereIsKing(color PieceColor) Square {
+	for sq, p := range br.Rep {
+		if (p.Kind == King) && (p.Color == color) {
+			return sq
+		}
+	}
+
+	return NO_SQUARE
+}
+
 /////////////////////////////////////////////////////////////////////

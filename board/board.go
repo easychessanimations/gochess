@@ -154,7 +154,7 @@ func (b *Board) PslmsForVectorPieceAtSquare(p Piece, sq Square) []Move {
 	for _, dir := range pdesc.Directions {
 		ok := true
 
-		currentSq = sq.Add(Square(dir))
+		currentSq = sq.Add(dir)
 
 		for ok {
 			if b.HasSquare(currentSq) {
@@ -199,7 +199,7 @@ func (b *Board) PslmsForVectorPieceAtSquare(p Piece, sq Square) []Move {
 				ok = false
 			}
 
-			currentSq = currentSq.Add(Square(dir))
+			currentSq = currentSq.Add(dir)
 		}
 	}
 
@@ -220,7 +220,7 @@ func (b *Board) PslmsForPawnAtSquare(p Piece, sq Square) []Move {
 		rankDir = -1
 	}
 
-	pushOneSq := sq.Add(Square{0, rankDir})
+	pushOneSq := sq.Add(PieceDirection{0, rankDir})
 
 	if b.HasSquare(pushOneSq) {
 		if b.IsSquareEmpty(pushOneSq) {
@@ -243,7 +243,7 @@ func (b *Board) PslmsForPawnAtSquare(p Piece, sq Square) []Move {
 				pslms = append(pslms, move)
 			}
 
-			pushTwoSq := pushOneSq.Add(Square{0, rankDir})
+			pushTwoSq := pushOneSq.Add(PieceDirection{0, rankDir})
 
 			if b.HasSquare(pushTwoSq) {
 				if b.IsSquareEmpty(pushTwoSq) {
@@ -251,7 +251,7 @@ func (b *Board) PslmsForPawnAtSquare(p Piece, sq Square) []Move {
 
 					var df int8
 					for df = -1; df <= 1; df += 2 {
-						testsq := pushTwoSq.Add(Square{df, 0})
+						testsq := pushTwoSq.Add(PieceDirection{df, 0})
 						if b.HasSquare(testsq) {
 							tp := b.PieceAtSquare(testsq)
 
@@ -276,7 +276,7 @@ func (b *Board) PslmsForPawnAtSquare(p Piece, sq Square) []Move {
 
 	var fileDir int8
 	for fileDir = -1; fileDir <= 1; fileDir += 2 {
-		captureSquare := sq.Add(Square{fileDir, rankDir})
+		captureSquare := sq.Add(PieceDirection{fileDir, rankDir})
 
 		if b.HasSquare(captureSquare) {
 			top := b.PieceAtSquare(captureSquare)
@@ -307,7 +307,7 @@ func (b *Board) PslmsForPawnAtSquare(p Piece, sq Square) []Move {
 					FromSq:        sq,
 					ToSq:          captureSquare,
 					EpCapture:     true,
-					EpClearSquare: captureSquare.Add(Square{0, -rankDir}),
+					EpClearSquare: captureSquare.Add(PieceDirection{0, -rankDir}),
 				}
 
 				pslms = append(pslms, plm)
@@ -382,6 +382,7 @@ func (b *Board) CreatePromotionMoves(
 
 func (b *Board) Push(move Move) {
 	restoreRep := make([]SetPiece, 0)
+	oldPos := b.Pos.Clone()
 
 	fromp := b.PieceAtSquare(move.FromSq)
 
@@ -423,7 +424,7 @@ func (b *Board) Push(move Move) {
 
 	b.MoveStack = append(b.MoveStack, MoveStackItem{
 		restoreRep,
-		b.Pos.Clone(),
+		oldPos,
 	})
 }
 
@@ -458,6 +459,14 @@ func (b *Board) CastlingRank(color PieceColor) int8 {
 	}
 
 	return 0
+}
+
+func (b *Board) SquaresInDirection(sq Square, dir PieceDirection) []Square {
+	return b.Rep.SquaresInDirection(sq, dir)
+}
+
+func (b *Board) WhereIsKing(color PieceColor) Square {
+	return b.Rep.WhereIsKing(color)
 }
 
 /////////////////////////////////////////////////////////////////////
