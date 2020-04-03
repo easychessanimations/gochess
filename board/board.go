@@ -30,7 +30,7 @@ func (b *Board) SetFromFen(fen string) {
 
 	b.Pos.Turn.SetFromFen(fenParts[1])
 
-	b.Pos.CastlingRights.SetFromFen(fenParts[2])
+	b.Pos.CastlingRights.SetFromFen(fenParts[2], b)
 
 	b.Pos.EpSquare = b.SquareFromAlgeb(fenParts[3])
 
@@ -66,7 +66,7 @@ func (b *Board) Init(variant VariantKey) {
 	b.MoveStack = make([]MoveStackItem, 0)
 
 	// init position
-	b.Pos.Init()
+	b.Pos.Init(b)
 }
 
 func (b *Board) HasSquare(sq Square) bool {
@@ -78,7 +78,7 @@ func (b *Board) ReportFen() string {
 
 	buff += " " + b.Pos.Turn.ToString()
 
-	buff += " " + b.Pos.CastlingRights.ToString()
+	buff += " " + b.Pos.CastlingRights.ToString(b)
 
 	buff += " " + b.SquareToAlgeb(b.Pos.EpSquare)
 
@@ -215,7 +215,7 @@ func (b *Board) PslmsForPawnAtSquare(p Piece, sq Square) []Move {
 
 	// black pawn goes down
 	var rankDir int8 = 1
-	if p.Color {
+	if p.Color == WHITE {
 		// white pawn goes up
 		rankDir = -1
 	}
@@ -386,14 +386,14 @@ func (b *Board) Push(move Move) {
 	fromp := b.PieceAtSquare(move.FromSq)
 
 	if fromp.Kind == King {
-		b.Pos.CastlingRights[b.Pos.Turn] = SideCastlingRights{KingSide: false, QueenSide: false}
+		b.Pos.CastlingRights[b.Pos.Turn].ClearAll()
 	}
 
 	b.SetPieceAtSquare(move.FromSq, Piece{})
 
 	b.SetPieceAtSquare(move.ToSq, fromp)
 
-	b.Pos.Turn = !b.Pos.Turn
+	b.Pos.Turn = b.Pos.Turn.Inverse()
 
 	b.Pos.EpSquare = NO_SQUARE
 
@@ -411,7 +411,7 @@ func (b *Board) Push(move Move) {
 		b.Pos.HalfmoveClock++
 	}
 
-	if b.Pos.Turn {
+	if b.Pos.Turn == WHITE {
 		b.Pos.FullmoveNumber++
 	}
 }
@@ -431,11 +431,19 @@ func (b *Board) Pop() {
 }
 
 func (b *Board) PromotionRank(color PieceColor) int8 {
-	if color {
+	if color == WHITE {
 		return 0
 	}
 
 	return 7
+}
+
+func (b *Board) CastlingRank(color PieceColor) int8 {
+	if color == WHITE {
+		return 7
+	}
+
+	return 0
 }
 
 /////////////////////////////////////////////////////////////////////

@@ -14,8 +14,13 @@ var START_FENS = map[VariantKey]string{
 	VARIANT_EIGHTPIECE: "jlsesqkbnr/pppppppp/8/8/8/8/PPPPPPPP/JLneSQKBNR w KQkq - 0 1",
 }
 
-const WHITE PieceColor = true
-const BLACK PieceColor = false
+const WHITE PieceColor = 1
+const BLACK PieceColor = 0
+
+type CastlingSide uint8
+
+const KING_SIDE CastlingSide = 1
+const QUEEN_SIDE CastlingSide = 0
 
 const (
 	NO_PIECE PieceKind = iota

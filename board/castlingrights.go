@@ -8,63 +8,24 @@ package board
 /////////////////////////////////////////////////////////////////////
 // member functions
 
-func (cr *CastlingRights) SetFromFen(fen string) {
-	K := false
-	Q := false
-	k := false
-	q := false
-
-	for i := 0; i < len(fen); i++ {
-		c := fen[i : i+1]
-
-		if c == "K" {
-			K = true
-		}
-
-		if c == "Q" {
-			Q = true
-		}
-
-		if c == "k" {
-			k = true
-		}
-
-		if c == "q" {
-			q = true
-		}
-	}
-
-	(*cr)[WHITE] = SideCastlingRights{KingSide: K, QueenSide: Q}
-	(*cr)[BLACK] = SideCastlingRights{KingSide: k, QueenSide: q}
+func (cr *CastlingRights) Init(b *Board) {
+	cr[WHITE].Init(WHITE, b)
+	cr[BLACK].Init(BLACK, b)
 }
 
-func (cr *CastlingRights) ToString() string {
-	buff := ""
+func (cr *CastlingRights) SetFromFen(fen string, b *Board) {
+	cr[WHITE].SetFromFen(fen, b)
+	cr[BLACK].SetFromFen(fen, b)
+}
 
-	crw, _ := (*cr)[WHITE]
-	crb, _ := (*cr)[BLACK]
+func (cr *CastlingRights) ToString(b *Board) string {
+	fen := cr[WHITE].ToString(b) + cr[BLACK].ToString(b)
 
-	if crw.KingSide {
-		buff += "K"
+	if fen == "" {
+		return "-"
 	}
 
-	if crw.QueenSide {
-		buff += "Q"
-	}
-
-	if crb.KingSide {
-		buff += "k"
-	}
-
-	if crb.QueenSide {
-		buff += "q"
-	}
-
-	if len(buff) > 0 {
-		return buff
-	}
-
-	return "-"
+	return fen
 }
 
 /////////////////////////////////////////////////////////////////////

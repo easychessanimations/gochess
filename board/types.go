@@ -7,7 +7,7 @@ type Square struct {
 
 type PieceKind uint8
 
-type PieceColor bool
+type PieceColor uint8
 
 type PieceDirection Square
 
@@ -27,12 +27,17 @@ type BoardRep struct {
 
 type VariantKey uint8
 
-type SideCastlingRights struct {
-	KingSide  bool
-	QueenSide bool
+type CastlingRight struct {
+	Color          PieceColor
+	Side           CastlingSide
+	CanCastle      bool
+	RookOrigSquare Square
+	RookOrigPiece  Piece
 }
 
-type CastlingRights map[PieceColor]SideCastlingRights
+type ColorCastlingRights [2]CastlingRight
+
+type CastlingRights [2]ColorCastlingRights
 
 type Pos struct {
 	Turn           PieceColor

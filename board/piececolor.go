@@ -9,7 +9,7 @@ package board
 // member functions
 
 func (p *PieceColor) ToString() string {
-	if *p {
+	if *p == WHITE {
 		return "w"
 	}
 
@@ -23,6 +23,10 @@ func (p *PieceColor) SetFromFen(fen string) {
 	}
 
 	*p = BLACK
+}
+
+func (p *PieceColor) Inverse() PieceColor {
+	return WHITE - *p
 }
 
 /////////////////////////////////////////////////////////////////////

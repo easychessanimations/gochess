@@ -13,7 +13,7 @@ import "strings"
 func (p *Piece) ToString() string {
 	letter, _ := PIECE_KIND_TO_PIECE_LETTER[p.Kind]
 
-	if p.Color {
+	if p.Color == WHITE {
 		letter = strings.ToUpper(letter)
 	}
 
