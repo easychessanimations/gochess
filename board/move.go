@@ -20,4 +20,8 @@ func (m *Move) ShouldDeleteHalfmoveClock() bool {
 	return m.IsCapture() || m.IsPawnMove()
 }
 
+func (m *Move) IsPromotion() bool {
+	return m.PromotionPiece.Kind != NO_PIECE
+}
+
 /////////////////////////////////////////////////////////////////////

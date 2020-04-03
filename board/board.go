@@ -133,6 +133,10 @@ func (b *Board) MoveToSan(move Move) string {
 	}
 	buff += toAlgeb
 
+	if move.IsPromotion() {
+		buff += "=" + move.PromotionPiece.ToStringUpper()
+	}
+
 	return buff
 }
 
@@ -220,13 +224,24 @@ func (b *Board) PslmsForPawnAtSquare(p Piece, sq Square) []Move {
 
 	if b.HasSquare(pushOneSq) {
 		if b.IsSquareEmpty(pushOneSq) {
-			move := Move{
-				FromSq:        sq,
-				ToSq:          pushOneSq,
-				PawnPushByOne: true,
-			}
+			if pushOneSq.Rank == b.PromotionRank(p.Color) {
+				promotionMoves := b.CreatePromotionMoves(
+					sq,        // from
+					pushOneSq, // to
+					false,     // pawn capture
+					true,      // push by one
+				)
 
-			pslms = append(pslms, move)
+				pslms = append(pslms, promotionMoves...)
+			} else {
+				move := Move{
+					FromSq:        sq,
+					ToSq:          pushOneSq,
+					PawnPushByOne: true,
+				}
+
+				pslms = append(pslms, move)
+			}
 
 			pushTwoSq := pushOneSq.Add(Square{0, rankDir})
 
@@ -267,13 +282,24 @@ func (b *Board) PslmsForPawnAtSquare(p Piece, sq Square) []Move {
 			top := b.PieceAtSquare(captureSquare)
 
 			if (top.Kind != NO_PIECE) && (top.Color != p.Color) {
-				plm := Move{
-					FromSq:      sq,
-					ToSq:        captureSquare,
-					PawnCapture: true,
-				}
+				if pushOneSq.Rank == b.PromotionRank(p.Color) {
+					promotionMoves := b.CreatePromotionMoves(
+						sq,            // from
+						captureSquare, // to
+						true,          // pawn capture
+						false,         // push by one
+					)
 
-				pslms = append(pslms, plm)
+					pslms = append(pslms, promotionMoves...)
+				} else {
+					plm := Move{
+						FromSq:      sq,
+						ToSq:        captureSquare,
+						PawnCapture: true,
+					}
+
+					pslms = append(pslms, plm)
+				}
 			}
 
 			if b.Pos.EpSquare == captureSquare {
@@ -329,6 +355,31 @@ func (b *Board) MovesSortedBySan(moves []Move) MoveBuff {
 	return mb
 }
 
+func (b *Board) CreatePromotionMoves(
+	fromsq Square,
+	tosq Square,
+	pawnCapture bool,
+	pawnPushByOne bool,
+) []Move {
+	promotionMoves := make([]Move, 0)
+
+	promotionPieces, _ := PROMOTION_PIECES[b.Variant]
+
+	for _, pp := range promotionPieces {
+		promotionMove := Move{
+			FromSq:         fromsq,
+			ToSq:           tosq,
+			PawnCapture:    pawnCapture,
+			PawnPushByOne:  pawnPushByOne,
+			PromotionPiece: pp,
+		}
+
+		promotionMoves = append(promotionMoves, promotionMove)
+	}
+
+	return promotionMoves
+}
+
 func (b *Board) Push(move Move) {
 	b.MoveStack = append(b.MoveStack, MoveStackItem{b.Rep.Clone(), b.Pos.Clone()})
 
@@ -377,6 +428,14 @@ func (b *Board) Pop() {
 
 	b.Rep = msi.Rep
 	b.Pos = msi.Pos
+}
+
+func (b *Board) PromotionRank(color PieceColor) int8 {
+	if color {
+		return 0
+	}
+
+	return 7
 }
 
 /////////////////////////////////////////////////////////////////////
