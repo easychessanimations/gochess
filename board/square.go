@@ -12,4 +12,8 @@ func (sq *Square) Add(delta PieceDirection) Square {
 	return Square{sq.File + delta.File, sq.Rank + delta.Rank}
 }
 
+func (sq *Square) EqualTo(testSq Square) bool {
+	return (sq.File == testSq.File) && (sq.Rank == testSq.Rank)
+}
+
 /////////////////////////////////////////////////////////////////////

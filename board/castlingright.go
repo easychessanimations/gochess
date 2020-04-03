@@ -128,4 +128,85 @@ func (cr *CastlingRight) ToString(b *Board) string {
 	}
 }
 
+// https://en.wikipedia.org/wiki/Fischer_random_chess#Castling_rules
+func (cr *CastlingRight) Free(b *Board) bool {
+	// sanity check, no castling right, no castling
+	if !cr.CanCastle {
+		return false
+	}
+
+	wk := b.WhereIsKing(cr.Color)
+
+	// sanity check, no king, no castling
+	if wk == NO_SQUARE {
+		return false
+	}
+
+	// sanity check, king should be on castling rank
+	if wk.Rank != b.CastlingRank(cr.Color) {
+		return false
+	}
+
+	// TODO: return false if king is in check
+
+	// all the squares between the king's initial and final squares (including the final square) should be empty
+	// except for the king and castling rook ( skip )
+	kctsq := b.KingCastlingTargetSq(cr.Color, cr.Side)
+
+	var dir int8 = 1
+	if kctsq.File < wk.File {
+		dir = -1
+	}
+
+	sqs := b.SquaresInDirection(wk, PieceDirection{dir, 0})
+
+	for _, sq := range sqs {
+		// TODO: return false if square is in check
+
+		skip := sq.EqualTo(wk) || sq.EqualTo(cr.RookOrigSquare)
+
+		if sq.EqualTo(kctsq) {
+			if b.IsSquareEmpty(kctsq) || skip {
+				break
+			} else {
+				return false
+			}
+		}
+
+		if (!b.IsSquareEmpty(sq)) && (!skip) {
+			return false
+		}
+	}
+
+	// all the squares between the rook's initial and final squares (including the final square) should be empty
+	// except for the king and castling rook ( skip )
+	rctsq := b.RookCastlingTargetSq(cr.Color, cr.Side)
+
+	dir = 1
+	if rctsq.File < cr.RookOrigSquare.File {
+		dir = -1
+	}
+
+	sqs = b.SquaresInDirection(cr.RookOrigSquare, PieceDirection{dir, 0})
+
+	for _, sq := range sqs {
+		skip := sq.EqualTo(wk) || sq.EqualTo(cr.RookOrigSquare)
+
+		if sq.EqualTo(rctsq) {
+			if b.IsSquareEmpty(rctsq) || skip {
+				// all tests passed, castling is ok
+				return true
+			} else {
+				return false
+			}
+		}
+
+		if (!b.IsSquareEmpty(sq)) && (!skip) {
+			return false
+		}
+	}
+
+	return false
+}
+
 /////////////////////////////////////////////////////////////////////

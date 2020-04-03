@@ -83,6 +83,9 @@ type Move struct {
 	EpClearSquare   Square
 	PromotionPiece  Piece
 	PromotionSquare Square
+	Castling        bool
+	CastlingSide    CastlingSide
+	RookOrigPiece   Piece
 }
 
 type MoveBuffItem struct {

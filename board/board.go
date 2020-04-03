@@ -117,6 +117,13 @@ func (b *Board) MoveToAlgeb(move Move) string {
 }
 
 func (b *Board) MoveToSan(move Move) string {
+	if move.Castling {
+		if move.CastlingSide == QUEEN_SIDE {
+			return "O-O-O"
+		}
+
+		return "O-O"
+	}
 	//fromAlgeb := b.SquareToAlgeb(move.FromSq)
 	toAlgeb := b.SquareToAlgeb(move.ToSq)
 	fromPiece := b.PieceAtSquare(move.FromSq)
@@ -335,6 +342,24 @@ func (b *Board) PslmsForAllPiecesOfColor(color PieceColor) []Move {
 		}
 	}
 
+	wk := b.WhereIsKing(color)
+
+	for side := QUEEN_SIDE; side <= KING_SIDE; side++ {
+		cs := b.Pos.CastlingRights[color][side]
+
+		if cs.Free(b) {
+			move := Move{
+				FromSq:        wk,
+				ToSq:          cs.RookOrigSquare,
+				Castling:      true,
+				CastlingSide:  side,
+				RookOrigPiece: cs.RookOrigPiece,
+			}
+
+			pslms = append(pslms, move)
+		}
+	}
+
 	return pslms
 }
 
@@ -398,7 +423,19 @@ func (b *Board) Push(move Move) {
 
 	b.SetPieceAtSquare(move.FromSq, Piece{})
 
-	b.SetPieceAtSquare(move.ToSq, fromp)
+	if move.Castling {
+		b.SetPieceAtSquare(move.ToSq, Piece{})
+		kctsq := b.KingCastlingTargetSq(b.Pos.Turn, move.CastlingSide)
+		kctp := b.PieceAtSquare(kctsq)
+		restoreRep = append(restoreRep, SetPiece{kctsq, kctp})
+		b.SetPieceAtSquare(kctsq, Piece{Kind: King, Color: b.Pos.Turn})
+		rctsq := b.RookCastlingTargetSq(b.Pos.Turn, move.CastlingSide)
+		rctp := b.PieceAtSquare(rctsq)
+		restoreRep = append(restoreRep, SetPiece{rctsq, rctp})
+		b.SetPieceAtSquare(rctsq, move.RookOrigPiece)
+	} else {
+		b.SetPieceAtSquare(move.ToSq, fromp)
+	}
 
 	ccr := b.Pos.CastlingRights[b.Pos.Turn]
 
@@ -474,6 +511,30 @@ func (b *Board) CastlingRank(color PieceColor) int8 {
 	}
 
 	return 0
+}
+
+func (b *Board) RookCastlingTargetSq(color PieceColor, side CastlingSide) Square {
+	rank := b.CastlingRank(color)
+
+	var file int8 = 2
+
+	if side == KING_SIDE {
+		file = 5
+	}
+
+	return Square{file, rank}
+}
+
+func (b *Board) KingCastlingTargetSq(color PieceColor, side CastlingSide) Square {
+	rank := b.CastlingRank(color)
+
+	var file int8 = 3
+
+	if side == KING_SIDE {
+		file = 6
+	}
+
+	return Square{file, rank}
 }
 
 func (b *Board) SquaresInDirection(sq Square, dir PieceDirection) []Square {
