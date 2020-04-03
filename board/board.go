@@ -381,9 +381,15 @@ func (b *Board) CreatePromotionMoves(
 }
 
 func (b *Board) Push(move Move) {
-	b.MoveStack = append(b.MoveStack, MoveStackItem{b.Rep.Clone(), b.Pos.Clone()})
+	restoreRep := make([]SetPiece, 0)
 
 	fromp := b.PieceAtSquare(move.FromSq)
+
+	restoreRep = append(restoreRep, SetPiece{move.FromSq, fromp})
+
+	top := b.PieceAtSquare(move.ToSq)
+
+	restoreRep = append(restoreRep, SetPiece{move.ToSq, top})
 
 	if fromp.Kind == King {
 		b.Pos.CastlingRights[b.Pos.Turn].ClearAll()
@@ -414,6 +420,11 @@ func (b *Board) Push(move Move) {
 	if b.Pos.Turn == WHITE {
 		b.Pos.FullmoveNumber++
 	}
+
+	b.MoveStack = append(b.MoveStack, MoveStackItem{
+		restoreRep,
+		b.Pos.Clone(),
+	})
 }
 
 func (b *Board) Pop() {
@@ -424,9 +435,12 @@ func (b *Board) Pop() {
 
 	msi := b.MoveStack[l-1]
 
-	b.MoveStack = b.MoveStack[0 : l-1]
+	b.MoveStack = b.MoveStack[:l-1]
 
-	b.Rep = msi.Rep
+	for _, sp := range msi.RestoreRep {
+		b.SetPieceAtSquare(sp.Sq, sp.P)
+	}
+
 	b.Pos = msi.Pos
 }
 

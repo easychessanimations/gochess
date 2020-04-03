@@ -47,9 +47,14 @@ type Pos struct {
 	FullmoveNumber int
 }
 
+type SetPiece struct {
+	Sq Square
+	P  Piece
+}
+
 type MoveStackItem struct {
-	Rep BoardRep
-	Pos Pos
+	RestoreRep []SetPiece
+	Pos        Pos
 }
 
 type Board struct {
