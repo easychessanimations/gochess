@@ -65,8 +65,12 @@ type Move struct {
 	FromSq        Square
 	ToSq          Square
 	Capture       bool
+	PawnCapture   bool
+	PawnPushByOne bool
 	PawnPushByTwo bool
 	EpSquare      Square
+	EpCapture     bool
+	EpClearSquare Square
 }
 
 type MoveBuffItem struct {

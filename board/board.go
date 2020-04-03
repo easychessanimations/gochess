@@ -125,7 +125,7 @@ func (b *Board) MoveToSan(move Move) string {
 	if fromPiece.Kind == Pawn {
 		buff = ""
 	}
-	if move.Capture {
+	if move.IsCapture() {
 		if fromPiece.Kind == Pawn {
 			buff = b.SquareToFileLetter(move.FromSq)
 		}
@@ -220,7 +220,11 @@ func (b *Board) PslmsForPawnAtSquare(p Piece, sq Square) []Move {
 
 	if b.HasSquare(pushOneSq) {
 		if b.IsSquareEmpty(pushOneSq) {
-			move := Move{FromSq: sq, ToSq: pushOneSq}
+			move := Move{
+				FromSq:        sq,
+				ToSq:          pushOneSq,
+				PawnPushByOne: true,
+			}
 
 			pslms = append(pslms, move)
 
@@ -228,11 +232,25 @@ func (b *Board) PslmsForPawnAtSquare(p Piece, sq Square) []Move {
 
 			if b.HasSquare(pushTwoSq) {
 				if b.IsSquareEmpty(pushTwoSq) {
+					epsq := NO_SQUARE
+
+					var df int8
+					for df = -1; df <= 1; df += 2 {
+						testsq := pushTwoSq.Add(Square{df, 0})
+						if b.HasSquare(testsq) {
+							tp := b.PieceAtSquare(testsq)
+
+							if (tp.Kind == Pawn) && (tp.Color != p.Color) {
+								epsq = pushOneSq
+							}
+						}
+					}
+
 					plm := Move{
 						FromSq:        sq,
 						ToSq:          pushTwoSq,
 						PawnPushByTwo: true,
-						EpSquare:      pushOneSq,
+						EpSquare:      epsq,
 					}
 
 					pslms = append(pslms, plm)
@@ -249,7 +267,22 @@ func (b *Board) PslmsForPawnAtSquare(p Piece, sq Square) []Move {
 			top := b.PieceAtSquare(captureSquare)
 
 			if (top.Kind != NO_PIECE) && (top.Color != p.Color) {
-				plm := Move{FromSq: sq, ToSq: captureSquare, Capture: true}
+				plm := Move{
+					FromSq:      sq,
+					ToSq:        captureSquare,
+					PawnCapture: true,
+				}
+
+				pslms = append(pslms, plm)
+			}
+
+			if b.Pos.EpSquare == captureSquare {
+				plm := Move{
+					FromSq:        sq,
+					ToSq:          captureSquare,
+					EpCapture:     true,
+					EpClearSquare: captureSquare.Add(Square{0, -rankDir}),
+				}
 
 				pslms = append(pslms, plm)
 			}
@@ -315,6 +348,16 @@ func (b *Board) Push(move Move) {
 
 	if move.PawnPushByTwo {
 		b.Pos.EpSquare = move.EpSquare
+	}
+
+	if move.EpCapture {
+		b.SetPieceAtSquare(move.EpClearSquare, Piece{})
+	}
+
+	if move.ShouldDeleteHalfmoveClock() {
+		b.Pos.HalfmoveClock = 0
+	} else {
+		b.Pos.HalfmoveClock++
 	}
 
 	if b.Pos.Turn {
