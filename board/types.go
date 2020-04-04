@@ -62,6 +62,7 @@ type Board struct {
 	Rep       BoardRep
 	Pos       Pos
 	MoveStack []MoveStackItem
+	Nodes     int
 }
 
 type PieceDescriptor struct {

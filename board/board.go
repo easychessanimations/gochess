@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 )
 
 /////////////////////////////////////////////////////////////////////
@@ -754,6 +755,38 @@ func (b *Board) HasLegalMoveColor(color PieceColor) bool {
 
 func (b *Board) LegalMovesForAllPieces() []Move {
 	return b.LegalMovesForAllPiecesOfColor(b.Pos.Turn)
+}
+
+func (b *Board) PerfRecursive(depth int, maxDepth int) {
+	b.Nodes++
+
+	if depth > maxDepth {
+		return
+	}
+
+	lms := b.LegalMovesForAllPieces()
+
+	for _, lm := range lms {
+		b.Push(lm)
+		b.PerfRecursive(depth+1, maxDepth)
+		b.Pop()
+	}
+}
+
+func (b *Board) Perf(maxDepth int) {
+	b.Nodes = 0
+
+	start := time.Now()
+
+	fmt.Printf(">> perf up to depth %d\n", maxDepth)
+
+	b.PerfRecursive(0, maxDepth)
+
+	elapsed := float32(time.Now().Sub(start)) / float32(1e9)
+
+	nps := float32(b.Nodes) / float32(elapsed)
+
+	fmt.Printf(">> perf elapsed %.2f nodes %d nps %.0f\n", elapsed, b.Nodes, nps)
 }
 
 /////////////////////////////////////////////////////////////////////
