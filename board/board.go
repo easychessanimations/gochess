@@ -137,20 +137,63 @@ func (b *Board) MoveToSan(move Move) string {
 		return "O-O" + checkStr
 	}
 
-	//fromAlgeb := b.SquareToAlgeb(move.FromSq)
+	fromAlgeb := b.SquareToAlgeb(move.FromSq)
 	toAlgeb := b.SquareToAlgeb(move.ToSq)
 	fromPiece := b.PieceAtSquare(move.FromSq)
 	pieceLetter := fromPiece.ToStringUpper()
-	buff := pieceLetter //+ fromAlgeb
+
+	qualifier := ""
+
+	if fromPiece.Kind != Pawn {
+		pslAttacks := b.AttacksOnSquareByPiece(move.ToSq, fromPiece, ALL_ATTACKS)
+
+		attacks := b.PickLegalMovesFrom(pslAttacks, b.Pos.Turn)
+
+		files := make(map[int8]bool, 0)
+		ranks := make(map[int8]bool, 0)
+		samefiles := false
+		sameranks := false
+
+		if len(attacks) > 1 {
+			for _, attack := range attacks {
+				_, hasfile := files[attack.FromSq.File]
+				if hasfile {
+					samefiles = true
+				} else {
+					files[attack.FromSq.File] = true
+				}
+
+				_, hasrank := ranks[attack.FromSq.Rank]
+				if hasrank {
+					sameranks = true
+				} else {
+					ranks[attack.FromSq.Rank] = true
+				}
+			}
+
+			if samefiles && sameranks {
+				qualifier = fromAlgeb
+			} else if samefiles {
+				qualifier = fromAlgeb[1:2]
+			} else {
+				qualifier = fromAlgeb[0:1]
+			}
+		}
+	}
+
+	buff := pieceLetter + qualifier
+
 	if fromPiece.Kind == Pawn {
 		buff = ""
 	}
+
 	if move.IsCapture() {
 		if fromPiece.Kind == Pawn {
 			buff = b.SquareToFileLetter(move.FromSq)
 		}
 		buff += "x"
 	}
+
 	buff += toAlgeb
 
 	if move.IsPromotion() {
@@ -256,8 +299,8 @@ func (b *Board) AttacksOnSquareByPawn(sq Square, color PieceColor, stopAtFirst b
 
 			if (testp.Kind == Pawn) && (testp.Color == color) {
 				attacks = append(attacks, Move{
-					FromSq: sq,
-					ToSq:   testsq,
+					FromSq: testsq,
+					ToSq:   sq,
 				})
 
 				if stopAtFirst {
@@ -279,9 +322,15 @@ func (b *Board) AttacksOnSquareByVectorPiece(sq Square, p Piece, stopAtFirst boo
 
 	for _, pslm := range pslms {
 		if pslm.IsCapture() {
-			p := b.PieceAtSquare(pslm.ToSq)
-			if p.KindColorEqualTo(p) {
-				attacks = append(attacks, pslm)
+			testp := b.PieceAtSquare(pslm.ToSq)
+			if testp.KindColorEqualTo(p) {
+				attack := Move{
+					FromSq: pslm.ToSq,
+					ToSq:   pslm.FromSq,
+				}
+
+				attacks = append(attacks, attack)
+
 				if stopAtFirst {
 					return attacks
 				}
@@ -675,10 +724,8 @@ func (b *Board) WhereIsKing(color PieceColor) Square {
 	return b.Rep.WhereIsKing(color)
 }
 
-func (b *Board) LegalMovesForAllPiecesOfColor(color PieceColor) []Move {
+func (b *Board) PickLegalMovesFrom(pslms []Move, color PieceColor) []Move {
 	lms := make([]Move, 0)
-
-	pslms := b.PslmsForAllPiecesOfColor(color)
 
 	for _, pslm := range pslms {
 		b.Push(pslm)
@@ -689,6 +736,14 @@ func (b *Board) LegalMovesForAllPiecesOfColor(color PieceColor) []Move {
 			lms = append(lms, pslm)
 		}
 	}
+
+	return lms
+}
+
+func (b *Board) LegalMovesForAllPiecesOfColor(color PieceColor) []Move {
+	pslms := b.PslmsForAllPiecesOfColor(color)
+
+	lms := b.PickLegalMovesFrom(pslms, color)
 
 	return lms
 }
