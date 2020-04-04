@@ -513,9 +513,15 @@ func (b *Board) PslmsForPieceAtSquare(p Piece, sq Square) []Move {
 func (b *Board) PslmsForAllPiecesOfColor(color PieceColor) []Move {
 	pslms := make([]Move, 0)
 
-	for sq, p := range b.Rep.Rep {
-		if (p.Color == color) && (p.Kind != NO_PIECE) {
-			pslms = append(pslms, b.PslmsForPieceAtSquare(p, sq)...)
+	var rank int8
+	var file int8
+	for rank = 0; rank < b.Rep.NumRanks; rank++ {
+		for file = 0; file < b.Rep.NumFiles; file++ {
+			p := b.PieceAtSquare(Square{file, rank})
+			sq := Square{file, rank}
+			if (p.Color == color) && (p.Kind != NO_PIECE) {
+				pslms = append(pslms, b.PslmsForPieceAtSquare(p, sq)...)
+			}
 		}
 	}
 

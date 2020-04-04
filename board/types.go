@@ -17,12 +17,23 @@ type Piece struct {
 	Direction PieceDirection
 }
 
-type BoardRep struct {
+type BoardRepMap struct {
 	NumFiles int8
 	LastFile int8
 	NumRanks int8
 	LastRank int8
 	Rep      map[Square]Piece
+}
+
+const MAX_FILES = 8
+const MAX_RANKS = 8
+
+type BoardRepSlice struct {
+	NumFiles int8
+	LastFile int8
+	NumRanks int8
+	LastRank int8
+	Rep      [MAX_RANKS][MAX_FILES]Piece
 }
 
 type VariantKey uint8
@@ -59,7 +70,7 @@ type MoveStackItem struct {
 
 type Board struct {
 	Variant   VariantKey
-	Rep       BoardRep
+	Rep       BoardRepSlice
 	Pos       Pos
 	MoveStack []MoveStackItem
 	Nodes     int
