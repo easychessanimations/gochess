@@ -66,6 +66,8 @@ type SetPiece struct {
 type MoveStackItem struct {
 	RestoreRep []SetPiece
 	Pos        Pos
+	Move       Move
+	San        string
 }
 
 type Board struct {

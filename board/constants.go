@@ -2,6 +2,7 @@ package board
 
 const STOP_AT_FIRST = true
 const ALL_ATTACKS = false
+const ADD_SAN = true
 
 const (
 	VARIANT_STANDARD VariantKey = iota
@@ -238,4 +239,22 @@ var PROMOTION_PIECES = map[VariantKey][]Piece{
 		Piece{Kind: Lancer, Direction: PieceDirection{-1, 0}},
 		Piece{Kind: Lancer, Direction: PieceDirection{-1, 1}},
 	},
+}
+
+const MAX_PIECE_KINDS = 20
+
+var PIECE_VALUES [MAX_PIECE_KINDS]int
+
+func init() {
+	PIECE_VALUES[Pawn] = 100
+	PIECE_VALUES[Knight] = 300
+	PIECE_VALUES[Bishop] = 300
+	PIECE_VALUES[Rook] = 500
+	PIECE_VALUES[Queen] = 900
+	PIECE_VALUES[King] = 0
+	PIECE_VALUES[Hawk] = 600
+	PIECE_VALUES[Elephant] = 800
+	PIECE_VALUES[Sentry] = 300
+	PIECE_VALUES[Jailer] = 400
+	PIECE_VALUES[Lancer] = 700
 }

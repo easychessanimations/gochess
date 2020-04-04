@@ -44,10 +44,26 @@ func (b *Board) SetFromFen(fen string) {
 	b.Pos.FullmoveNumber = int(fmn)
 }
 
+func (b *Board) Line() string {
+	buff := ""
+
+	for i, msi := range b.MoveStack {
+		if (i % 2) == 0 {
+			buff += fmt.Sprintf("%d.", i/2+1)
+		}
+
+		buff += msi.San + " "
+	}
+
+	return buff
+}
+
 func (b *Board) ToString() string {
 	buff := b.Rep.ToString()
 
 	buff += "\n" + b.ReportFen() + "\n"
+
+	buff += "\n" + b.Line() + "\n"
 
 	return buff
 }
@@ -120,7 +136,7 @@ func (b *Board) MoveToAlgeb(move Move) string {
 func (b *Board) MoveToSan(move Move) string {
 	checkStr := ""
 
-	b.Push(move)
+	b.Push(move, !ADD_SAN)
 	check := b.IsInCheck(b.Pos.Turn)
 	if check {
 		checkStr = "+"
@@ -517,8 +533,8 @@ func (b *Board) PslmsForAllPiecesOfColor(color PieceColor) []Move {
 	var file int8
 	for rank = 0; rank < b.Rep.NumRanks; rank++ {
 		for file = 0; file < b.Rep.NumFiles; file++ {
-			p := b.PieceAtSquare(Square{file, rank})
 			sq := Square{file, rank}
+			p := b.PieceAtSquare(sq)
 			if (p.Color == color) && (p.Kind != NO_PIECE) {
 				pslms = append(pslms, b.PslmsForPieceAtSquare(p, sq)...)
 			}
@@ -591,7 +607,13 @@ func (b *Board) CreatePromotionMoves(
 	return promotionMoves
 }
 
-func (b *Board) Push(move Move) {
+func (b *Board) Push(move Move, addSan bool) {
+	san := "?"
+
+	if addSan {
+		san = b.MoveToSan(move)
+	}
+
 	restoreRep := make([]SetPiece, 0)
 	oldPos := b.Pos.Clone()
 
@@ -663,6 +685,8 @@ func (b *Board) Push(move Move) {
 	b.MoveStack = append(b.MoveStack, MoveStackItem{
 		restoreRep,
 		oldPos,
+		move,
+		san,
 	})
 }
 
@@ -735,7 +759,7 @@ func (b *Board) PickLegalMovesFrom(pslms []Move, color PieceColor) []Move {
 	lms := make([]Move, 0)
 
 	for _, pslm := range pslms {
-		b.Push(pslm)
+		b.Push(pslm, !ADD_SAN)
 		check := b.IsInCheck(color)
 		b.Pop()
 
@@ -773,7 +797,7 @@ func (b *Board) PerfRecursive(depth int, maxDepth int) {
 	lms := b.LegalMovesForAllPieces()
 
 	for _, lm := range lms {
-		b.Push(lm)
+		b.Push(lm, !ADD_SAN)
 		b.PerfRecursive(depth+1, maxDepth)
 		b.Pop()
 	}
@@ -793,6 +817,97 @@ func (b *Board) Perf(maxDepth int) {
 	nps := float32(b.Nodes) / float32(elapsed)
 
 	fmt.Printf(">> perf elapsed %.2f nodes %d nps %.0f\n", elapsed, b.Nodes, nps)
+}
+
+func (b *Board) Material(color PieceColor) int {
+	material := 0
+
+	var rank int8
+	var file int8
+	for rank = 0; rank < b.Rep.NumRanks; rank++ {
+		for file = 0; file < b.Rep.NumFiles; file++ {
+			p := b.PieceAtSquare(Square{file, rank})
+			if (p.Color == color) && (p.Kind != NO_PIECE) {
+				material += PIECE_VALUES[p.Kind]
+
+				if p.Kind == Pawn {
+					if (rank >= 3) && (rank <= 4) {
+						if (file >= 3) && (file <= 4) {
+							material += 50
+						}
+					}
+				}
+
+				if p.Kind == Knight {
+					if (rank == 0) || (rank == 7) {
+						material -= 50
+					}
+					if (file == 0) || (file == 7) {
+						material -= 50
+					}
+				}
+			}
+		}
+	}
+
+	pslms := b.PslmsForAllPiecesOfColor(color)
+
+	material += 5 * len(pslms)
+
+	return material
+}
+
+func (b *Board) MaterialBalance() int {
+	return b.Material(WHITE) - b.Material(BLACK)
+}
+
+func (b *Board) Eval() int {
+	return b.MaterialBalance()
+}
+
+func (b *Board) EvalForColor(color PieceColor) int {
+	eval := b.Eval()
+
+	if color == WHITE {
+		return eval
+	}
+
+	return -eval
+}
+
+func (b *Board) EvalForTurn() int {
+	return b.EvalForColor(b.Pos.Turn)
+}
+
+// https://www.chessprogramming.org/Alpha-Beta
+func (b *Board) AlphaBeta(alpha int, beta int, depthLeft int) (Move, int) {
+	if depthLeft <= 0 {
+		return Move{}, b.EvalForTurn()
+	}
+
+	lms := b.LegalMovesForAllPieces()
+
+	bm := Move{}
+
+	for _, lm := range lms {
+		b.Push(lm, !ADD_SAN)
+		_, score := b.AlphaBeta(-beta, -alpha, depthLeft-1)
+		b.Pop()
+
+		score *= -1
+
+		if score >= beta {
+			return bm, beta
+		}
+
+		if score > alpha {
+			bm = lm
+			alpha = score
+		}
+	}
+
+	return bm, alpha
+
 }
 
 /////////////////////////////////////////////////////////////////////
