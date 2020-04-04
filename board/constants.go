@@ -1,5 +1,8 @@
 package board
 
+const STOP_AT_FIRST = true
+const ALL_ATTACKS = false
+
 const (
 	VARIANT_STANDARD VariantKey = iota
 	VARIANT_ATOMIC

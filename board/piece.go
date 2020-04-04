@@ -33,4 +33,8 @@ func (p *Piece) KindColorEqualTo(testP Piece) bool {
 	return (p.Kind == testP.Kind) && (p.Color == testP.Color)
 }
 
+func (p *Piece) ColorInverse() Piece {
+	return Piece{Kind: p.Kind, Color: p.Color.Inverse(), Direction: p.Direction}
+}
+
 /////////////////////////////////////////////////////////////////////

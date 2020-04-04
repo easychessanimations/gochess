@@ -117,13 +117,26 @@ func (b *Board) MoveToAlgeb(move Move) string {
 }
 
 func (b *Board) MoveToSan(move Move) string {
+	checkStr := ""
+
+	b.Push(move)
+	check := b.IsInCheck(b.Pos.Turn)
+	if check {
+		checkStr = "+"
+		if !b.HasLegalMoveColor(b.Pos.Turn) {
+			checkStr = "#"
+		}
+	}
+	b.Pop()
+
 	if move.Castling {
 		if move.CastlingSide == QUEEN_SIDE {
-			return "O-O-O"
+			return "O-O-O" + checkStr
 		}
 
-		return "O-O"
+		return "O-O" + checkStr
 	}
+
 	//fromAlgeb := b.SquareToAlgeb(move.FromSq)
 	toAlgeb := b.SquareToAlgeb(move.ToSq)
 	fromPiece := b.PieceAtSquare(move.FromSq)
@@ -144,7 +157,7 @@ func (b *Board) MoveToSan(move Move) string {
 		buff += "=" + move.PromotionPiece.ToStringUpper()
 	}
 
-	return buff
+	return buff + checkStr
 }
 
 func (b *Board) PslmsForVectorPieceAtSquare(p Piece, sq Square) []Move {
@@ -217,15 +230,129 @@ func (b *Board) IsSquareEmpty(sq Square) bool {
 	return b.Rep.IsSquareEmpty(sq)
 }
 
+func (b *Board) PawnRankDir(color PieceColor) int8 {
+	// black pawn goes downward in rank
+	var rankDir int8 = 1
+
+	if color == WHITE {
+		// white pawn goes upward in rank
+		rankDir = -1
+	}
+
+	return rankDir
+}
+
+func (b *Board) AttacksOnSquareByPawn(sq Square, color PieceColor, stopAtFirst bool) []Move {
+	attacks := make([]Move, 0)
+
+	rdir := -b.PawnRankDir(color)
+
+	var df int8
+	for df = -1; df <= 1; df += 2 {
+		testsq := sq.Add(PieceDirection{df, rdir})
+
+		if b.HasSquare(testsq) {
+			testp := b.PieceAtSquare(testsq)
+
+			if (testp.Kind == Pawn) && (testp.Color == color) {
+				attacks = append(attacks, Move{
+					FromSq: sq,
+					ToSq:   testsq,
+				})
+
+				if stopAtFirst {
+					return attacks
+				}
+			}
+		}
+	}
+
+	return attacks
+}
+
+func (b *Board) AttacksOnSquareByVectorPiece(sq Square, p Piece, stopAtFirst bool) []Move {
+	attacks := make([]Move, 0)
+
+	testp := p.ColorInverse()
+
+	pslms := b.PslmsForVectorPieceAtSquare(testp, sq)
+
+	for _, pslm := range pslms {
+		if pslm.IsCapture() {
+			p := b.PieceAtSquare(pslm.ToSq)
+			if p.KindColorEqualTo(p) {
+				attacks = append(attacks, pslm)
+				if stopAtFirst {
+					return attacks
+				}
+			}
+		}
+	}
+
+	return attacks
+}
+
+func (b *Board) AttacksOnSquareByPiece(sq Square, p Piece, stopAtFirst bool) []Move {
+	if p.Kind == Pawn {
+		return b.AttacksOnSquareByPawn(sq, p.Color, stopAtFirst)
+	}
+
+	return b.AttacksOnSquareByVectorPiece(sq, p, stopAtFirst)
+}
+
+func (b *Board) IsSquareAttackedByPiece(sq Square, p Piece) bool {
+	attacks := b.AttacksOnSquareByPiece(sq, p, STOP_AT_FIRST)
+
+	return len(attacks) > 0
+}
+
+func (b *Board) AttackingPieceKinds() []PieceKind {
+	apks := []PieceKind{
+		Pawn,
+		King,
+		Queen,
+		Rook,
+		Bishop,
+		Knight,
+	}
+
+	if b.Variant == VARIANT_SEIRAWAN {
+		apks = append(apks, []PieceKind{
+			Elephant,
+			Hawk,
+		}...)
+	}
+
+	return apks
+}
+
+func (b *Board) IsSquareAttackedByColor(sq Square, color PieceColor) bool {
+	apks := b.AttackingPieceKinds()
+
+	for _, apk := range apks {
+		if b.IsSquareAttackedByPiece(sq, Piece{Kind: apk, Color: color}) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (b *Board) IsInCheck(color PieceColor) bool {
+	wk := b.WhereIsKing(color)
+
+	if wk == NO_SQUARE {
+		// missing king is considered check
+		return true
+	}
+
+	return b.IsSquareAttackedByColor(wk, color.Inverse())
+}
+
 func (b *Board) PslmsForPawnAtSquare(p Piece, sq Square) []Move {
 	pslms := make([]Move, 0)
 
-	// black pawn goes down
-	var rankDir int8 = 1
-	if p.Color == WHITE {
-		// white pawn goes up
-		rankDir = -1
-	}
+	rankDir := b.PawnRankDir(p.Color)
 
 	pushOneSq := sq.Add(PieceDirection{0, rankDir})
 
@@ -372,7 +499,10 @@ func (b *Board) MovesSortedBySan(moves []Move) MoveBuff {
 	mb := make(MoveBuff, 0)
 
 	for _, move := range moves {
-		mb = append(mb, MoveBuffItem{move, b.MoveToSan(move)})
+		san := b.MoveToSan(move)
+		algeb := b.MoveToAlgeb(move)
+
+		mb = append(mb, MoveBuffItem{move, san, algeb})
 	}
 
 	sort.Sort(MoveBuff(mb))
@@ -417,8 +547,10 @@ func (b *Board) Push(move Move) {
 
 	restoreRep = append(restoreRep, SetPiece{move.ToSq, top})
 
+	ccr := &b.Pos.CastlingRights[b.Pos.Turn]
+
 	if fromp.Kind == King {
-		b.Pos.CastlingRights[b.Pos.Turn].ClearAll()
+		ccr.ClearAll()
 	}
 
 	b.SetPieceAtSquare(move.FromSq, Piece{})
@@ -437,11 +569,9 @@ func (b *Board) Push(move Move) {
 		b.SetPieceAtSquare(move.ToSq, fromp)
 	}
 
-	ccr := b.Pos.CastlingRights[b.Pos.Turn]
-
 	var side CastlingSide
 	for side = QUEEN_SIDE; side <= KING_SIDE; side++ {
-		cs := ccr[side]
+		cs := &ccr[side]
 		if cs.CanCastle {
 			rp := b.PieceAtSquare(cs.RookOrigSquare)
 
@@ -543,6 +673,32 @@ func (b *Board) SquaresInDirection(sq Square, dir PieceDirection) []Square {
 
 func (b *Board) WhereIsKing(color PieceColor) Square {
 	return b.Rep.WhereIsKing(color)
+}
+
+func (b *Board) LegalMovesForAllPiecesOfColor(color PieceColor) []Move {
+	lms := make([]Move, 0)
+
+	pslms := b.PslmsForAllPiecesOfColor(color)
+
+	for _, pslm := range pslms {
+		b.Push(pslm)
+		check := b.IsInCheck(color)
+		b.Pop()
+
+		if !check {
+			lms = append(lms, pslm)
+		}
+	}
+
+	return lms
+}
+
+func (b *Board) HasLegalMoveColor(color PieceColor) bool {
+	return len(b.LegalMovesForAllPiecesOfColor(color)) > 0
+}
+
+func (b *Board) LegalMovesForAllPieces() []Move {
+	return b.LegalMovesForAllPiecesOfColor(b.Pos.Turn)
 }
 
 /////////////////////////////////////////////////////////////////////

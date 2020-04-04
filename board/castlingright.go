@@ -147,7 +147,10 @@ func (cr *CastlingRight) Free(b *Board) bool {
 		return false
 	}
 
-	// TODO: return false if king is in check
+	// no castling if king is in check
+	if b.IsInCheck(cr.Color) {
+		return false
+	}
 
 	// all the squares between the king's initial and final squares (including the final square) should be empty
 	// except for the king and castling rook ( skip )
@@ -161,7 +164,10 @@ func (cr *CastlingRight) Free(b *Board) bool {
 	sqs := b.SquaresInDirection(wk, PieceDirection{dir, 0})
 
 	for _, sq := range sqs {
-		// TODO: return false if square is in check
+		// passing squares of king should not be under attack
+		if b.IsSquareAttackedByColor(sq, cr.Color.Inverse()) {
+			return false
+		}
 
 		skip := sq.EqualTo(wk) || sq.EqualTo(cr.RookOrigSquare)
 

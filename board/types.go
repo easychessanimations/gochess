@@ -89,8 +89,9 @@ type Move struct {
 }
 
 type MoveBuffItem struct {
-	Move Move
-	Str  string
+	Move  Move
+	San   string
+	Algeb string
 }
 
 type MoveBuff []MoveBuffItem
@@ -102,5 +103,5 @@ func (mb MoveBuff) Swap(i, j int) {
 	mb[i], mb[j] = mb[j], mb[i]
 }
 func (mb MoveBuff) Less(i, j int) bool {
-	return mb[i].Str < mb[j].Str
+	return mb[i].San < mb[j].San
 }

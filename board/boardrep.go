@@ -23,12 +23,12 @@ func (br *BoardRep) ReportFen() string {
 			if p.IsEmpty() {
 				cumul++
 			} else {
-				buff += p.ToString()
-
 				if cumul > 0 {
 					buff += string([]byte{"0"[0] + byte(cumul)})
 					cumul = 0
 				}
+
+				buff += p.ToString()
 			}
 		}
 
