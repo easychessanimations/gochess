@@ -1,5 +1,7 @@
 package board
 
+import "time"
+
 type Square struct {
 	File int8
 	Rank int8
@@ -76,6 +78,7 @@ type Board struct {
 	Pos       Pos
 	MoveStack []MoveStackItem
 	Nodes     int
+	Start     time.Time
 }
 
 type PieceDescriptor struct {

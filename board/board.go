@@ -5,6 +5,7 @@ package board
 
 import (
 	"fmt"
+	"math/rand"
 	"sort"
 	"strconv"
 	"strings"
@@ -803,20 +804,26 @@ func (b *Board) PerfRecursive(depth int, maxDepth int) {
 	}
 }
 
-func (b *Board) Perf(maxDepth int) {
+func (b *Board) StartPerf() {
 	b.Nodes = 0
 
-	start := time.Now()
+	b.Start = time.Now()
+}
 
-	fmt.Printf(">> perf up to depth %d\n", maxDepth)
-
-	b.PerfRecursive(0, maxDepth)
-
-	elapsed := float32(time.Now().Sub(start)) / float32(1e9)
+func (b *Board) StopPerf() {
+	elapsed := float32(time.Now().Sub(b.Start)) / float32(1e9)
 
 	nps := float32(b.Nodes) / float32(elapsed)
 
 	fmt.Printf(">> perf elapsed %.2f nodes %d nps %.0f\n", elapsed, b.Nodes, nps)
+}
+
+func (b *Board) Perf(maxDepth int) {
+	b.StartPerf()
+
+	fmt.Printf(">> perf up to depth %d\n", maxDepth)
+
+	b.PerfRecursive(0, maxDepth)
 }
 
 func (b *Board) Material(color PieceColor) int {
@@ -860,6 +867,8 @@ func (b *Board) Material(color PieceColor) int {
 
 	material += MOBILITY_MULTIPLIER * len(pslms)
 
+	material += rand.Intn(RANDOM_BONUS)
+
 	return material
 }
 
@@ -887,6 +896,8 @@ func (b *Board) EvalForTurn() int {
 
 // https://www.chessprogramming.org/Alpha-Beta
 func (b *Board) AlphaBeta(alpha int, beta int, depthLeft int, quescDepth int) (Move, int) {
+	b.Nodes++
+
 	bm := Move{}
 
 	if depthLeft <= -quescDepth {
@@ -923,6 +934,20 @@ func (b *Board) AlphaBeta(alpha int, beta int, depthLeft int, quescDepth int) (M
 	}
 
 	return bm, alpha
+}
+
+func (b *Board) Go(depth int, quisecenceDepth int) (Move, int) {
+	b.StartPerf()
+
+	fmt.Printf(">> go depth %d quiescence depth %d\n", depth, quisecenceDepth)
+
+	bm, score := b.AlphaBeta(-10000, 10000, depth, quisecenceDepth)
+
+	b.StopPerf()
+
+	fmt.Printf(">> move %s score %d\n", b.MoveToSan(bm), score)
+
+	return bm, score
 }
 
 /////////////////////////////////////////////////////////////////////
