@@ -833,17 +833,23 @@ func (b *Board) Material(color PieceColor) int {
 				if p.Kind == Pawn {
 					if (rank >= 3) && (rank <= 4) {
 						if (file >= 3) && (file <= 4) {
-							material += 50
+							material += CENTER_PAWN_BONUS
 						}
 					}
 				}
 
 				if p.Kind == Knight {
-					if (rank == 0) || (rank == 7) {
-						material -= 50
+					if (rank <= 1) || (rank >= 6) {
+						material -= KNIGHT_ON_EDGE_DEDUCTION
 					}
-					if (file == 0) || (file == 7) {
-						material -= 50
+					if (file <= 1) || (file >= 6) {
+						material -= KNIGHT_ON_EDGE_DEDUCTION
+					}
+					if (rank <= 0) || (rank >= 7) {
+						material -= KNIGHT_CLOSE_TO_EDGE_DEDUCTION
+					}
+					if (file <= 0) || (file >= 7) {
+						material -= KNIGHT_CLOSE_TO_EDGE_DEDUCTION
 					}
 				}
 			}
@@ -852,7 +858,7 @@ func (b *Board) Material(color PieceColor) int {
 
 	pslms := b.PslmsForAllPiecesOfColor(color)
 
-	material += 5 * len(pslms)
+	material += MOBILITY_MULTIPLIER * len(pslms)
 
 	return material
 }
@@ -880,34 +886,43 @@ func (b *Board) EvalForTurn() int {
 }
 
 // https://www.chessprogramming.org/Alpha-Beta
-func (b *Board) AlphaBeta(alpha int, beta int, depthLeft int) (Move, int) {
-	if depthLeft <= 0 {
-		return Move{}, b.EvalForTurn()
+func (b *Board) AlphaBeta(alpha int, beta int, depthLeft int, quescDepth int) (Move, int) {
+	bm := Move{}
+
+	if depthLeft <= -quescDepth {
+		return bm, b.EvalForTurn()
 	}
 
 	lms := b.LegalMovesForAllPieces()
 
-	bm := Move{}
+	hadMove := false
 
 	for _, lm := range lms {
-		b.Push(lm, !ADD_SAN)
-		_, score := b.AlphaBeta(-beta, -alpha, depthLeft-1)
-		b.Pop()
+		if (depthLeft >= 0) || lm.IsCapture() {
+			b.Push(lm, !ADD_SAN)
+			_, score := b.AlphaBeta(-beta, -alpha, depthLeft-1, quescDepth)
+			b.Pop()
 
-		score *= -1
+			hadMove = true
 
-		if score >= beta {
-			return bm, beta
-		}
+			score *= -1
 
-		if score > alpha {
-			bm = lm
-			alpha = score
+			if score >= beta {
+				return bm, beta
+			}
+
+			if score > alpha {
+				bm = lm
+				alpha = score
+			}
 		}
 	}
 
-	return bm, alpha
+	if !hadMove {
+		return bm, b.EvalForTurn()
+	}
 
+	return bm, alpha
 }
 
 /////////////////////////////////////////////////////////////////////
