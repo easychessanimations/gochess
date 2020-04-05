@@ -18,17 +18,62 @@ import (
 // member functions
 
 func (b *Board) SetPieceAtSquare(sq Square, p Piece) bool {
-	return b.Rep.SetPieceAtSquare(sq, p)
+	if b.HasSquare(sq) {
+		b.Rep[sq.Rank][sq.File] = p
+
+		return true
+	}
+
+	return false
 }
 
 func (b *Board) PieceAtSquare(sq Square) Piece {
-	return b.Rep.PieceAtSquare(sq)
+	if b.HasSquare(sq) {
+		return b.Rep[sq.Rank][sq.File]
+	}
+
+	return Piece{Kind: NO_PIECE}
+}
+
+func (b *Board) SetFromRawFen(fen string) {
+	var file int8 = 0
+	var rank int8 = 0
+	for index := 0; index < len(fen); {
+		chr := fen[index : index+1]
+		if (chr >= "0") && (chr <= "9") {
+			for cumul := chr[0] - "0"[0]; cumul > 0; cumul-- {
+				b.SetPieceAtSquare(Square{file, rank}, Piece{})
+				file++
+			}
+		} else if chr == "/" {
+			rank++
+			file = 0
+		} else {
+			pieceLetter := chr
+			if (chr == "l") || (chr == "L") {
+				index++
+				dirFirst := fen[index : index+1]
+				dirSecond := ""
+				if (dirFirst == "n") || (dirFirst == "s") {
+					index++
+					dirSecond = fen[index : index+1]
+					if (dirSecond != "w") && (dirSecond != "e") {
+						dirSecond = ""
+					}
+				}
+				pieceLetter = chr + dirFirst + dirSecond
+			}
+			b.SetPieceAtSquare(Square{file, rank}, PieceLetterToPiece(pieceLetter))
+			file++
+		}
+		index++
+	}
 }
 
 func (b *Board) SetFromFen(fen string) {
 	fenParts := strings.Split(fen, " ")
 
-	b.Rep.SetFromFen(fenParts[0])
+	b.SetFromRawFen(fenParts[0])
 
 	b.Pos.Turn.SetFromFen(fenParts[1])
 
@@ -60,7 +105,17 @@ func (b *Board) Line() string {
 }
 
 func (b *Board) ToString() string {
-	buff := b.Rep.ToString()
+	buff := ""
+
+	var rank int8
+	var file int8
+	for rank = 0; rank < b.NumRanks; rank++ {
+		for file = 0; file < b.NumFiles; file++ {
+			piece := b.Rep[rank][file]
+			buff += fmt.Sprintf("%-4s", piece.ToString())
+		}
+		buff += "\n"
+	}
 
 	buff += "\n" + b.ReportFen() + "\n"
 
@@ -78,7 +133,18 @@ func (b *Board) Init(variant VariantKey) {
 	b.Variant = variant
 
 	// initialize rep to size required by variant
-	b.Rep.Init(b.Variant)
+	b.NumFiles = NumFiles(variant)
+	b.LastFile = b.NumFiles - 1
+	b.NumRanks = NumRanks(variant)
+	b.LastRank = b.NumRanks - 1
+
+	var rank int8
+	var file int8
+	for rank = 0; rank < b.NumRanks; rank++ {
+		for file = 0; file < b.NumFiles; file++ {
+			b.Rep[rank][file] = Piece{}
+		}
+	}
 
 	// init move stack
 	b.MoveStack = make([]MoveStackItem, 0)
@@ -88,11 +154,46 @@ func (b *Board) Init(variant VariantKey) {
 }
 
 func (b *Board) HasSquare(sq Square) bool {
-	return b.Rep.HasSquare(sq)
+	return (sq.File >= 0) && (sq.File < b.NumFiles) && (sq.Rank >= 0) && (sq.Rank < b.NumRanks)
+}
+
+func (b *Board) ReportRawFen() string {
+	buff := ""
+	cumul := 0
+
+	var file int8
+	var rank int8
+	for rank = 0; rank < b.NumRanks; rank++ {
+		for file = 0; file < b.NumFiles; file++ {
+			p := b.PieceAtSquare(Square{file, rank})
+
+			if p.IsEmpty() {
+				cumul++
+			} else {
+				if cumul > 0 {
+					buff += string([]byte{"0"[0] + byte(cumul)})
+					cumul = 0
+				}
+
+				buff += p.ToString()
+			}
+		}
+
+		if cumul > 0 {
+			buff += string([]byte{"0"[0] + byte(cumul)})
+			cumul = 0
+		}
+
+		if rank < (b.NumRanks - 1) {
+			buff += "/"
+		}
+	}
+
+	return buff
 }
 
 func (b *Board) ReportFen() string {
-	buff := b.Rep.ReportFen()
+	buff := b.ReportRawFen()
 
 	buff += " " + b.Pos.Turn.ToString()
 
@@ -112,7 +213,7 @@ func (b *Board) SquareToFileLetter(sq Square) string {
 }
 
 func (b *Board) SquareToRankLetter(sq Square) string {
-	return string([]byte{"1"[0] + byte(b.Rep.LastRank-sq.Rank)})
+	return string([]byte{"1"[0] + byte(b.LastRank-sq.Rank)})
 }
 
 func (b *Board) SquareToAlgeb(sq Square) string {
@@ -127,7 +228,7 @@ func (b *Board) SquareFromAlgeb(algeb string) Square {
 		return NO_SQUARE
 	}
 
-	return Square{int8(algeb[0] - "a"[0]), int8(byte(b.Rep.LastRank) - algeb[1] - "1"[0])}
+	return Square{int8(algeb[0] - "a"[0]), int8(byte(b.LastRank) - algeb[1] - "1"[0])}
 }
 
 func (b *Board) MoveToAlgeb(move Move) string {
@@ -288,7 +389,7 @@ func (b *Board) PslmsForVectorPieceAtSquare(p Piece, sq Square) []Move {
 }
 
 func (b *Board) IsSquareEmpty(sq Square) bool {
-	return b.Rep.IsSquareEmpty(sq)
+	return b.PieceAtSquare(sq).Kind == NO_PIECE
 }
 
 func (b *Board) PawnRankDir(color PieceColor) int8 {
@@ -532,8 +633,8 @@ func (b *Board) PslmsForAllPiecesOfColor(color PieceColor) []Move {
 
 	var rank int8
 	var file int8
-	for rank = 0; rank < b.Rep.NumRanks; rank++ {
-		for file = 0; file < b.Rep.NumFiles; file++ {
+	for rank = 0; rank < b.NumRanks; rank++ {
+		for file = 0; file < b.NumFiles; file++ {
 			sq := Square{file, rank}
 			p := b.PieceAtSquare(sq)
 			if (p.Color == color) && (p.Kind != NO_PIECE) {
@@ -615,16 +716,10 @@ func (b *Board) Push(move Move, addSan bool) {
 		san = b.MoveToSan(move)
 	}
 
-	restoreRep := make([]SetPiece, 0)
+	oldRep := b.Rep
 	oldPos := b.Pos.Clone()
 
 	fromp := b.PieceAtSquare(move.FromSq)
-
-	restoreRep = append(restoreRep, SetPiece{move.FromSq, fromp})
-
-	top := b.PieceAtSquare(move.ToSq)
-
-	restoreRep = append(restoreRep, SetPiece{move.ToSq, top})
 
 	ccr := &b.Pos.CastlingRights[b.Pos.Turn]
 
@@ -637,12 +732,8 @@ func (b *Board) Push(move Move, addSan bool) {
 	if move.Castling {
 		b.SetPieceAtSquare(move.ToSq, Piece{})
 		kctsq := b.KingCastlingTargetSq(b.Pos.Turn, move.CastlingSide)
-		kctp := b.PieceAtSquare(kctsq)
-		restoreRep = append(restoreRep, SetPiece{kctsq, kctp})
 		b.SetPieceAtSquare(kctsq, Piece{Kind: King, Color: b.Pos.Turn})
 		rctsq := b.RookCastlingTargetSq(b.Pos.Turn, move.CastlingSide)
-		rctp := b.PieceAtSquare(rctsq)
-		restoreRep = append(restoreRep, SetPiece{rctsq, rctp})
 		b.SetPieceAtSquare(rctsq, move.RookOrigPiece)
 	} else {
 		b.SetPieceAtSquare(move.ToSq, fromp)
@@ -684,7 +775,7 @@ func (b *Board) Push(move Move, addSan bool) {
 	}
 
 	b.MoveStack = append(b.MoveStack, MoveStackItem{
-		restoreRep,
+		oldRep,
 		oldPos,
 		move,
 		san,
@@ -699,13 +790,10 @@ func (b *Board) Pop() {
 
 	msi := b.MoveStack[l-1]
 
-	b.MoveStack = b.MoveStack[:l-1]
-
-	for _, sp := range msi.RestoreRep {
-		b.SetPieceAtSquare(sp.Sq, sp.P)
-	}
-
+	b.Rep = msi.Rep
 	b.Pos = msi.Pos
+
+	b.MoveStack = b.MoveStack[:l-1]
 }
 
 func (b *Board) PromotionRank(color PieceColor) int8 {
@@ -748,12 +836,33 @@ func (b *Board) KingCastlingTargetSq(color PieceColor, side CastlingSide) Square
 	return Square{file, rank}
 }
 
-func (b *Board) SquaresInDirection(sq Square, dir PieceDirection) []Square {
-	return b.Rep.SquaresInDirection(sq, dir)
+func (b *Board) SquaresInDirection(origSq Square, dir PieceDirection) []Square {
+	sqs := make([]Square, 0)
+
+	currentSq := origSq.Add(dir)
+
+	for b.HasSquare(currentSq) {
+		sqs = append(sqs, currentSq)
+
+		currentSq = currentSq.Add(dir)
+	}
+
+	return sqs
 }
 
 func (b *Board) WhereIsKing(color PieceColor) Square {
-	return b.Rep.WhereIsKing(color)
+	var rank int8
+	var file int8
+	for rank = 0; rank < b.NumRanks; rank++ {
+		for file = 0; file < b.NumFiles; file++ {
+			p := b.Rep[rank][file]
+			if (p.Kind == King) && (p.Color == color) {
+				return Square{file, rank}
+			}
+		}
+	}
+
+	return NO_SQUARE
 }
 
 func (b *Board) PickLegalMovesFrom(pslms []Move, color PieceColor) []Move {
@@ -824,6 +933,8 @@ func (b *Board) Perf(maxDepth int) {
 	fmt.Printf(">> perf up to depth %d\n", maxDepth)
 
 	b.PerfRecursive(0, maxDepth)
+
+	b.StopPerf()
 }
 
 func (b *Board) Material(color PieceColor) int {
@@ -831,8 +942,8 @@ func (b *Board) Material(color PieceColor) int {
 
 	var rank int8
 	var file int8
-	for rank = 0; rank < b.Rep.NumRanks; rank++ {
-		for file = 0; file < b.Rep.NumFiles; file++ {
+	for rank = 0; rank < b.NumRanks; rank++ {
+		for file = 0; file < b.NumFiles; file++ {
 			p := b.PieceAtSquare(Square{file, rank})
 			if (p.Color == color) && (p.Kind != NO_PIECE) {
 				material += PIECE_VALUES[p.Kind]
