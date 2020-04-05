@@ -130,7 +130,7 @@ func (b *Board) ExecCommand(command string) bool {
 		return true
 	} else {
 		if command == "go" {
-			bm, _ := b.Go(2, 8)
+			bm, _ := b.Go(4, 100)
 
 			b.Push(bm, ADD_SAN)
 
@@ -1138,8 +1138,8 @@ func (b *Board) LineToString(line []Move) string {
 func (b *Board) AlphaBeta(info AlphaBetaInfo) (Move, int) {
 	b.Nodes++
 
-	if info.TotalDepth() > b.SelDepth {
-		b.SelDepth = info.TotalDepth()
+	if info.CurrentDepth > b.SelDepth {
+		b.SelDepth = info.CurrentDepth
 	}
 
 	bm := Move{}
@@ -1148,15 +1148,15 @@ func (b *Board) AlphaBeta(info AlphaBetaInfo) (Move, int) {
 		return bm, b.EvalForTurn()
 	}
 
-	lms := b.PslmsForAllPiecesOfColor(b.Pos.Turn)
+	plms := b.PslmsForAllPiecesOfColor(b.Pos.Turn)
 
 	isNormalSearch := info.CurrentDepth < info.Depth
 
 	numLegals := 0
 
-	for _, lm := range lms {
-		if isNormalSearch || lm.IsCapture() {
-			b.Push(lm, !ADD_SAN)
+	for _, plm := range plms {
+		if isNormalSearch || plm.IsCapture() {
+			b.Push(plm, !ADD_SAN)
 
 			if !b.IsInCheck(b.Pos.Turn.Inverse()) {
 				numLegals++
@@ -1165,7 +1165,7 @@ func (b *Board) AlphaBeta(info AlphaBetaInfo) (Move, int) {
 				newInfo.Alpha = -info.Beta
 				newInfo.Beta = -info.Alpha
 				newInfo.CurrentDepth = info.CurrentDepth + 1
-				newInfo.Line = append(newInfo.Line, lm)
+				newInfo.Line = append(newInfo.Line, b.MoveToAlgeb(plm))
 
 				_, score := b.AlphaBeta(newInfo)
 
@@ -1178,7 +1178,7 @@ func (b *Board) AlphaBeta(info AlphaBetaInfo) (Move, int) {
 				}
 
 				if score > info.Alpha {
-					bm = lm
+					bm = plm
 					info.Alpha = score
 				}
 			} else {
@@ -1186,6 +1186,8 @@ func (b *Board) AlphaBeta(info AlphaBetaInfo) (Move, int) {
 			}
 		}
 	}
+
+	eval := b.EvalForTurn()
 
 	if isNormalSearch {
 		if numLegals <= 0 {
@@ -1195,13 +1197,17 @@ func (b *Board) AlphaBeta(info AlphaBetaInfo) (Move, int) {
 				return bm, DRAW_SCORE
 			}
 		}
+	} else {
+		if numLegals <= 0 {
+			return bm, eval
+		}
 	}
 
 	if info.Alpha > -INFINITE_SCORE {
 		return bm, info.Alpha
 	}
 
-	return bm, b.EvalForTurn()
+	return bm, eval
 }
 
 func (b *Board) Go(depth int, quiescenceDepth int) (Move, int) {

@@ -118,5 +118,5 @@ type AlphaBetaInfo struct {
 	Depth           int
 	QuiescenceDepth int
 	CurrentDepth    int
-	Line            []Move
+	Line            []string
 }
