@@ -14,13 +14,9 @@ import (
 
 var engine = uciengine.UciEngine{}
 
-func init() {
-	engine.Name = uciengine.ENGINE_NAME
-	engine.Description = uciengine.ENGINE_DESCRIPTION
-	engine.Author = uciengine.ENGINE_AUTHOR
-}
-
 func main() {
+	engine.Init()
+
 	engine.PrintWelcomeMessage()
 
 	engine.UciLoop()

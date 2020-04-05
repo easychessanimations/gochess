@@ -9,6 +9,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/easychessanimations/gochess/board"
 )
 
 /////////////////////////////////////////////////////////////////////
@@ -128,6 +130,30 @@ func (eng *UciEngine) SetOptionFromTokens(tokens []string) {
 	eng.SetOption(nameBuff, valueBuff)
 }
 
+func (eng *UciEngine) LogPrefixedContent(prefix string, content string) {
+	lines := strings.Split(content, "\n")
+
+	for _, line := range lines {
+		fmt.Println(prefix, line)
+	}
+}
+
+func (eng *UciEngine) LogInfoContent(content string) {
+	eng.LogPrefixedContent("info string", content)
+}
+
+func (eng *UciEngine) Init() {
+	eng.Name = ENGINE_NAME
+	eng.Description = ENGINE_DESCRIPTION
+	eng.Author = ENGINE_AUTHOR
+
+	eng.Board.Init(board.VARIANT_STANDARD)
+
+	eng.Board.Reset()
+
+	eng.Board.LogFunc = eng.LogInfoContent
+}
+
 func (eng *UciEngine) UciLoop() {
 	reader := bufio.NewReader(os.Stdin)
 
@@ -138,24 +164,29 @@ func (eng *UciEngine) UciLoop() {
 
 		if (command == "quit") || (command == "x") {
 			break
-		}
-
-		if command == "uci" {
+		} else if command == "uci" {
 			eng.Uci()
-		}
+		} else if command == "i" {
+			eng.Interactive = true
+			eng.Board.Print()
+		} else {
+			tokens := strings.Split(command, " ")
 
-		tokens := strings.Split(command, " ")
+			command = tokens[0]
 
-		command = tokens[0]
+			args := []string{}
 
-		args := []string{}
+			if len(tokens) > 1 {
+				args = tokens[1:]
+			}
 
-		if len(tokens) > 1 {
-			args = tokens[1:]
-		}
-
-		if command == "setoption" {
-			eng.SetOptionFromTokens(args)
+			if command == "setoption" {
+				eng.SetOptionFromTokens(args)
+			} else if eng.Interactive {
+				if eng.Board.ExecCommand(command) {
+					eng.Board.Print()
+				}
+			}
 		}
 	}
 }

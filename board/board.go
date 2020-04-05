@@ -119,6 +119,54 @@ func (b *Board) ReportMaterial() string {
 	return buff
 }
 
+func (b *Board) ExecCommand(command string) bool {
+	i, err := strconv.ParseInt(command, 10, 32)
+
+	if err == nil {
+		move := b.SortedSanMoveBuff[i-1].Move
+
+		b.Push(move, ADD_SAN)
+
+		return true
+	} else {
+		if command == "go" {
+			bm, _ := b.Go(2, 8)
+
+			b.Push(bm, ADD_SAN)
+
+			return true
+		} else if command == "perf" {
+			b.Perf(3)
+
+			return true
+		} else if command == "d" {
+			b.Pop()
+
+			return true
+		} else if command == "" {
+			randIndex := rand.Intn(len(b.SortedSanMoveBuff))
+
+			move := b.SortedSanMoveBuff[randIndex-1].Move
+
+			b.Push(move, ADD_SAN)
+
+			return true
+		} else if command != "" {
+			for _, mbi := range b.SortedSanMoveBuff {
+				if (mbi.San == command) || (mbi.Algeb == command) {
+					move := mbi.Move
+
+					b.Push(move, ADD_SAN)
+
+					return true
+				}
+			}
+		}
+	}
+
+	return false
+}
+
 func (b *Board) ToString() string {
 	buff := ""
 
@@ -140,11 +188,35 @@ func (b *Board) ToString() string {
 
 	buff += "\n" + b.Line() + "\n"
 
+	buff += "\n" + b.LegalMovesToString()
+
+	return buff
+}
+
+func (b *Board) Log(content string) {
+	if b.LogFunc != nil {
+		b.LogFunc(content)
+	} else {
+		fmt.Println(content)
+	}
+}
+
+func (b *Board) LegalMovesToString() string {
+	lms := b.LegalMovesForAllPieces()
+
+	b.SortedSanMoveBuff = b.MovesSortedBySan(lms)
+
+	buff := fmt.Sprintf("Legal moves ( %d ) ", len(lms))
+
+	for i, mbi := range b.SortedSanMoveBuff {
+		buff += fmt.Sprintf("%d. %s [ %s ] ", i+1, mbi.San, mbi.Algeb)
+	}
+
 	return buff
 }
 
 func (b *Board) Print() {
-	fmt.Println(b.ToString())
+	b.Log(b.ToString())
 }
 
 func (b *Board) Init(variant VariantKey) {
@@ -943,13 +1015,13 @@ func (b *Board) StopPerf() {
 
 	nps := float32(b.Nodes) / float32(elapsed)
 
-	fmt.Printf(">> perf elapsed %.2f nodes %d nps %.0f\n", elapsed, b.Nodes, nps)
+	b.Log(fmt.Sprintf("perf elapsed %.2f nodes %d nps %.0f", elapsed, b.Nodes, nps))
 }
 
 func (b *Board) Perf(maxDepth int) {
 	b.StartPerf()
 
-	fmt.Printf(">> perf up to depth %d\n", maxDepth)
+	b.Log(fmt.Sprintf("perf up to depth %d", maxDepth))
 
 	b.PerfRecursive(0, maxDepth)
 
@@ -1042,7 +1114,7 @@ func (b *Board) AlphaBeta(info AlphaBetaInfo) (Move, int) {
 	b.Nodes++
 
 	if info.CurrentDepth <= 1 {
-		fmt.Println("depth", info.CurrentDepth, "nodes", b.Nodes, "alpha", info.Alpha, "beta", info.Beta, "line", b.LineToString(info.Line))
+		b.Log(fmt.Sprintf("depth %d nodes %d alpha %d beta %d line %s", info.CurrentDepth, b.Nodes, info.Alpha, info.Beta, b.LineToString(info.Line)))
 	}
 
 	bm := Move{}
@@ -1071,7 +1143,7 @@ func (b *Board) AlphaBeta(info AlphaBetaInfo) (Move, int) {
 
 			if score >= info.Beta {
 				if info.CurrentDepth <= 1 {
-					fmt.Println("beta cut", info.CurrentDepth, b.MoveToAlgeb(bm), score)
+					b.Log(fmt.Sprintf("beta cut %d %s %d", info.CurrentDepth, b.MoveToAlgeb(bm), score))
 				}
 
 				return bm, info.Beta
@@ -1081,7 +1153,7 @@ func (b *Board) AlphaBeta(info AlphaBetaInfo) (Move, int) {
 				bm = lm
 				info.Alpha = score
 				if info.CurrentDepth <= 1 {
-					fmt.Println("alpha improved", info.CurrentDepth, b.MoveToAlgeb(bm), score)
+					b.Log(fmt.Sprintf("alpha improved %d %s %d", info.CurrentDepth, b.MoveToAlgeb(bm), score))
 				}
 			}
 		}

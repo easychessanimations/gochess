@@ -54,16 +54,18 @@ type MoveStackItem struct {
 }
 
 type Board struct {
-	Variant   VariantKey
-	NumFiles  int8
-	LastFile  int8
-	NumRanks  int8
-	LastRank  int8
-	Rep       BoardRep
-	Pos       Pos
-	MoveStack []MoveStackItem
-	Nodes     int
-	Start     time.Time
+	Variant           VariantKey
+	NumFiles          int8
+	LastFile          int8
+	NumRanks          int8
+	LastRank          int8
+	Rep               BoardRep
+	Pos               Pos
+	MoveStack         []MoveStackItem
+	Nodes             int
+	Start             time.Time
+	LogFunc           func(string)
+	SortedSanMoveBuff MoveBuff
 }
 
 type PieceDescriptor struct {
