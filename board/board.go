@@ -623,6 +623,7 @@ func (b *Board) PslmsForPawnAtSquare(p Piece, sq Square) []Move {
 					pushOneSq, // to
 					false,     // pawn capture
 					true,      // push by one
+					p.Color,   // color
 				)
 
 				pslms = append(pslms, promotionMoves...)
@@ -681,6 +682,7 @@ func (b *Board) PslmsForPawnAtSquare(p Piece, sq Square) []Move {
 						captureSquare, // to
 						true,          // pawn capture
 						false,         // push by one
+						p.Color,       // color
 					)
 
 					pslms = append(pslms, promotionMoves...)
@@ -780,18 +782,23 @@ func (b *Board) CreatePromotionMoves(
 	tosq Square,
 	pawnCapture bool,
 	pawnPushByOne bool,
+	color PieceColor,
 ) []Move {
 	promotionMoves := make([]Move, 0)
 
 	promotionPieces, _ := PROMOTION_PIECES[b.Variant]
 
 	for _, pp := range promotionPieces {
+		ppc := pp
+
+		ppc.Color = color
+
 		promotionMove := Move{
 			FromSq:         fromsq,
 			ToSq:           tosq,
 			PawnCapture:    pawnCapture,
 			PawnPushByOne:  pawnPushByOne,
-			PromotionPiece: pp,
+			PromotionPiece: ppc,
 		}
 
 		promotionMoves = append(promotionMoves, promotionMove)
@@ -853,6 +860,10 @@ func (b *Board) Push(move Move, addSan bool) {
 
 	if move.EpCapture {
 		b.SetPieceAtSquare(move.EpClearSquare, NO_PIECE)
+	}
+
+	if move.IsPromotion() {
+		b.SetPieceAtSquare(move.ToSq, move.PromotionPiece)
 	}
 
 	if move.ShouldDeleteHalfmoveClock() {
@@ -1113,48 +1124,60 @@ func (b *Board) LineToString(line []Move) string {
 func (b *Board) AlphaBeta(info AlphaBetaInfo) (Move, int) {
 	b.Nodes++
 
-	if info.CurrentDepth <= 1 {
-		b.Log(fmt.Sprintf("depth %d nodes %d alpha %d beta %d line %s", info.CurrentDepth, b.Nodes, info.Alpha, info.Beta, b.LineToString(info.Line)))
-	}
-
 	bm := Move{}
 
 	if info.CurrentDepth >= info.TotalDepth() {
 		return bm, b.EvalForTurn()
 	}
 
-	lms := b.LegalMovesForAllPieces()
+	lms := b.PslmsForAllPiecesOfColor(b.Pos.Turn)
+
+	isNormalSearch := info.CurrentDepth < info.Depth
+
+	numLegals := 0
 
 	for _, lm := range lms {
-		if (info.CurrentDepth < info.Depth) || lm.IsCapture() {
+		if isNormalSearch || lm.IsCapture() {
 			b.Push(lm, !ADD_SAN)
 
-			newInfo := info
-			newInfo.Alpha = -info.Beta
-			newInfo.Beta = -info.Alpha
-			newInfo.CurrentDepth = info.CurrentDepth + 1
-			newInfo.Line = append(newInfo.Line, lm)
+			if !b.IsInCheck(b.Pos.Turn.Inverse()) {
+				numLegals++
 
-			_, score := b.AlphaBeta(newInfo)
+				newInfo := info
+				newInfo.Alpha = -info.Beta
+				newInfo.Beta = -info.Alpha
+				newInfo.CurrentDepth = info.CurrentDepth + 1
+				newInfo.Line = append(newInfo.Line, lm)
 
-			b.Pop()
+				_, score := b.AlphaBeta(newInfo)
 
-			score *= -1
+				b.Pop()
 
-			if score >= info.Beta {
-				if info.CurrentDepth <= 1 {
-					b.Log(fmt.Sprintf("beta cut %d %s %d", info.CurrentDepth, b.MoveToAlgeb(bm), score))
+				score *= -1
+
+				if score >= info.Beta {
+					return bm, info.Beta
 				}
 
-				return bm, info.Beta
+				if score > info.Alpha {
+					bm = lm
+					info.Alpha = score
+					if info.CurrentDepth <= 1 {
+						b.Log(fmt.Sprintf("alpha improved %d %s %d", info.CurrentDepth, b.MoveToAlgeb(bm), score))
+					}
+				}
+			} else {
+				b.Pop()
 			}
+		}
+	}
 
-			if score > info.Alpha {
-				bm = lm
-				info.Alpha = score
-				if info.CurrentDepth <= 1 {
-					b.Log(fmt.Sprintf("alpha improved %d %s %d", info.CurrentDepth, b.MoveToAlgeb(bm), score))
-				}
+	if isNormalSearch {
+		if numLegals <= 0 {
+			if b.IsInCheck(b.Pos.Turn) {
+				return bm, -MATE_SCORE
+			} else {
+				return bm, DRAW_SCORE
 			}
 		}
 	}
