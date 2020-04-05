@@ -91,7 +91,7 @@ func (b *Board) SetFromFen(fen string) {
 }
 
 func (b *Board) Line() string {
-	buff := ""
+	buff := "Line : "
 
 	for i, msi := range b.MoveStack {
 		if (i % 2) == 0 {
@@ -1027,50 +1027,87 @@ func (b *Board) EvalForTurn() int {
 	//return rand.Intn(RANDOM_BONUS)
 }
 
+func (b *Board) LineToString(line []Move) string {
+	buff := []string{}
+
+	for _, move := range line {
+		buff = append(buff, b.MoveToAlgeb(move))
+	}
+
+	return strings.Join(buff, " ")
+}
+
 // https://www.chessprogramming.org/Alpha-Beta
-func (b *Board) AlphaBeta(alpha int, beta int, depthLeft int, quiescDepth int) (Move, int) {
+func (b *Board) AlphaBeta(info AlphaBetaInfo) (Move, int) {
 	b.Nodes++
+
+	if info.CurrentDepth <= 1 {
+		fmt.Println("depth", info.CurrentDepth, "nodes", b.Nodes, "alpha", info.Alpha, "beta", info.Beta, "line", b.LineToString(info.Line))
+	}
 
 	bm := Move{}
 
-	if depthLeft < -quiescDepth {
+	if info.CurrentDepth >= info.TotalDepth() {
 		return bm, b.EvalForTurn()
 	}
 
 	lms := b.LegalMovesForAllPieces()
 
 	for _, lm := range lms {
-		if (depthLeft >= 0) || lm.IsCapture() {
+		if (info.CurrentDepth < info.Depth) || lm.IsCapture() {
 			b.Push(lm, !ADD_SAN)
-			_, score := b.AlphaBeta(-beta, -alpha, depthLeft-1, quiescDepth)
+
+			newInfo := info
+			newInfo.Alpha = -info.Beta
+			newInfo.Beta = -info.Alpha
+			newInfo.CurrentDepth = info.CurrentDepth + 1
+			newInfo.Line = append(newInfo.Line, lm)
+
+			_, score := b.AlphaBeta(newInfo)
+
 			b.Pop()
 
 			score *= -1
 
-			if score >= beta {
-				return bm, beta
+			if score >= info.Beta {
+				if info.CurrentDepth <= 1 {
+					fmt.Println("beta cut", info.CurrentDepth, b.MoveToAlgeb(bm), score)
+				}
+
+				return bm, info.Beta
 			}
 
-			if score > alpha {
+			if score > info.Alpha {
 				bm = lm
-				alpha = score
+				info.Alpha = score
+				if info.CurrentDepth <= 1 {
+					fmt.Println("alpha improved", info.CurrentDepth, b.MoveToAlgeb(bm), score)
+				}
 			}
 		}
 	}
 
-	if alpha > -INFINITE_SCORE {
-		return bm, alpha
+	if info.Alpha > -INFINITE_SCORE {
+		return bm, info.Alpha
 	}
 
 	return bm, b.EvalForTurn()
 }
 
-func (b *Board) Go(depth int, quisecenceDepth int) (Move, int) {
+func (b *Board) Go(depth int, quiescenceDepth int) (Move, int) {
 	b.StartPerf()
 
-	fmt.Printf(">> go depth %d quiescence depth %d\n", depth, quisecenceDepth)
+	fmt.Printf(">> go depth %d quiescence depth %d\n", depth, quiescenceDepth)
 
-	bm, score := b.AlphaBeta(-INFINITE_SCORE, INFINITE_SCORE, depth, quisecenceDepth)
+	alphaBetaInfo := AlphaBetaInfo{
+		Alpha:           -INFINITE_SCORE,
+		Beta:            INFINITE_SCORE,
+		Depth:           depth,
+		QuiescenceDepth: quiescenceDepth,
+		CurrentDepth:    0,
+	}
+
+	bm, score := b.AlphaBeta(alphaBetaInfo)
 
 	b.StopPerf()
 

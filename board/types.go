@@ -107,3 +107,12 @@ func (mb MoveBuff) Swap(i, j int) {
 func (mb MoveBuff) Less(i, j int) bool {
 	return mb[i].San < mb[j].San
 }
+
+type AlphaBetaInfo struct {
+	Alpha           int
+	Beta            int
+	Depth           int
+	QuiescenceDepth int
+	CurrentDepth    int
+	Line            []Move
+}
