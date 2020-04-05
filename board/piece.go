@@ -25,10 +25,6 @@ func (p *Piece) ToStringUpper() string {
 	return strings.ToUpper(str[0:1]) + str[1:]
 }
 
-func (p *Piece) IsEmpty() bool {
-	return p.Kind == NO_PIECE
-}
-
 func (p *Piece) KindColorEqualTo(testP Piece) bool {
 	return (p.Kind == testP.Kind) && (p.Color == testP.Color)
 }

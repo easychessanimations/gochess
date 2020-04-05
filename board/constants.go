@@ -27,7 +27,7 @@ const KING_SIDE CastlingSide = 1
 const QUEEN_SIDE CastlingSide = 0
 
 const (
-	NO_PIECE PieceKind = iota
+	NO_PIECE_KIND PieceKind = iota
 	Pawn
 	Knight
 	Bishop
@@ -41,25 +41,26 @@ const (
 	Lancer
 )
 
+var NO_PIECE = Piece{Kind: NO_PIECE_KIND}
 var NO_SQUARE = Square{-1, -1}
 
 var PIECE_KIND_TO_PIECE_LETTER = map[PieceKind]string{
-	NO_PIECE: "-",
-	Pawn:     "p",
-	Knight:   "n",
-	Bishop:   "b",
-	Rook:     "r",
-	Queen:    "q",
-	King:     "k",
-	Hawk:     "h",
-	Elephant: "e",
-	Sentry:   "s",
-	Jailer:   "j",
-	Lancer:   "l",
+	NO_PIECE_KIND: "-",
+	Pawn:          "p",
+	Knight:        "n",
+	Bishop:        "b",
+	Rook:          "r",
+	Queen:         "q",
+	King:          "k",
+	Hawk:          "h",
+	Elephant:      "e",
+	Sentry:        "s",
+	Jailer:        "j",
+	Lancer:        "l",
 }
 
 var PIECE_LETTER_TO_PIECE_KIND = map[string]PieceKind{
-	"-": NO_PIECE,
+	"-": NO_PIECE_KIND,
 	"p": Pawn,
 	"n": Knight,
 	"b": Bishop,
@@ -259,8 +260,10 @@ func init() {
 	PIECE_VALUES[Lancer] = 700
 }
 
-const KNIGHT_ON_EDGE_DEDUCTION = 25
-const KNIGHT_CLOSE_TO_EDGE_DEDUCTION = 25
-const CENTER_PAWN_BONUS = 70
-const MOBILITY_MULTIPLIER = 10
-const RANDOM_BONUS = 30
+const INFINITE_SCORE = 100000
+
+const KNIGHT_ON_EDGE_DEDUCTION = 10
+const KNIGHT_CLOSE_TO_EDGE_DEDUCTION = 10
+const CENTER_PAWN_BONUS = 30
+const MOBILITY_BONUS = 2
+const RANDOM_BONUS = 10

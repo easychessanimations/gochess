@@ -21,7 +21,7 @@ func (m *Move) ShouldDeleteHalfmoveClock() bool {
 }
 
 func (m *Move) IsPromotion() bool {
-	return m.PromotionPiece.Kind != NO_PIECE
+	return m.PromotionPiece != NO_PIECE
 }
 
 /////////////////////////////////////////////////////////////////////

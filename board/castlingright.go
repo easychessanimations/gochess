@@ -40,7 +40,7 @@ func (cr *CastlingRight) SetFromFen(fen string, b *Board) {
 	sqs := b.SquaresInDirection(wk, PieceDirection{int8(cr.Side*2) - 1, 0})
 
 	lastSq := NO_SQUARE
-	lastKind := NO_PIECE
+	lastKind := NO_PIECE_KIND
 
 	for _, sq := range sqs {
 		p := b.PieceAtSquare(sq)
@@ -65,7 +65,7 @@ func (cr *CastlingRight) SetFromFen(fen string, b *Board) {
 		}
 	}
 
-	if lastKind == NO_PIECE {
+	if lastKind == NO_PIECE_KIND {
 		// no rook, no castling
 		return
 	}
