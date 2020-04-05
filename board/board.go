@@ -201,6 +201,14 @@ func (b *Board) Log(content string) {
 	}
 }
 
+func (b *Board) LogAnalysisInfo(content string) {
+	if b.LogAnalysisInfoFunc != nil {
+		b.LogAnalysisInfoFunc(content)
+	} else {
+		fmt.Println(content)
+	}
+}
+
 func (b *Board) LegalMovesToString() string {
 	lms := b.LegalMovesForAllPieces()
 
@@ -1021,10 +1029,16 @@ func (b *Board) StartPerf() {
 	b.Start = time.Now()
 }
 
-func (b *Board) StopPerf() {
+func (b *Board) GetNps() (float32, float32) {
 	elapsed := float32(time.Now().Sub(b.Start)) / float32(1e9)
 
 	nps := float32(b.Nodes) / float32(elapsed)
+
+	return nps, elapsed
+}
+
+func (b *Board) StopPerf() {
+	nps, elapsed := b.GetNps()
 
 	b.Log(fmt.Sprintf("perf elapsed %.2f nodes %d nps %.0f", elapsed, b.Nodes, nps))
 }
@@ -1124,6 +1138,10 @@ func (b *Board) LineToString(line []Move) string {
 func (b *Board) AlphaBeta(info AlphaBetaInfo) (Move, int) {
 	b.Nodes++
 
+	if info.TotalDepth() > b.SelDepth {
+		b.SelDepth = info.TotalDepth()
+	}
+
 	bm := Move{}
 
 	if info.CurrentDepth >= info.TotalDepth() {
@@ -1162,9 +1180,6 @@ func (b *Board) AlphaBeta(info AlphaBetaInfo) (Move, int) {
 				if score > info.Alpha {
 					bm = lm
 					info.Alpha = score
-					if info.CurrentDepth <= 1 {
-						b.Log(fmt.Sprintf("alpha improved %d %s %d", info.CurrentDepth, b.MoveToAlgeb(bm), score))
-					}
 				}
 			} else {
 				b.Pop()
@@ -1175,7 +1190,7 @@ func (b *Board) AlphaBeta(info AlphaBetaInfo) (Move, int) {
 	if isNormalSearch {
 		if numLegals <= 0 {
 			if b.IsInCheck(b.Pos.Turn) {
-				return bm, -MATE_SCORE
+				return bm, -(MATE_SCORE - info.CurrentDepth)
 			} else {
 				return bm, DRAW_SCORE
 			}
@@ -1192,21 +1207,39 @@ func (b *Board) AlphaBeta(info AlphaBetaInfo) (Move, int) {
 func (b *Board) Go(depth int, quiescenceDepth int) (Move, int) {
 	b.StartPerf()
 
-	fmt.Printf(">> go depth %d quiescence depth %d\n", depth, quiescenceDepth)
+	fmt.Printf("go depth %d\n", depth)
 
-	alphaBetaInfo := AlphaBetaInfo{
-		Alpha:           -INFINITE_SCORE,
-		Beta:            INFINITE_SCORE,
-		Depth:           depth,
-		QuiescenceDepth: quiescenceDepth,
-		CurrentDepth:    0,
+	bm := Move{}
+	score := -INFINITE_SCORE
+
+	for iterDepth := 1; iterDepth <= depth; iterDepth++ {
+		b.SelDepth = 0
+
+		alphaBetaInfo := AlphaBetaInfo{
+			Alpha:           -INFINITE_SCORE,
+			Beta:            INFINITE_SCORE,
+			Depth:           iterDepth,
+			QuiescenceDepth: quiescenceDepth,
+			CurrentDepth:    0,
+		}
+
+		bm, score = b.AlphaBeta(alphaBetaInfo)
+
+		nps, elapsed := b.GetNps()
+
+		b.LogAnalysisInfo(fmt.Sprintf(
+			"depth %d seldepth %d nodes %d time %.0f nps %.0f score cp %d pv %s",
+			iterDepth,
+			b.SelDepth,
+			b.Nodes,
+			elapsed,
+			nps,
+			score,
+			b.MoveToSan(bm),
+		))
 	}
 
-	bm, score := b.AlphaBeta(alphaBetaInfo)
-
-	b.StopPerf()
-
-	fmt.Printf(">> move %s score %d\n", b.MoveToSan(bm), score)
+	fmt.Println(fmt.Sprintf("bestmove %s", b.MoveToAlgeb(bm)))
 
 	return bm, score
 }

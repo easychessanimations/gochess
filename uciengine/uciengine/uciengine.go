@@ -142,6 +142,10 @@ func (eng *UciEngine) LogInfoContent(content string) {
 	eng.LogPrefixedContent("info string", content)
 }
 
+func (eng *UciEngine) LogAnalysisInfo(content string) {
+	eng.LogPrefixedContent("info", content)
+}
+
 func (eng *UciEngine) Init() {
 	eng.Name = ENGINE_NAME
 	eng.Description = ENGINE_DESCRIPTION
@@ -152,6 +156,7 @@ func (eng *UciEngine) Init() {
 	eng.Board.Reset()
 
 	eng.Board.LogFunc = eng.LogInfoContent
+	eng.Board.LogAnalysisInfoFunc = eng.LogAnalysisInfo
 }
 
 func (eng *UciEngine) UciLoop() {
