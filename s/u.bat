@@ -1,0 +1,1 @@
+go run uciengine/main.go

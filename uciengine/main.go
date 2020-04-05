@@ -1,0 +1,29 @@
+package main
+
+/////////////////////////////////////////////////////////////////////
+// imports
+
+import (
+	"github.com/easychessanimations/gochess/uciengine/uciengine"
+)
+
+/////////////////////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////////////
+// member function
+
+var engine = uciengine.UciEngine{}
+
+func init() {
+	engine.Name = uciengine.ENGINE_NAME
+	engine.Description = uciengine.ENGINE_DESCRIPTION
+	engine.Author = uciengine.ENGINE_AUTHOR
+}
+
+func main() {
+	engine.PrintWelcomeMessage()
+
+	engine.UciLoop()
+}
+
+/////////////////////////////////////////////////////////////////////
