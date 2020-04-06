@@ -155,8 +155,8 @@ func (b *Board) ExecCommand(command string) bool {
 
 		return true
 	} else {
-		if command == "go" {
-			bm, _ := b.Go(10, 0*100)
+		if command == "g" {
+			bm, _ := b.Go(10)
 
 			b.Push(bm, ADD_SAN)
 
@@ -1353,14 +1353,12 @@ func (b *Board) Stop() {
 	b.Searching = false
 }
 
-func (b *Board) Go(depth int, quiescenceDepth int) (Move, int) {
+func (b *Board) Go(depth int) (Move, int) {
 	b.StartPerf()
 
 	b.PositionHash = PositionHash{}
 
 	b.PositionHash.Init()
-
-	fmt.Printf("go depth %d\n", depth)
 
 	bm := Move{}
 
@@ -1370,6 +1368,12 @@ func (b *Board) Go(depth int, quiescenceDepth int) (Move, int) {
 
 	pvMoves := []Move{}
 
+	quiescenceDepthUciOption := b.GetUciOptionByNameWithDefault("Quiescence Depth", utils.UciOption{
+		ValueInt: 0,
+	})
+
+	b.Log(fmt.Sprintf("go depth %d quiescence depth %d", depth, quiescenceDepthUciOption.ValueInt))
+
 	for iterDepth := 1; iterDepth <= depth; iterDepth++ {
 		b.SelDepth = 0
 
@@ -1377,7 +1381,7 @@ func (b *Board) Go(depth int, quiescenceDepth int) (Move, int) {
 			Alpha:           -INFINITE_SCORE,
 			Beta:            INFINITE_SCORE,
 			Depth:           iterDepth,
-			QuiescenceDepth: quiescenceDepth,
+			QuiescenceDepth: quiescenceDepthUciOption.ValueInt,
 			CurrentDepth:    0,
 		}
 

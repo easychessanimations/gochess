@@ -51,14 +51,16 @@ const CAPTURE_BONUS = 2000
 const NON_PAWN_MOVE_BONUS = 1000
 
 const SEARCH_MAX_DEPTH = 100
-const DEFAULT_QUIESCENCE_DEPTH = SEARCH_MAX_DEPTH
+const DEFAULT_QUIESCENCE_DEPTH = 0
+const DEFAULT_UCI_VARIANT_STRING = "standard"
 
 var UCI_OPTIONS = []utils.UciOption{
 	{
 		Kind:      "combo",
 		Name:      "UCI_Variant",
 		ValueKind: "string",
-		Default:   "standard",
+		Default:   DEFAULT_UCI_VARIANT_STRING,
+		Value:     DEFAULT_UCI_VARIANT_STRING,
 		DefaultStringArray: []string{
 			"standard",
 			"atomic",
@@ -74,7 +76,16 @@ var UCI_OPTIONS = []utils.UciOption{
 		MinInt:     0,
 		MaxInt:     0,
 		DefaultInt: DEFAULT_QUIESCENCE_DEPTH,
+		ValueInt:   DEFAULT_QUIESCENCE_DEPTH,
 	},
+}
+
+var UCI_COMMAND_ALIASES = map[string]string{
+	"v":  "setoption name UCI_Variant value standard\ni",
+	"va": "setoption name UCI_Variant value atomic\ni",
+	"vs": "setoption name UCI_Variant value seirawan\ni",
+	"ve": "setoption name UCI_Variant value eightpiece\ni",
+	"q":  "setoption name Quiescence Depth value 100",
 }
 
 /////////////////////////////////////////////////////////////////////

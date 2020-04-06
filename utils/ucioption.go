@@ -32,6 +32,20 @@ func (uo *UciOption) ToUciString() string {
 	}
 }
 
+func (uo *UciOption) ValueToString() string {
+	if uo.ValueKind == "int" {
+		return fmt.Sprintf("%d", uo.ValueInt)
+	} else if uo.ValueKind == "bool" {
+		return fmt.Sprintf("%v", uo.ValueBool)
+	} else {
+		return uo.Value
+	}
+}
+
+func (uo *UciOption) ToString() string {
+	return fmt.Sprintf("%-30s = %s", uo.Name, uo.ValueToString())
+}
+
 func (uo *UciOption) PrintUci() {
 	fmt.Println(uo.ToUciString())
 }

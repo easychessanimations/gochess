@@ -63,7 +63,7 @@ func (eng *UciEngine) SetOption(name string, value string) {
 		board.UCI_OPTIONS[index] = *uo
 
 		// handle UCI_Variant as a special option
-		if name == "UCI_Variant"{
+		if name == "UCI_Variant" {
 			eng.Board.ResetVariantFromUciOption()
 		}
 	}
@@ -190,6 +190,51 @@ func (eng *UciEngine) Position(args []string) {
 	}
 }
 
+func (eng *UciEngine) ListUci() {
+	for _, uo := range board.UCI_OPTIONS {
+		fmt.Println(uo.ToString())
+	}
+}
+
+func (eng *UciEngine) ExecuteUciCommand(command string) {
+	if command == "stop" {
+		eng.Stop()
+	} else if command == "uci" {
+		eng.Uci()
+	} else if command == "l" {
+		eng.ListUci()
+	} else if command == "i" {
+		eng.Interactive = true
+		eng.Board.Print()
+	} else {
+		tokens := strings.Split(command, " ")
+
+		command = tokens[0]
+
+		args := []string{}
+
+		if len(tokens) > 1 {
+			args = tokens[1:]
+		}
+
+		if command == "setoption" {
+			eng.SetOptionFromTokens(args)
+		} else if command == "position" {
+			eng.Position(args)
+		} else {
+			go eng.Board.ExecCommand(command)
+		}
+	}
+}
+
+func (eng *UciEngine) ExecuteUciCommands(commandsStr string) {
+	commands := strings.Split(commandsStr, "\n")
+
+	for _, command := range commands {
+		eng.ExecuteUciCommand(command)
+	}
+}
+
 func (eng *UciEngine) UciLoop() {
 	reader := bufio.NewReader(os.Stdin)
 
@@ -200,30 +245,13 @@ func (eng *UciEngine) UciLoop() {
 
 		if (command == "quit") || (command == "x") {
 			break
-		} else if command == "stop" {
-			eng.Stop()
-		} else if command == "uci" {
-			eng.Uci()
-		} else if command == "i" {
-			eng.Interactive = true
-			eng.Board.Print()
 		} else {
-			tokens := strings.Split(command, " ")
+			alias, ok := board.UCI_COMMAND_ALIASES[command]
 
-			command = tokens[0]
-
-			args := []string{}
-
-			if len(tokens) > 1 {
-				args = tokens[1:]
-			}
-
-			if command == "setoption" {
-				eng.SetOptionFromTokens(args)
-			} else if command == "position" {
-				eng.Position(args)
-			} else if eng.Interactive {
-				go eng.Board.ExecCommand(command)
+			if ok {
+				eng.ExecuteUciCommands(alias)
+			} else {
+				eng.ExecuteUciCommand(command)
 			}
 		}
 	}
