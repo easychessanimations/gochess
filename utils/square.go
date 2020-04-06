@@ -1,4 +1,4 @@
-package board
+package utils
 
 /////////////////////////////////////////////////////////////////////
 // imports
@@ -8,14 +8,12 @@ package board
 /////////////////////////////////////////////////////////////////////
 // member functions
 
-func (pd PieceDirection) ToString() string {
-	dirStr, ok := PIECE_DIRECTION_TO_DIRECTION_STRING[pd]
+func (sq *Square) Add(delta PieceDirection) Square {
+	return Square{sq.File + delta.File, sq.Rank + delta.Rank}
+}
 
-	if ok {
-		return dirStr
-	}
-
-	return ""
+func (sq *Square) EqualTo(testSq Square) bool {
+	return (sq.File == testSq.File) && (sq.Rank == testSq.Rank)
 }
 
 /////////////////////////////////////////////////////////////////////

@@ -1,11 +1,11 @@
 package uciengine
 
-/////////////////////////////////////////////////////////////////////
-// imports
-
 import (
 	"github.com/easychessanimations/gochess/board"
 )
+
+/////////////////////////////////////////////////////////////////////
+// imports
 
 /////////////////////////////////////////////////////////////////////
 
@@ -18,21 +18,6 @@ type UciEngine struct {
 	Author      string
 	Board       board.Board
 	Interactive bool
-}
-
-type UciOption struct {
-	Kind               string
-	Name               string
-	ValueKind          string
-	Default            string
-	DefaultInt         int
-	DefaultBool        bool
-	DefaultStringArray []string
-	Value              string
-	ValueInt           int
-	ValueBool          bool
-	MinInt             int
-	MaxInt             int
 }
 
 /////////////////////////////////////////////////////////////////////

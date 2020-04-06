@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/easychessanimations/gochess/utils"
 )
 
 /////////////////////////////////////////////////////////////////////
@@ -17,7 +19,15 @@ import (
 /////////////////////////////////////////////////////////////////////
 // member functions
 
-func (b *Board) SetPieceAtSquare(sq Square, p Piece) bool {
+func (b *Board) GetUciOptionByNameWithDefault(name string, uciOption utils.UciOption) utils.UciOption {
+	if b.GetUciOptionByNameWithDefaultFunc != nil {
+		return b.GetUciOptionByNameWithDefaultFunc(name, uciOption)
+	}
+
+	return uciOption
+}
+
+func (b *Board) SetPieceAtSquare(sq utils.Square, p utils.Piece) bool {
 	if b.HasSquare(sq) {
 		b.Pos.Rep[sq.Rank][sq.File] = p
 
@@ -27,12 +37,12 @@ func (b *Board) SetPieceAtSquare(sq Square, p Piece) bool {
 	return false
 }
 
-func (b *Board) PieceAtSquare(sq Square) Piece {
+func (b *Board) PieceAtSquare(sq utils.Square) utils.Piece {
 	if b.HasSquare(sq) {
 		return b.Pos.Rep[sq.Rank][sq.File]
 	}
 
-	return NO_PIECE
+	return utils.NO_PIECE
 }
 
 func (b *Board) SetFromRawFen(fen string) {
@@ -42,7 +52,7 @@ func (b *Board) SetFromRawFen(fen string) {
 		chr := fen[index : index+1]
 		if (chr >= "0") && (chr <= "9") {
 			for cumul := chr[0] - "0"[0]; cumul > 0; cumul-- {
-				b.SetPieceAtSquare(Square{file, rank}, NO_PIECE)
+				b.SetPieceAtSquare(utils.Square{file, rank}, utils.NO_PIECE)
 				file++
 			}
 		} else if chr == "/" {
@@ -63,7 +73,7 @@ func (b *Board) SetFromRawFen(fen string) {
 				}
 				pieceLetter = chr + dirFirst + dirSecond
 			}
-			b.SetPieceAtSquare(Square{file, rank}, PieceLetterToPiece(pieceLetter))
+			b.SetPieceAtSquare(utils.Square{file, rank}, utils.PieceLetterToPiece(pieceLetter))
 			file++
 		}
 		index++
@@ -105,8 +115,8 @@ func (b *Board) Line() string {
 }
 
 func (b *Board) ReportMaterial() string {
-	materialWhite, materialBonusWhite, mobilityWhite := b.Material(WHITE)
-	materialBlack, materialBonusBlack, mobilityBlack := b.Material(BLACK)
+	materialWhite, materialBonusWhite, mobilityWhite := b.Material(utils.WHITE)
+	materialBlack, materialBonusBlack, mobilityBlack := b.Material(utils.BLACK)
 
 	totalWhite := materialWhite + materialBonusWhite + mobilityWhite
 	totalBlack := materialBlack + materialBonusBlack + mobilityBlack
@@ -130,7 +140,7 @@ func (b *Board) ExecCommand(command string) bool {
 		return true
 	} else {
 		if command == "go" {
-			bm, _ := b.Go(10, 1*100)
+			bm, _ := b.Go(10, 0*100)
 
 			b.Push(bm, ADD_SAN)
 
@@ -235,21 +245,21 @@ func (b *Board) Print() {
 	b.Log(b.ToString())
 }
 
-func (b *Board) Init(variant VariantKey) {
+func (b *Board) Init(variant utils.VariantKey) {
 	// set variant
 	b.Variant = variant
 
 	// initialize rep to size required by variant
-	b.NumFiles = NumFiles(variant)
+	b.NumFiles = utils.NumFiles(variant)
 	b.LastFile = b.NumFiles - 1
-	b.NumRanks = NumRanks(variant)
+	b.NumRanks = utils.NumRanks(variant)
 	b.LastRank = b.NumRanks - 1
 
 	var rank int8
 	var file int8
 	for rank = 0; rank < b.NumRanks; rank++ {
 		for file = 0; file < b.NumFiles; file++ {
-			b.Pos.Rep[rank][file] = NO_PIECE
+			b.Pos.Rep[rank][file] = utils.NO_PIECE
 		}
 	}
 
@@ -260,7 +270,7 @@ func (b *Board) Init(variant VariantKey) {
 	b.Pos.Init(b)
 }
 
-func (b *Board) HasSquare(sq Square) bool {
+func (b *Board) HasSquare(sq utils.Square) bool {
 	return (sq.File >= 0) && (sq.File < b.NumFiles) && (sq.Rank >= 0) && (sq.Rank < b.NumRanks)
 }
 
@@ -272,9 +282,9 @@ func (b *Board) ReportRawFen() string {
 	var rank int8
 	for rank = 0; rank < b.NumRanks; rank++ {
 		for file = 0; file < b.NumFiles; file++ {
-			p := b.PieceAtSquare(Square{file, rank})
+			p := b.PieceAtSquare(utils.Square{file, rank})
 
-			if p == NO_PIECE {
+			if p == utils.NO_PIECE {
 				cumul++
 			} else {
 				if cumul > 0 {
@@ -315,27 +325,27 @@ func (b *Board) ReportFen() string {
 	return buff
 }
 
-func (b *Board) SquareToFileLetter(sq Square) string {
+func (b *Board) SquareToFileLetter(sq utils.Square) string {
 	return string([]byte{"a"[0] + byte(sq.File)})
 }
 
-func (b *Board) SquareToRankLetter(sq Square) string {
+func (b *Board) SquareToRankLetter(sq utils.Square) string {
 	return string([]byte{"1"[0] + byte(b.LastRank-sq.Rank)})
 }
 
-func (b *Board) SquareToAlgeb(sq Square) string {
+func (b *Board) SquareToAlgeb(sq utils.Square) string {
 	if sq.File < 0 {
 		return "-"
 	}
 	return b.SquareToFileLetter(sq) + b.SquareToRankLetter(sq)
 }
 
-func (b *Board) SquareFromAlgeb(algeb string) Square {
+func (b *Board) SquareFromAlgeb(algeb string) utils.Square {
 	if algeb == "-" {
-		return NO_SQUARE
+		return utils.NO_SQUARE
 	}
 
-	return Square{int8(algeb[0] - "a"[0]), int8(byte(b.LastRank) - algeb[1] - "1"[0])}
+	return utils.Square{int8(algeb[0] - "a"[0]), int8(byte(b.LastRank) - algeb[1] - "1"[0])}
 }
 
 func (b *Board) MoveToAlgeb(move Move) string {
@@ -370,7 +380,7 @@ func (b *Board) MoveToSan(move Move) string {
 
 	qualifier := ""
 
-	if fromPiece.Kind != Pawn {
+	if fromPiece.Kind != utils.Pawn {
 		pslAttacks := b.AttacksOnSquareByPiece(move.ToSq, fromPiece, ALL_ATTACKS)
 
 		attacks := b.PickLegalMovesFrom(pslAttacks, b.Pos.Turn)
@@ -409,12 +419,12 @@ func (b *Board) MoveToSan(move Move) string {
 
 	buff := pieceLetter + qualifier
 
-	if fromPiece.Kind == Pawn {
+	if fromPiece.Kind == utils.Pawn {
 		buff = ""
 	}
 
 	if move.IsCapture() {
-		if fromPiece.Kind == Pawn {
+		if fromPiece.Kind == utils.Pawn {
 			buff = b.SquareToFileLetter(move.FromSq)
 		}
 		buff += "x"
@@ -429,10 +439,10 @@ func (b *Board) MoveToSan(move Move) string {
 	return buff + checkStr
 }
 
-func (b *Board) PslmsForVectorPieceAtSquare(p Piece, sq Square) []Move {
+func (b *Board) PslmsForVectorPieceAtSquare(p utils.Piece, sq utils.Square) []Move {
 	pslms := make([]Move, 0)
 
-	pdesc, ok := PIECE_KIND_TO_PIECE_DESCRIPTOR[p.Kind]
+	pdesc, ok := utils.PIECE_KIND_TO_PIECE_DESCRIPTOR[p.Kind]
 
 	if !ok {
 		return pslms
@@ -452,7 +462,7 @@ func (b *Board) PslmsForVectorPieceAtSquare(p Piece, sq Square) []Move {
 				capture := false
 				add := true
 
-				if top != NO_PIECE {
+				if top != utils.NO_PIECE {
 					// non empty target square is capture
 					capture = true
 
@@ -495,15 +505,15 @@ func (b *Board) PslmsForVectorPieceAtSquare(p Piece, sq Square) []Move {
 	return pslms
 }
 
-func (b *Board) IsSquareEmpty(sq Square) bool {
-	return b.PieceAtSquare(sq) == NO_PIECE
+func (b *Board) IsSquareEmpty(sq utils.Square) bool {
+	return b.PieceAtSquare(sq) == utils.NO_PIECE
 }
 
-func (b *Board) PawnRankDir(color PieceColor) int8 {
+func (b *Board) PawnRankDir(color utils.PieceColor) int8 {
 	// black pawn goes downward in rank
 	var rankDir int8 = 1
 
-	if color == WHITE {
+	if color == utils.WHITE {
 		// white pawn goes upward in rank
 		rankDir = -1
 	}
@@ -511,19 +521,19 @@ func (b *Board) PawnRankDir(color PieceColor) int8 {
 	return rankDir
 }
 
-func (b *Board) AttacksOnSquareByPawn(sq Square, color PieceColor, stopAtFirst bool) []Move {
+func (b *Board) AttacksOnSquareByPawn(sq utils.Square, color utils.PieceColor, stopAtFirst bool) []Move {
 	attacks := make([]Move, 0)
 
 	rdir := -b.PawnRankDir(color)
 
 	var df int8
 	for df = -1; df <= 1; df += 2 {
-		testsq := sq.Add(PieceDirection{df, rdir})
+		testsq := sq.Add(utils.PieceDirection{df, rdir})
 
 		if b.HasSquare(testsq) {
 			testp := b.PieceAtSquare(testsq)
 
-			if (testp.Kind == Pawn) && (testp.Color == color) {
+			if (testp.Kind == utils.Pawn) && (testp.Color == color) {
 				attacks = append(attacks, Move{
 					FromSq: testsq,
 					ToSq:   sq,
@@ -539,7 +549,7 @@ func (b *Board) AttacksOnSquareByPawn(sq Square, color PieceColor, stopAtFirst b
 	return attacks
 }
 
-func (b *Board) AttacksOnSquareByVectorPiece(sq Square, p Piece, stopAtFirst bool) []Move {
+func (b *Board) AttacksOnSquareByVectorPiece(sq utils.Square, p utils.Piece, stopAtFirst bool) []Move {
 	attacks := make([]Move, 0)
 
 	testp := p.ColorInverse()
@@ -567,45 +577,45 @@ func (b *Board) AttacksOnSquareByVectorPiece(sq Square, p Piece, stopAtFirst boo
 	return attacks
 }
 
-func (b *Board) AttacksOnSquareByPiece(sq Square, p Piece, stopAtFirst bool) []Move {
-	if p.Kind == Pawn {
+func (b *Board) AttacksOnSquareByPiece(sq utils.Square, p utils.Piece, stopAtFirst bool) []Move {
+	if p.Kind == utils.Pawn {
 		return b.AttacksOnSquareByPawn(sq, p.Color, stopAtFirst)
 	}
 
 	return b.AttacksOnSquareByVectorPiece(sq, p, stopAtFirst)
 }
 
-func (b *Board) IsSquareAttackedByPiece(sq Square, p Piece) bool {
+func (b *Board) IsSquareAttackedByPiece(sq utils.Square, p utils.Piece) bool {
 	attacks := b.AttacksOnSquareByPiece(sq, p, STOP_AT_FIRST)
 
 	return len(attacks) > 0
 }
 
-func (b *Board) AttackingPieceKinds() []PieceKind {
-	apks := []PieceKind{
-		Pawn,
-		King,
-		Queen,
-		Rook,
-		Bishop,
-		Knight,
+func (b *Board) AttackingPieceKinds() []utils.PieceKind {
+	apks := []utils.PieceKind{
+		utils.Pawn,
+		utils.King,
+		utils.Queen,
+		utils.Rook,
+		utils.Bishop,
+		utils.Knight,
 	}
 
-	if b.Variant == VARIANT_SEIRAWAN {
-		apks = append(apks, []PieceKind{
-			Elephant,
-			Hawk,
+	if b.Variant == utils.VARIANT_SEIRAWAN {
+		apks = append(apks, []utils.PieceKind{
+			utils.Elephant,
+			utils.Hawk,
 		}...)
 	}
 
 	return apks
 }
 
-func (b *Board) IsSquareAttackedByColor(sq Square, color PieceColor) bool {
+func (b *Board) IsSquareAttackedByColor(sq utils.Square, color utils.PieceColor) bool {
 	apks := b.AttackingPieceKinds()
 
 	for _, apk := range apks {
-		if b.IsSquareAttackedByPiece(sq, Piece{Kind: apk, Color: color}) {
+		if b.IsSquareAttackedByPiece(sq, utils.Piece{Kind: apk, Color: color}) {
 			return true
 		}
 	}
@@ -613,10 +623,10 @@ func (b *Board) IsSquareAttackedByColor(sq Square, color PieceColor) bool {
 	return false
 }
 
-func (b *Board) IsInCheck(color PieceColor) bool {
+func (b *Board) IsInCheck(color utils.PieceColor) bool {
 	wk := b.WhereIsKing(color)
 
-	if wk == NO_SQUARE {
+	if wk == utils.NO_SQUARE {
 		// missing king is considered check
 		return true
 	}
@@ -624,12 +634,12 @@ func (b *Board) IsInCheck(color PieceColor) bool {
 	return b.IsSquareAttackedByColor(wk, color.Inverse())
 }
 
-func (b *Board) PslmsForPawnAtSquare(p Piece, sq Square) []Move {
+func (b *Board) PslmsForPawnAtSquare(p utils.Piece, sq utils.Square) []Move {
 	pslms := make([]Move, 0)
 
 	rankDir := b.PawnRankDir(p.Color)
 
-	pushOneSq := sq.Add(PieceDirection{0, rankDir})
+	pushOneSq := sq.Add(utils.PieceDirection{0, rankDir})
 
 	if b.HasSquare(pushOneSq) {
 		if b.IsSquareEmpty(pushOneSq) {
@@ -653,19 +663,19 @@ func (b *Board) PslmsForPawnAtSquare(p Piece, sq Square) []Move {
 				pslms = append(pslms, move)
 			}
 
-			pushTwoSq := pushOneSq.Add(PieceDirection{0, rankDir})
+			pushTwoSq := pushOneSq.Add(utils.PieceDirection{0, rankDir})
 
 			if b.HasSquare(pushTwoSq) {
 				if b.IsSquareEmpty(pushTwoSq) {
-					epsq := NO_SQUARE
+					epsq := utils.NO_SQUARE
 
 					var df int8
 					for df = -1; df <= 1; df += 2 {
-						testsq := pushTwoSq.Add(PieceDirection{df, 0})
+						testsq := pushTwoSq.Add(utils.PieceDirection{df, 0})
 						if b.HasSquare(testsq) {
 							tp := b.PieceAtSquare(testsq)
 
-							if (tp.Kind == Pawn) && (tp.Color != p.Color) {
+							if (tp.Kind == utils.Pawn) && (tp.Color != p.Color) {
 								epsq = pushOneSq
 							}
 						}
@@ -686,12 +696,12 @@ func (b *Board) PslmsForPawnAtSquare(p Piece, sq Square) []Move {
 
 	var fileDir int8
 	for fileDir = -1; fileDir <= 1; fileDir += 2 {
-		captureSquare := sq.Add(PieceDirection{fileDir, rankDir})
+		captureSquare := sq.Add(utils.PieceDirection{fileDir, rankDir})
 
 		if b.HasSquare(captureSquare) {
 			top := b.PieceAtSquare(captureSquare)
 
-			if (top != NO_PIECE) && (top.Color != p.Color) {
+			if (top != utils.NO_PIECE) && (top.Color != p.Color) {
 				if pushOneSq.Rank == b.PromotionRank(p.Color) {
 					promotionMoves := b.CreatePromotionMoves(
 						sq,            // from
@@ -718,7 +728,7 @@ func (b *Board) PslmsForPawnAtSquare(p Piece, sq Square) []Move {
 					FromSq:        sq,
 					ToSq:          captureSquare,
 					EpCapture:     true,
-					EpClearSquare: captureSquare.Add(PieceDirection{0, -rankDir}),
+					EpClearSquare: captureSquare.Add(utils.PieceDirection{0, -rankDir}),
 				}
 
 				pslms = append(pslms, plm)
@@ -729,24 +739,24 @@ func (b *Board) PslmsForPawnAtSquare(p Piece, sq Square) []Move {
 	return pslms
 }
 
-func (b *Board) PslmsForPieceAtSquare(p Piece, sq Square) []Move {
-	if p.Kind == Pawn {
+func (b *Board) PslmsForPieceAtSquare(p utils.Piece, sq utils.Square) []Move {
+	if p.Kind == utils.Pawn {
 		return b.PslmsForPawnAtSquare(p, sq)
 	}
 
 	return b.PslmsForVectorPieceAtSquare(p, sq)
 }
 
-func (b *Board) PslmsForAllPiecesOfColor(color PieceColor) []Move {
+func (b *Board) PslmsForAllPiecesOfColor(color utils.PieceColor) []Move {
 	pslms := make([]Move, 0)
 
 	var rank int8
 	var file int8
 	for rank = 0; rank < b.NumRanks; rank++ {
 		for file = 0; file < b.NumFiles; file++ {
-			sq := Square{file, rank}
+			sq := utils.Square{file, rank}
 			p := b.PieceAtSquare(sq)
-			if (p.Color == color) && (p != NO_PIECE) {
+			if (p.Color == color) && (p != utils.NO_PIECE) {
 				pslms = append(pslms, b.PslmsForPieceAtSquare(p, sq)...)
 			}
 		}
@@ -774,8 +784,7 @@ func (b *Board) PslmsForAllPiecesOfColor(color PieceColor) []Move {
 }
 
 func (b *Board) Reset() {
-	fen, _ := START_FENS[b.Variant]
-	b.SetFromFen(fen)
+	b.SetFromFen(utils.StartFenForVariant(b.Variant))
 }
 
 func (b *Board) MovesSortedBySan(moves []Move) MoveBuff {
@@ -794,15 +803,15 @@ func (b *Board) MovesSortedBySan(moves []Move) MoveBuff {
 }
 
 func (b *Board) CreatePromotionMoves(
-	fromsq Square,
-	tosq Square,
+	fromsq utils.Square,
+	tosq utils.Square,
 	pawnCapture bool,
 	pawnPushByOne bool,
-	color PieceColor,
+	color utils.PieceColor,
 ) []Move {
 	promotionMoves := make([]Move, 0)
 
-	promotionPieces, _ := PROMOTION_PIECES[b.Variant]
+	promotionPieces, _ := utils.PROMOTION_PIECES[b.Variant]
 
 	for _, pp := range promotionPieces {
 		ppc := pp
@@ -836,16 +845,16 @@ func (b *Board) Push(move Move, addSan bool) {
 
 	ccr := &b.Pos.CastlingRights[b.Pos.Turn]
 
-	if fromp.Kind == King {
+	if fromp.Kind == utils.King {
 		ccr.ClearAll()
 	}
 
-	b.SetPieceAtSquare(move.FromSq, NO_PIECE)
+	b.SetPieceAtSquare(move.FromSq, utils.NO_PIECE)
 
 	if move.Castling {
-		b.SetPieceAtSquare(move.ToSq, NO_PIECE)
+		b.SetPieceAtSquare(move.ToSq, utils.NO_PIECE)
 		kctsq := b.KingCastlingTargetSq(b.Pos.Turn, move.CastlingSide)
-		b.SetPieceAtSquare(kctsq, Piece{Kind: King, Color: b.Pos.Turn})
+		b.SetPieceAtSquare(kctsq, utils.Piece{Kind: utils.King, Color: b.Pos.Turn})
 		rctsq := b.RookCastlingTargetSq(b.Pos.Turn, move.CastlingSide)
 		b.SetPieceAtSquare(rctsq, move.RookOrigPiece)
 	} else {
@@ -867,14 +876,14 @@ func (b *Board) Push(move Move, addSan bool) {
 
 	b.Pos.Turn = b.Pos.Turn.Inverse()
 
-	b.Pos.EpSquare = NO_SQUARE
+	b.Pos.EpSquare = utils.NO_SQUARE
 
 	if move.PawnPushByTwo {
 		b.Pos.EpSquare = move.EpSquare
 	}
 
 	if move.EpCapture {
-		b.SetPieceAtSquare(move.EpClearSquare, NO_PIECE)
+		b.SetPieceAtSquare(move.EpClearSquare, utils.NO_PIECE)
 	}
 
 	if move.IsPromotion() {
@@ -887,7 +896,7 @@ func (b *Board) Push(move Move, addSan bool) {
 		b.Pos.HalfmoveClock++
 	}
 
-	if b.Pos.Turn == WHITE {
+	if b.Pos.Turn == utils.WHITE {
 		b.Pos.FullmoveNumber++
 	}
 
@@ -911,23 +920,23 @@ func (b *Board) Pop() {
 	b.MoveStack = b.MoveStack[:l-1]
 }
 
-func (b *Board) PromotionRank(color PieceColor) int8 {
-	if color == WHITE {
+func (b *Board) PromotionRank(color utils.PieceColor) int8 {
+	if color == utils.WHITE {
 		return 0
 	}
 
 	return 7
 }
 
-func (b *Board) CastlingRank(color PieceColor) int8 {
-	if color == WHITE {
+func (b *Board) CastlingRank(color utils.PieceColor) int8 {
+	if color == utils.WHITE {
 		return 7
 	}
 
 	return 0
 }
 
-func (b *Board) RookCastlingTargetSq(color PieceColor, side CastlingSide) Square {
+func (b *Board) RookCastlingTargetSq(color utils.PieceColor, side CastlingSide) utils.Square {
 	rank := b.CastlingRank(color)
 
 	var file int8 = 2
@@ -936,10 +945,10 @@ func (b *Board) RookCastlingTargetSq(color PieceColor, side CastlingSide) Square
 		file = 5
 	}
 
-	return Square{file, rank}
+	return utils.Square{file, rank}
 }
 
-func (b *Board) KingCastlingTargetSq(color PieceColor, side CastlingSide) Square {
+func (b *Board) KingCastlingTargetSq(color utils.PieceColor, side CastlingSide) utils.Square {
 	rank := b.CastlingRank(color)
 
 	var file int8 = 3
@@ -948,11 +957,11 @@ func (b *Board) KingCastlingTargetSq(color PieceColor, side CastlingSide) Square
 		file = 6
 	}
 
-	return Square{file, rank}
+	return utils.Square{file, rank}
 }
 
-func (b *Board) SquaresInDirection(origSq Square, dir PieceDirection) []Square {
-	sqs := make([]Square, 0)
+func (b *Board) SquaresInDirection(origSq utils.Square, dir utils.PieceDirection) []utils.Square {
+	sqs := make([]utils.Square, 0)
 
 	currentSq := origSq.Add(dir)
 
@@ -965,22 +974,22 @@ func (b *Board) SquaresInDirection(origSq Square, dir PieceDirection) []Square {
 	return sqs
 }
 
-func (b *Board) WhereIsKing(color PieceColor) Square {
+func (b *Board) WhereIsKing(color utils.PieceColor) utils.Square {
 	var rank int8
 	var file int8
 	for rank = 0; rank < b.NumRanks; rank++ {
 		for file = 0; file < b.NumFiles; file++ {
 			p := b.Pos.Rep[rank][file]
-			if (p.Kind == King) && (p.Color == color) {
-				return Square{file, rank}
+			if (p.Kind == utils.King) && (p.Color == color) {
+				return utils.Square{file, rank}
 			}
 		}
 	}
 
-	return NO_SQUARE
+	return utils.NO_SQUARE
 }
 
-func (b *Board) PickLegalMovesFrom(pslms []Move, color PieceColor) []Move {
+func (b *Board) PickLegalMovesFrom(pslms []Move, color utils.PieceColor) []Move {
 	lms := make([]Move, 0)
 
 	for _, pslm := range pslms {
@@ -996,7 +1005,7 @@ func (b *Board) PickLegalMovesFrom(pslms []Move, color PieceColor) []Move {
 	return lms
 }
 
-func (b *Board) LegalMovesForAllPiecesOfColor(color PieceColor) []Move {
+func (b *Board) LegalMovesForAllPiecesOfColor(color utils.PieceColor) []Move {
 	pslms := b.PslmsForAllPiecesOfColor(color)
 
 	lms := b.PickLegalMovesFrom(pslms, color)
@@ -1004,7 +1013,7 @@ func (b *Board) LegalMovesForAllPiecesOfColor(color PieceColor) []Move {
 	return lms
 }
 
-func (b *Board) HasLegalMoveColor(color PieceColor) bool {
+func (b *Board) HasLegalMoveColor(color utils.PieceColor) bool {
 	return len(b.LegalMovesForAllPiecesOfColor(color)) > 0
 }
 
@@ -1062,7 +1071,7 @@ func (b *Board) Perf(maxDepth int) {
 	b.StopPerf()
 }
 
-func (b *Board) Material(color PieceColor) (int, int, int) {
+func (b *Board) Material(color utils.PieceColor) (int, int, int) {
 	material := 0
 	materialBonus := 0
 	mobility := 0
@@ -1071,11 +1080,11 @@ func (b *Board) Material(color PieceColor) (int, int, int) {
 	var file int8
 	for rank = 0; rank < b.NumRanks; rank++ {
 		for file = 0; file < b.NumFiles; file++ {
-			p := b.PieceAtSquare(Square{file, rank})
-			if (p.Color == color) && (p != NO_PIECE) {
+			p := b.PieceAtSquare(utils.Square{file, rank})
+			if (p.Color == color) && (p != utils.NO_PIECE) {
 				material += PIECE_VALUES[p.Kind]
 
-				if p.Kind == Pawn {
+				if p.Kind == utils.Pawn {
 					if (rank >= 3) && (rank <= 4) {
 						if (file >= 3) && (file <= 4) {
 							materialBonus += CENTER_PAWN_BONUS
@@ -1083,7 +1092,7 @@ func (b *Board) Material(color PieceColor) (int, int, int) {
 					}
 				}
 
-				if p.Kind == Knight {
+				if p.Kind == utils.Knight {
 					if (rank <= 1) || (rank >= 6) {
 						materialBonus -= KNIGHT_ON_EDGE_DEDUCTION
 					}
@@ -1109,8 +1118,8 @@ func (b *Board) Material(color PieceColor) (int, int, int) {
 }
 
 func (b *Board) MaterialBalance() int {
-	materialWhite, materialBonusWhite, mobilityWhite := b.Material(WHITE)
-	materialBlack, materialBonusBlack, mobilityBlack := b.Material(BLACK)
+	materialWhite, materialBonusWhite, mobilityWhite := b.Material(utils.WHITE)
+	materialBlack, materialBonusBlack, mobilityBlack := b.Material(utils.BLACK)
 	return materialWhite + materialBonusWhite + mobilityWhite - (materialBlack + materialBonusBlack + mobilityBlack)
 }
 
@@ -1118,10 +1127,10 @@ func (b *Board) Eval() int {
 	return b.MaterialBalance() + rand.Intn(RANDOM_BONUS)
 }
 
-func (b *Board) EvalForColor(color PieceColor) int {
+func (b *Board) EvalForColor(color utils.PieceColor) int {
 	eval := b.Eval()
 
-	if color == WHITE {
+	if color == utils.WHITE {
 		return eval
 	}
 

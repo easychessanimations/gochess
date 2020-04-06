@@ -1,5 +1,7 @@
 package board
 
+import "github.com/easychessanimations/gochess/utils"
+
 /////////////////////////////////////////////////////////////////////
 // imports
 
@@ -21,7 +23,7 @@ func (m *Move) ShouldDeleteHalfmoveClock() bool {
 }
 
 func (m *Move) IsPromotion() bool {
-	return m.PromotionPiece != NO_PIECE
+	return m.PromotionPiece != utils.NO_PIECE
 }
 
 /////////////////////////////////////////////////////////////////////

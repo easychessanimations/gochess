@@ -3,7 +3,11 @@ package board
 /////////////////////////////////////////////////////////////////////
 // imports
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/easychessanimations/gochess/utils"
+)
 
 /////////////////////////////////////////////////////////////////////
 
@@ -16,7 +20,7 @@ func (cr *CastlingRight) Clear() {
 
 // https://en.wikipedia.org/wiki/X-FEN
 
-func (cr *CastlingRight) Init(color PieceColor, side CastlingSide, b *Board) {
+func (cr *CastlingRight) Init(color utils.PieceColor, side CastlingSide, b *Board) {
 	cr.Color = color
 	cr.Side = side
 	cr.Clear()
@@ -28,7 +32,7 @@ func (cr *CastlingRight) SetFromFen(fen string, b *Board) {
 	wk := b.WhereIsKing(cr.Color)
 
 	// sanity check, no king, no castling
-	if wk == NO_SQUARE {
+	if wk == utils.NO_SQUARE {
 		return
 	}
 
@@ -37,18 +41,18 @@ func (cr *CastlingRight) SetFromFen(fen string, b *Board) {
 		return
 	}
 
-	sqs := b.SquaresInDirection(wk, PieceDirection{int8(cr.Side*2) - 1, 0})
+	sqs := b.SquaresInDirection(wk, utils.PieceDirection{int8(cr.Side*2) - 1, 0})
 
-	lastSq := NO_SQUARE
-	lastKind := NO_PIECE_KIND
+	lastSq := utils.NO_SQUARE
+	lastKind := utils.NO_PIECE_KIND
 
 	for _, sq := range sqs {
 		p := b.PieceAtSquare(sq)
 
-		if ((p.Kind == Rook) || (p.Kind == Jailer)) && (p.Color == cr.Color) {
+		if ((p.Kind == utils.Rook) || (p.Kind == utils.Jailer)) && (p.Color == cr.Color) {
 			letter := b.SquareToFileLetter(sq)
 
-			if cr.Color == WHITE {
+			if cr.Color == utils.WHITE {
 				letter = strings.ToUpper(letter)
 			}
 
@@ -65,7 +69,7 @@ func (cr *CastlingRight) SetFromFen(fen string, b *Board) {
 		}
 	}
 
-	if lastKind == NO_PIECE_KIND {
+	if lastKind == utils.NO_PIECE_KIND {
 		// no rook, no castling
 		return
 	}
@@ -73,7 +77,7 @@ func (cr *CastlingRight) SetFromFen(fen string, b *Board) {
 	// fall back to conventional fen with outermost rook
 	if strings.Contains(fen, CastlingLetter(cr.Color, cr.Side)) {
 		cr.RookOrigSquare = lastSq
-		cr.RookOrigPiece = Piece{Kind: lastKind, Color: cr.Color}
+		cr.RookOrigPiece = utils.Piece{Kind: lastKind, Color: cr.Color}
 		cr.CanCastle = true
 	}
 }
@@ -86,7 +90,7 @@ func (cr *CastlingRight) ToString(b *Board) string {
 	wk := b.WhereIsKing(cr.Color)
 
 	// sanity check, no king, no castling
-	if wk == NO_SQUARE {
+	if wk == utils.NO_SQUARE {
 		return ""
 	}
 
@@ -95,7 +99,7 @@ func (cr *CastlingRight) ToString(b *Board) string {
 		return ""
 	}
 
-	sqs := b.SquaresInDirection(wk, PieceDirection{int8(cr.Side*2) - 1, 0})
+	sqs := b.SquaresInDirection(wk, utils.PieceDirection{int8(cr.Side*2) - 1, 0})
 
 	rcnt := 0
 
@@ -103,7 +107,7 @@ func (cr *CastlingRight) ToString(b *Board) string {
 	for _, sq := range sqs {
 		p := b.PieceAtSquare(sq)
 
-		if ((p.Kind == Rook) || (p.Kind == Jailer)) && (p.Color == cr.Color) {
+		if ((p.Kind == utils.Rook) || (p.Kind == utils.Jailer)) && (p.Color == cr.Color) {
 			rcnt++
 
 			if rcnt > 1 {
@@ -118,7 +122,7 @@ func (cr *CastlingRight) ToString(b *Board) string {
 	} else if rcnt > 1 {
 		// more than one rook, needs x-fen
 		letter := b.SquareToFileLetter(cr.RookOrigSquare)
-		if cr.Color == WHITE {
+		if cr.Color == utils.WHITE {
 			letter = strings.ToUpper(letter)
 		}
 		return letter
@@ -138,7 +142,7 @@ func (cr *CastlingRight) Free(b *Board) bool {
 	wk := b.WhereIsKing(cr.Color)
 
 	// sanity check, no king, no castling
-	if wk == NO_SQUARE {
+	if wk == utils.NO_SQUARE {
 		return false
 	}
 
@@ -161,7 +165,7 @@ func (cr *CastlingRight) Free(b *Board) bool {
 		dir = -1
 	}
 
-	sqs := b.SquaresInDirection(wk, PieceDirection{dir, 0})
+	sqs := b.SquaresInDirection(wk, utils.PieceDirection{dir, 0})
 
 	for _, sq := range sqs {
 		// passing squares of king should not be under attack
@@ -193,7 +197,7 @@ func (cr *CastlingRight) Free(b *Board) bool {
 		dir = -1
 	}
 
-	sqs = b.SquaresInDirection(cr.RookOrigSquare, PieceDirection{dir, 0})
+	sqs = b.SquaresInDirection(cr.RookOrigSquare, utils.PieceDirection{dir, 0})
 
 	for _, sq := range sqs {
 		skip := sq.EqualTo(wk) || sq.EqualTo(cr.RookOrigSquare)

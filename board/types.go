@@ -1,37 +1,30 @@
 package board
 
-import "time"
+/////////////////////////////////////////////////////////////////////
+// imports
 
-type Square struct {
-	File int8
-	Rank int8
-}
+import (
+	"time"
 
-type PieceKind uint8
+	"github.com/easychessanimations/gochess/utils"
+)
 
-type PieceColor uint8
+/////////////////////////////////////////////////////////////////////
 
-type PieceDirection Square
-
-type Piece struct {
-	Kind      PieceKind
-	Color     PieceColor
-	Direction PieceDirection
-}
+/////////////////////////////////////////////////////////////////////
+// types
 
 const MAX_FILES = 8
 const MAX_RANKS = 8
 
-type BoardRep [MAX_RANKS][MAX_FILES]Piece
-
-type VariantKey uint8
+type BoardRep [MAX_RANKS][MAX_FILES]utils.Piece
 
 type CastlingRight struct {
-	Color          PieceColor
+	Color          utils.PieceColor
 	Side           CastlingSide
 	CanCastle      bool
-	RookOrigSquare Square
-	RookOrigPiece  Piece
+	RookOrigSquare utils.Square
+	RookOrigPiece  utils.Piece
 }
 
 type ColorCastlingRights [2]CastlingRight
@@ -40,9 +33,9 @@ type CastlingRights [2]ColorCastlingRights
 
 type Pos struct {
 	Rep            BoardRep
-	Turn           PieceColor
+	Turn           utils.PieceColor
 	CastlingRights CastlingRights
-	EpSquare       Square
+	EpSquare       utils.Square
 	HalfmoveClock  int
 	FullmoveNumber int
 }
@@ -54,48 +47,42 @@ type MoveStackItem struct {
 }
 
 type Board struct {
-	Variant             VariantKey
-	NumFiles            int8
-	LastFile            int8
-	NumRanks            int8
-	LastRank            int8
-	Pos                 Pos
-	MoveStack           []MoveStackItem
-	Nodes               int
-	Start               time.Time
-	LogFunc             func(string)
-	LogAnalysisInfoFunc func(string)
-	SortedSanMoveBuff   MoveBuff
-	SelDepth            int
-	Alphas              int
-	Betas               int
-	Searching           bool
-	PositionHash        PositionHash
-	TestBoard           *Board
-}
-
-type PieceDescriptor struct {
-	Directions          []PieceDirection
-	Sliding             bool
-	CanJumpOverOwnPiece bool
-	CanCapture          bool
+	Variant                           utils.VariantKey
+	NumFiles                          int8
+	LastFile                          int8
+	NumRanks                          int8
+	LastRank                          int8
+	Pos                               Pos
+	MoveStack                         []MoveStackItem
+	Nodes                             int
+	Start                             time.Time
+	LogFunc                           func(string)
+	LogAnalysisInfoFunc               func(string)
+	SortedSanMoveBuff                 MoveBuff
+	SelDepth                          int
+	Alphas                            int
+	Betas                             int
+	Searching                         bool
+	PositionHash                      PositionHash
+	TestBoard                         *Board
+	GetUciOptionByNameWithDefaultFunc func(string, utils.UciOption) utils.UciOption
 }
 
 type Move struct {
-	FromSq          Square
-	ToSq            Square
+	FromSq          utils.Square
+	ToSq            utils.Square
 	Capture         bool
 	PawnCapture     bool
 	PawnPushByOne   bool
 	PawnPushByTwo   bool
-	EpSquare        Square
+	EpSquare        utils.Square
 	EpCapture       bool
-	EpClearSquare   Square
-	PromotionPiece  Piece
-	PromotionSquare Square
+	EpClearSquare   utils.Square
+	PromotionPiece  utils.Piece
+	PromotionSquare utils.Square
 	Castling        bool
 	CastlingSide    CastlingSide
-	RookOrigPiece   Piece
+	RookOrigPiece   utils.Piece
 }
 
 type MoveEvalBuffItem struct {
@@ -153,3 +140,5 @@ type PositionEntry struct {
 type PositionHash struct {
 	PositionEntries map[Pos]PositionEntry
 }
+
+/////////////////////////////////////////////////////////////////////

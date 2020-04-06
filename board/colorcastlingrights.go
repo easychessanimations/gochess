@@ -1,5 +1,7 @@
 package board
 
+import "github.com/easychessanimations/gochess/utils"
+
 /////////////////////////////////////////////////////////////////////
 // imports
 
@@ -8,7 +10,7 @@ package board
 /////////////////////////////////////////////////////////////////////
 // member functions
 
-func (ccr *ColorCastlingRights) Init(color PieceColor, b *Board) {
+func (ccr *ColorCastlingRights) Init(color utils.PieceColor, b *Board) {
 	ccr[KING_SIDE].Init(color, KING_SIDE, b)
 	ccr[QUEEN_SIDE].Init(color, QUEEN_SIDE, b)
 }

@@ -7,10 +7,10 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/easychessanimations/gochess/board"
+	"github.com/easychessanimations/gochess/utils"
 )
 
 /////////////////////////////////////////////////////////////////////
@@ -28,22 +28,8 @@ func (eng *UciEngine) PrintWelcomeMessage() {
 }
 
 func (eng *UciEngine) PrintUciOptions() {
-	for _, uo := range UCI_OPTIONS {
-		if uo.Kind == "button" {
-			fmt.Printf("option name %s type button", uo.Name)
-		} else if uo.Kind == "spin" {
-			fmt.Printf("option name %s type spin default %d min %d max %d", uo.Name, uo.DefaultInt, uo.MinInt, uo.MaxInt)
-		} else if uo.ValueKind == "int" {
-			fmt.Printf("option name %s type %s default %d", uo.Name, uo.Kind, uo.DefaultInt)
-		} else if uo.ValueKind == "bool" {
-			fmt.Printf("option name %s type %s default %v", uo.Name, uo.Kind, uo.DefaultBool)
-		} else if uo.ValueKind == "stringarray" {
-			fmt.Printf("option name %s type %s default %s", uo.Name, uo.Kind, strings.Join(uo.DefaultStringArray, " "))
-		} else {
-			fmt.Printf("option name %s type %s default %s", uo.Name, uo.Kind, uo.Default)
-		}
-
-		fmt.Println()
+	for _, uo := range board.UCI_OPTIONS {
+		uo.PrintUci()
 	}
 }
 
@@ -57,8 +43,8 @@ func (eng *UciEngine) Uci() {
 	fmt.Println("uciok")
 }
 
-func (eng *UciEngine) GetOptionByName(name string) *UciOption {
-	for _, uo := range UCI_OPTIONS {
+func (eng *UciEngine) GetOptionByName(name string) *utils.UciOption {
+	for _, uo := range board.UCI_OPTIONS {
 		if uo.Name == name {
 			return &uo
 		}
@@ -67,33 +53,13 @@ func (eng *UciEngine) GetOptionByName(name string) *UciOption {
 	return nil
 }
 
-func (eng *UciEngine) SetOptionFromString(uo *UciOption, value string) {
-	if uo.ValueKind == "string" {
-		uo.Value = value
-	} else if uo.ValueKind == "int" {
-		i, err := strconv.ParseInt(value, 10, 32)
-
-		if err == nil {
-			uo.ValueInt = int(i)
-		} else {
-			fmt.Println("option value should be an integer")
-		}
-	} else if uo.ValueKind == "bool" {
-		uo.ValueBool = false
-
-		if value == "true" {
-			uo.ValueBool = true
-		}
-	}
-}
-
 func (eng *UciEngine) SetOption(name string, value string) {
 	uo := eng.GetOptionByName(name)
 
 	if uo == nil {
 		fmt.Println("unknown uci option")
 	} else {
-		eng.SetOptionFromString(uo, value)
+		uo.SetFromString(value)
 	}
 }
 
@@ -146,17 +112,28 @@ func (eng *UciEngine) LogAnalysisInfo(content string) {
 	eng.LogPrefixedContent("info", content)
 }
 
+func (eng *UciEngine) GetUciOptionByNameWithDefault(name string, defaultUciOption utils.UciOption) utils.UciOption {
+	uo := eng.GetOptionByName(name)
+
+	if uo != nil {
+		return *uo
+	}
+
+	return defaultUciOption
+}
+
 func (eng *UciEngine) Init() {
 	eng.Name = ENGINE_NAME
 	eng.Description = ENGINE_DESCRIPTION
 	eng.Author = ENGINE_AUTHOR
 
-	eng.Board.Init(board.VARIANT_STANDARD)
+	eng.Board.Init(utils.VARIANT_STANDARD)
 
 	eng.Board.Reset()
 
 	eng.Board.LogFunc = eng.LogInfoContent
 	eng.Board.LogAnalysisInfoFunc = eng.LogAnalysisInfo
+	eng.Board.GetUciOptionByNameWithDefaultFunc = eng.GetUciOptionByNameWithDefault
 }
 
 func (eng *UciEngine) Stop() {
