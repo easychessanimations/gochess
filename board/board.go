@@ -1177,7 +1177,7 @@ func (b *Board) CreateMoveEvalBuff(moves []Move) MoveEvalBuff {
 	return meb
 }
 
-func (b *Board) GetPv(maxDepth int) string {
+func (b *Board) GetPv(maxDepth int) (string, []Move) {
 	b.TestBoard = &Board{}
 
 	b.TestBoard.Init(b.Variant)
@@ -1187,6 +1187,8 @@ func (b *Board) GetPv(maxDepth int) string {
 	b.TestBoard.PositionHash = b.PositionHash
 
 	pv := []string{}
+
+	pvMoves := []Move{}
 
 	for i := 0; i < maxDepth; i++ {
 		lms := b.TestBoard.LegalMovesForAllPieces()
@@ -1199,6 +1201,8 @@ func (b *Board) GetPv(maxDepth int) string {
 
 				pv = append(pv, b.TestBoard.MoveToAlgeb(pvMove))
 
+				pvMoves = append(pvMoves, pvMove)
+
 				b.TestBoard.Push(pvMove, !ADD_SAN)
 			} else {
 				break
@@ -1208,7 +1212,7 @@ func (b *Board) GetPv(maxDepth int) string {
 		}
 	}
 
-	return strings.Join(pv, " ")
+	return strings.Join(pv, " "), pvMoves
 }
 
 // https://www.chessprogramming.org/Alpha-Beta
@@ -1319,9 +1323,12 @@ func (b *Board) Go(depth int, quiescenceDepth int) (Move, int) {
 	fmt.Printf("go depth %d\n", depth)
 
 	bm := Move{}
+
 	score := -INFINITE_SCORE
 
 	bestPv := ""
+
+	pvMoves := []Move{}
 
 	for iterDepth := 1; iterDepth <= depth; iterDepth++ {
 		if !b.Searching {
@@ -1342,7 +1349,7 @@ func (b *Board) Go(depth int, quiescenceDepth int) (Move, int) {
 
 		nps, elapsed := b.GetNps()
 
-		bestPv = b.GetPv(iterDepth)
+		bestPv, pvMoves = b.GetPv(iterDepth)
 
 		b.LogAnalysisInfo(fmt.Sprintf(
 			"depth %d seldepth %d nodes %d time %.0f nps %.0f alphas %d betas %d score cp %d pv %s",
@@ -1371,6 +1378,10 @@ func (b *Board) Go(depth int, quiescenceDepth int) (Move, int) {
 	}
 
 	b.Searching = false
+
+	if len(pvMoves) > 0 {
+		return pvMoves[0], score
+	}
 
 	return bm, score
 }
