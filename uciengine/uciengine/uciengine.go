@@ -159,6 +159,10 @@ func (eng *UciEngine) Init() {
 	eng.Board.LogAnalysisInfoFunc = eng.LogAnalysisInfo
 }
 
+func (eng *UciEngine) Stop() {
+	eng.Board.Stop()
+}
+
 func (eng *UciEngine) UciLoop() {
 	reader := bufio.NewReader(os.Stdin)
 
@@ -169,6 +173,8 @@ func (eng *UciEngine) UciLoop() {
 
 		if (command == "quit") || (command == "x") {
 			break
+		} else if command == "stop" {
+			eng.Stop()
 		} else if command == "uci" {
 			eng.Uci()
 		} else if command == "i" {
@@ -188,9 +194,7 @@ func (eng *UciEngine) UciLoop() {
 			if command == "setoption" {
 				eng.SetOptionFromTokens(args)
 			} else if eng.Interactive {
-				if eng.Board.ExecCommand(command) {
-					eng.Board.Print()
-				}
+				go eng.Board.ExecCommand(command)
 			}
 		}
 	}

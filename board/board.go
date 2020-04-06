@@ -130,9 +130,11 @@ func (b *Board) ExecCommand(command string) bool {
 		return true
 	} else {
 		if command == "go" {
-			bm, _ := b.Go(4, 100)
+			bm, _ := b.Go(10, 100)
 
 			b.Push(bm, ADD_SAN)
+
+			b.Print()
 
 			return true
 		} else if command == "perf" {
@@ -142,6 +144,8 @@ func (b *Board) ExecCommand(command string) bool {
 		} else if command == "d" {
 			b.Pop()
 
+			b.Print()
+
 			return true
 		} else if command == "" {
 			randIndex := rand.Intn(len(b.SortedSanMoveBuff))
@@ -150,6 +154,8 @@ func (b *Board) ExecCommand(command string) bool {
 
 			b.Push(move, ADD_SAN)
 
+			b.Print()
+
 			return true
 		} else if command != "" {
 			for _, mbi := range b.SortedSanMoveBuff {
@@ -157,6 +163,8 @@ func (b *Board) ExecCommand(command string) bool {
 					move := mbi.Move
 
 					b.Push(move, ADD_SAN)
+
+					b.Print()
 
 					return true
 				}
@@ -1022,6 +1030,10 @@ func (b *Board) PerfRecursive(depth int, maxDepth int) {
 
 func (b *Board) StartPerf() {
 	b.Nodes = 0
+	b.Alphas = 0
+	b.Betas = 0
+
+	b.Searching = true
 
 	b.Start = time.Now()
 }
@@ -1141,6 +1153,10 @@ func (b *Board) AlphaBeta(info AlphaBetaInfo) (Move, int) {
 
 	bm := Move{}
 
+	if !b.Searching {
+		return bm, b.EvalForTurn()
+	}
+
 	if info.CurrentDepth >= info.TotalDepth() {
 		return bm, b.EvalForTurn()
 	}
@@ -1171,10 +1187,14 @@ func (b *Board) AlphaBeta(info AlphaBetaInfo) (Move, int) {
 				score *= -1
 
 				if score >= info.Beta {
+					b.Betas++
+
 					return bm, info.Beta
 				}
 
 				if score > info.Alpha {
+					b.Alphas++
+
 					bm = plm
 					info.Alpha = score
 				}
@@ -1207,6 +1227,10 @@ func (b *Board) AlphaBeta(info AlphaBetaInfo) (Move, int) {
 	return bm, eval
 }
 
+func (b *Board) Stop() {
+	b.Searching = false
+}
+
 func (b *Board) Go(depth int, quiescenceDepth int) (Move, int) {
 	b.StartPerf()
 
@@ -1231,18 +1255,22 @@ func (b *Board) Go(depth int, quiescenceDepth int) (Move, int) {
 		nps, elapsed := b.GetNps()
 
 		b.LogAnalysisInfo(fmt.Sprintf(
-			"depth %d seldepth %d nodes %d time %.0f nps %.0f score cp %d pv %s",
+			"depth %d seldepth %d nodes %d time %.0f nps %.0f alphas %d betas %d score cp %d pv %s",
 			iterDepth,
 			b.SelDepth,
 			b.Nodes,
 			elapsed,
 			nps,
+			b.Alphas,
+			b.Betas,
 			score,
 			b.MoveToSan(bm),
 		))
 	}
 
 	fmt.Println(fmt.Sprintf("bestmove %s", b.MoveToAlgeb(bm)))
+
+	b.Searching = false
 
 	return bm, score
 }

@@ -13,7 +13,7 @@ const ENGINE_DESCRIPTION = "multi variant multi platform uci engine"
 const ENGINE_AUTHOR = "easychessanimations"
 
 const SEARCH_MAX_DEPTH = 100
-const DEFAULT_QUIESCENCE_DEPTH = 6
+const DEFAULT_QUIESCENCE_DEPTH = SEARCH_MAX_DEPTH
 
 var UCI_OPTIONS = []UciOption{
 	{

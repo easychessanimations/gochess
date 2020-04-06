@@ -67,6 +67,9 @@ type Board struct {
 	LogAnalysisInfoFunc func(string)
 	SortedSanMoveBuff   MoveBuff
 	SelDepth            int
+	Alphas              int
+	Betas               int
+	Searching           bool
 }
 
 type PieceDescriptor struct {
