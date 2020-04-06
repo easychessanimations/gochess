@@ -71,6 +71,7 @@ type Board struct {
 	Betas               int
 	Searching           bool
 	PositionHash        PositionHash
+	TestBoard           *Board
 }
 
 type PieceDescriptor struct {
@@ -95,6 +96,23 @@ type Move struct {
 	Castling        bool
 	CastlingSide    CastlingSide
 	RookOrigPiece   Piece
+}
+
+type MoveEvalBuffItem struct {
+	Move Move
+	Eval int
+}
+
+type MoveEvalBuff []MoveEvalBuffItem
+
+func (meb MoveEvalBuff) Len() int {
+	return len(meb)
+}
+func (meb MoveEvalBuff) Swap(i, j int) {
+	meb[i], meb[j] = meb[j], meb[i]
+}
+func (meb MoveEvalBuff) Less(i, j int) bool {
+	return meb[i].Eval > meb[j].Eval
 }
 
 type MoveBuffItem struct {

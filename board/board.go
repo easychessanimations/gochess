@@ -1143,6 +1143,74 @@ func (b *Board) LineToString(line []Move) string {
 	return strings.Join(buff, " ")
 }
 
+func (b *Board) CreateMoveEvalBuff(moves []Move) MoveEvalBuff {
+	meb := MoveEvalBuff{}
+
+	pe, ok := b.PositionHash.PositionEntries[b.Pos]
+
+	if ok {
+		for _, move := range moves {
+			eval := -INFINITE_SCORE
+
+			me, ok := pe.MoveEntries[move]
+
+			if ok {
+				eval = me.Eval
+			}
+
+			meb = append(meb, MoveEvalBuffItem{
+				Move: move,
+				Eval: eval,
+			})
+		}
+
+		sort.Sort(meb)
+	} else {
+		for _, move := range moves {
+			meb = append(meb, MoveEvalBuffItem{
+				Move: move,
+				Eval: -INFINITE_SCORE,
+			})
+		}
+	}
+
+	return meb
+}
+
+func (b *Board) GetPv(maxDepth int) string {
+	b.TestBoard = &Board{}
+
+	b.TestBoard.Init(b.Variant)
+
+	b.TestBoard.Pos = b.Pos
+
+	b.TestBoard.PositionHash = b.PositionHash
+
+	pv := []string{}
+
+	for i := 0; i < maxDepth; i++ {
+		lms := b.TestBoard.LegalMovesForAllPieces()
+
+		meb := b.TestBoard.CreateMoveEvalBuff(lms)
+
+		if len(meb) > 0 {
+			if meb[0].Eval > -INFINITE_SCORE {
+				pvMove := meb[0].Move
+
+				pv = append(pv, b.TestBoard.MoveToAlgeb(pvMove))
+
+				b.TestBoard.Push(pvMove, !ADD_SAN)
+			} else {
+				break
+			}
+		} else {
+			break
+		}
+	}
+
+	return strings.Join(pv, " ")
+}
+
 // https://www.chessprogramming.org/Alpha-Beta
 func (b *Board) AlphaBeta(info AlphaBetaInfo) (Move, int) {
 	b.Nodes++
@@ -1163,11 +1231,15 @@ func (b *Board) AlphaBeta(info AlphaBetaInfo) (Move, int) {
 
 	plms := b.PslmsForAllPiecesOfColor(b.Pos.Turn)
 
+	meb := b.CreateMoveEvalBuff(plms)
+
 	isNormalSearch := info.CurrentDepth < info.Depth
 
 	numLegals := 0
 
-	for _, plm := range plms {
+	for _, mebi := range meb {
+		plm := mebi.Move
+
 		if isNormalSearch || plm.IsCapture() {
 			b.Push(plm, !ADD_SAN)
 
@@ -1250,6 +1322,10 @@ func (b *Board) Go(depth int, quiescenceDepth int) (Move, int) {
 	score := -INFINITE_SCORE
 
 	for iterDepth := 1; iterDepth <= depth; iterDepth++ {
+		if !b.Searching {
+			break
+		}
+
 		b.SelDepth = 0
 
 		alphaBetaInfo := AlphaBetaInfo{
@@ -1261,6 +1337,10 @@ func (b *Board) Go(depth int, quiescenceDepth int) (Move, int) {
 		}
 
 		bm, score = b.AlphaBeta(alphaBetaInfo)
+
+		if !b.Searching {
+			break
+		}
 
 		nps, elapsed := b.GetNps()
 
@@ -1274,7 +1354,7 @@ func (b *Board) Go(depth int, quiescenceDepth int) (Move, int) {
 			b.Alphas,
 			b.Betas,
 			score,
-			b.MoveToSan(bm),
+			b.GetPv(iterDepth),
 		))
 	}
 
