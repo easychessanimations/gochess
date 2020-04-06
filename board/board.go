@@ -130,7 +130,7 @@ func (b *Board) ExecCommand(command string) bool {
 		return true
 	} else {
 		if command == "go" {
-			bm, _ := b.Go(10, 0*100)
+			bm, _ := b.Go(10, 1*100)
 
 			b.Push(bm, ADD_SAN)
 
@@ -1345,10 +1345,6 @@ func (b *Board) Go(depth int, quiescenceDepth int) (Move, int) {
 	pvMoves := []Move{}
 
 	for iterDepth := 1; iterDepth <= depth; iterDepth++ {
-		if !b.Searching {
-			break
-		}
-
 		b.SelDepth = 0
 
 		alphaBetaInfo := AlphaBetaInfo{
@@ -1360,6 +1356,10 @@ func (b *Board) Go(depth int, quiescenceDepth int) (Move, int) {
 		}
 
 		bm, score = b.AlphaBeta(alphaBetaInfo)
+
+		if !b.Searching {
+			break
+		}
 
 		nps, elapsed := b.GetNps()
 
@@ -1378,8 +1378,6 @@ func (b *Board) Go(depth int, quiescenceDepth int) (Move, int) {
 			bestPv,
 		))
 	}
-
-	fmt.Println("bestpv", bestPv)
 
 	bestPvParts := strings.Split(bestPv, " ")
 
