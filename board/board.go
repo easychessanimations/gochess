@@ -1321,6 +1321,8 @@ func (b *Board) Go(depth int, quiescenceDepth int) (Move, int) {
 	bm := Move{}
 	score := -INFINITE_SCORE
 
+	bestPv := ""
+
 	for iterDepth := 1; iterDepth <= depth; iterDepth++ {
 		if !b.Searching {
 			break
@@ -1338,11 +1340,9 @@ func (b *Board) Go(depth int, quiescenceDepth int) (Move, int) {
 
 		bm, score = b.AlphaBeta(alphaBetaInfo)
 
-		if !b.Searching {
-			break
-		}
-
 		nps, elapsed := b.GetNps()
+
+		bestPv = b.GetPv(iterDepth)
 
 		b.LogAnalysisInfo(fmt.Sprintf(
 			"depth %d seldepth %d nodes %d time %.0f nps %.0f alphas %d betas %d score cp %d pv %s",
@@ -1354,17 +1354,21 @@ func (b *Board) Go(depth int, quiescenceDepth int) (Move, int) {
 			b.Alphas,
 			b.Betas,
 			score,
-			b.GetPv(iterDepth),
+			bestPv,
 		))
 	}
 
-	b.Push(bm, !ADD_SAN)
+	fmt.Println("bestpv", bestPv)
 
-	ponder := b.GetPv(1)
+	bestPvParts := strings.Split(bestPv, " ")
 
-	fmt.Println(fmt.Sprintf("bestmove %s ponder %s", b.MoveToAlgeb(bm), ponder))
-
-	b.Pop()
+	if len(bestPvParts) > 1 {
+		fmt.Println(fmt.Sprintf("bestmove %s ponder %s", bestPvParts[0], bestPvParts[1]))
+	} else if bestPv != "" {
+		fmt.Println(fmt.Sprintf("bestmove %s ponder null", bestPvParts[0]))
+	} else {
+		fmt.Println(fmt.Sprintf("bestmove null"))
+	}
 
 	b.Searching = false
 
