@@ -50,4 +50,12 @@ func (pe *PositionEntry) SetMoveEntry(move Move, me MoveEntry) {
 	pe.MoveEntries[move] = me
 }
 
+func (pe *PositionEntry) DecreaseEntries(by int) {
+	for move, me := range pe.MoveEntries {
+		me.Eval -= by
+
+		pe.MoveEntries[move] = me
+	}
+}
+
 /////////////////////////////////////////////////////////////////////

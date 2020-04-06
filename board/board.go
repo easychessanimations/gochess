@@ -1283,6 +1283,8 @@ func (b *Board) AlphaBeta(info AlphaBetaInfo) (Move, int) {
 
 					pe := b.PositionHash.GetPositionEntry(b.Pos)
 
+					pe.DecreaseEntries(500)
+
 					me := pe.GetMoveEntry(plm)
 
 					me.Eval = score
