@@ -1358,7 +1358,13 @@ func (b *Board) Go(depth int, quiescenceDepth int) (Move, int) {
 		))
 	}
 
-	fmt.Println(fmt.Sprintf("bestmove %s", b.MoveToAlgeb(bm)))
+	b.Push(bm, !ADD_SAN)
+
+	ponder := b.GetPv(1)
+
+	fmt.Println(fmt.Sprintf("bestmove %s ponder %s", b.MoveToAlgeb(bm), ponder))
+
+	b.Pop()
 
 	b.Searching = false
 
