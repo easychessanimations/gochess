@@ -32,8 +32,8 @@ func (ph *PositionHash) GetPositionEntry(pos Pos) PositionEntry {
 	return pe
 }
 
-func (ph *PositionEntry) GetMoveEntry(move Move) MoveEntry {
-	me, ok := ph.MoveEntries[move]
+func (pe *PositionEntry) GetMoveEntry(move Move) MoveEntry {
+	me, ok := pe.MoveEntries[move]
 
 	if ok {
 		return me
@@ -41,9 +41,13 @@ func (ph *PositionEntry) GetMoveEntry(move Move) MoveEntry {
 
 	me = MoveEntry{}
 
-	ph.MoveEntries[move] = me
+	pe.MoveEntries[move] = me
 
 	return me
+}
+
+func (pe *PositionEntry) SetMoveEntry(move Move, me MoveEntry) {
+	pe.MoveEntries[move] = me
 }
 
 /////////////////////////////////////////////////////////////////////

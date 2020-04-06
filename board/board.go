@@ -1287,6 +1287,8 @@ func (b *Board) AlphaBeta(info AlphaBetaInfo) (Move, int) {
 
 					me.Eval = score
 
+					pe.SetMoveEntry(plm, me)
+
 					bm = plm
 					info.Alpha = score
 				}
