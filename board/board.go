@@ -130,7 +130,7 @@ func (b *Board) ExecCommand(command string) bool {
 		return true
 	} else {
 		if command == "go" {
-			bm, _ := b.Go(10, 100)
+			bm, _ := b.Go(10, 0*100)
 
 			b.Push(bm, ADD_SAN)
 
@@ -1167,9 +1167,19 @@ func (b *Board) CreateMoveEvalBuff(moves []Move) MoveEvalBuff {
 		sort.Sort(meb)
 	} else {
 		for _, move := range moves {
+			eval := -INFINITE_SCORE
+
+			if move.IsCapture() {
+				eval += CAPTURE_BONUS
+			}
+
+			if !move.IsPawnMove() {
+				eval += NON_PAWN_MOVE_BONUS
+			}
+
 			meb = append(meb, MoveEvalBuffItem{
 				Move: move,
-				Eval: -INFINITE_SCORE,
+				Eval: eval,
 			})
 		}
 	}
