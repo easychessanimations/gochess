@@ -39,6 +39,7 @@ type ColorCastlingRights [2]CastlingRight
 type CastlingRights [2]ColorCastlingRights
 
 type Pos struct {
+	Rep            BoardRep
 	Turn           PieceColor
 	CastlingRights CastlingRights
 	EpSquare       Square
@@ -47,7 +48,6 @@ type Pos struct {
 }
 
 type MoveStackItem struct {
-	Rep  BoardRep
 	Pos  Pos
 	Move Move
 	San  string
@@ -59,7 +59,6 @@ type Board struct {
 	LastFile            int8
 	NumRanks            int8
 	LastRank            int8
-	Rep                 BoardRep
 	Pos                 Pos
 	MoveStack           []MoveStackItem
 	Nodes               int
