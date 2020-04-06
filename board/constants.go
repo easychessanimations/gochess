@@ -55,18 +55,25 @@ const DEFAULT_QUIESCENCE_DEPTH = SEARCH_MAX_DEPTH
 
 var UCI_OPTIONS = []utils.UciOption{
 	{
+		Kind:      "combo",
+		Name:      "UCI_Variant",
+		ValueKind: "string",
+		Default:   "standard",
+		DefaultStringArray: []string{
+			"standard",
+			"atomic",
+			"seirawan",
+			"eightpiece",
+		},
+		DefaultBool: true,
+	},
+	{
 		Kind:       "spin",
 		Name:       "Quiescence Depth",
 		ValueKind:  "int",
 		MinInt:     0,
-		MaxInt:     SEARCH_MAX_DEPTH,
+		MaxInt:     0,
 		DefaultInt: DEFAULT_QUIESCENCE_DEPTH,
-	},
-	{
-		Kind:        "check",
-		Name:        "Use AlphaBeta",
-		ValueKind:   "bool",
-		DefaultBool: true,
 	},
 }
 

@@ -43,23 +43,29 @@ func (eng *UciEngine) Uci() {
 	fmt.Println("uciok")
 }
 
-func (eng *UciEngine) GetOptionByName(name string) *utils.UciOption {
-	for _, uo := range board.UCI_OPTIONS {
+func (eng *UciEngine) GetOptionByName(name string) (int, *utils.UciOption) {
+	for index, uo := range board.UCI_OPTIONS {
 		if uo.Name == name {
-			return &uo
+			return index, &uo
 		}
 	}
 
-	return nil
+	return -1, nil
 }
 
 func (eng *UciEngine) SetOption(name string, value string) {
-	uo := eng.GetOptionByName(name)
+	index, uo := eng.GetOptionByName(name)
 
 	if uo == nil {
 		fmt.Println("unknown uci option")
 	} else {
 		uo.SetFromString(value)
+		board.UCI_OPTIONS[index] = *uo
+
+		// handle UCI_Variant as a special option
+		if name == "UCI_Variant"{
+			eng.Board.ResetVariantFromUciOption()
+		}
 	}
 }
 
@@ -113,7 +119,7 @@ func (eng *UciEngine) LogAnalysisInfo(content string) {
 }
 
 func (eng *UciEngine) GetUciOptionByNameWithDefault(name string, defaultUciOption utils.UciOption) utils.UciOption {
-	uo := eng.GetOptionByName(name)
+	_, uo := eng.GetOptionByName(name)
 
 	if uo != nil {
 		return *uo
@@ -138,6 +144,50 @@ func (eng *UciEngine) Init() {
 
 func (eng *UciEngine) Stop() {
 	eng.Board.Stop()
+}
+
+func (eng *UciEngine) Position(args []string) {
+	var i int
+
+	if len(args) <= 0 {
+		fmt.Println("missing argument for position command")
+	} else if args[0] == "startpos" {
+		eng.Board.ResetVariantFromUciOption()
+		args = args[1:]
+	} else if args[0] == "fen" {
+		if len(args) > 1 {
+			fenparts := []string{}
+			for i = 1; i < len(args); i++ {
+				if args[i] == "moves" {
+					break
+				} else {
+					fenparts = append(fenparts, args[i])
+				}
+			}
+			eng.Board.SetFromVariantUciOptionAndFen(strings.Join(fenparts, " "))
+			if i >= (len(args) - 1) {
+				return
+			} else {
+				args = args[i+1:]
+			}
+		} else {
+			fmt.Println("no fen specified in fen argument")
+		}
+	} else {
+		fmt.Println("unknown position command")
+	}
+
+	if len(args) > 0 {
+		if args[0] == "moves" {
+			if len(args) > 1 {
+
+			} else {
+				fmt.Println("no move list specified in moves argument")
+			}
+		} else {
+			fmt.Printf("unknown position argument %s\n", args[0])
+		}
+	}
 }
 
 func (eng *UciEngine) UciLoop() {
@@ -170,6 +220,8 @@ func (eng *UciEngine) UciLoop() {
 
 			if command == "setoption" {
 				eng.SetOptionFromTokens(args)
+			} else if command == "position" {
+				eng.Position(args)
 			} else if eng.Interactive {
 				go eng.Board.ExecCommand(command)
 			}

@@ -17,6 +17,8 @@ import (
 func (uo *UciOption) ToUciString() string {
 	if uo.Kind == "button" {
 		return fmt.Sprintf("option name %s type button", uo.Name)
+	} else if uo.Kind == "combo" {
+		return fmt.Sprintf("option name %s type combo default %s var %s", uo.Name, uo.Default, strings.Join(uo.DefaultStringArray, " var "))
 	} else if uo.Kind == "spin" {
 		return fmt.Sprintf("option name %s type spin default %d min %d max %d", uo.Name, uo.DefaultInt, uo.MinInt, uo.MaxInt)
 	} else if uo.ValueKind == "int" {

@@ -80,6 +80,22 @@ func (b *Board) SetFromRawFen(fen string) {
 	}
 }
 
+func (b *Board) ResetVariantFromUciOption() {
+	variantUciOption := b.GetUciOptionByNameWithDefault("UCI_Variant", utils.UciOption{
+		Value: "standard",
+	})
+
+	b.Variant = utils.VariantKeyStringToVariantKey(variantUciOption.Value)
+
+	b.Reset()
+}
+
+func (b *Board) SetFromVariantUciOptionAndFen(fen string) {
+	b.ResetVariantFromUciOption()
+
+	b.SetFromFen(fen)
+}
+
 func (b *Board) SetFromFen(fen string) {
 	fenParts := strings.Split(fen, " ")
 
@@ -198,6 +214,7 @@ func (b *Board) ToString() string {
 		buff += "\n"
 	}
 
+	buff += "\n" + utils.VariantKeyToVariantKeyString(b.Variant)
 	buff += "\n" + b.ReportFen() + "\n"
 
 	buff += "\n" + b.ReportMaterial() + "\n"
