@@ -70,6 +70,7 @@ type Board struct {
 	Alphas              int
 	Betas               int
 	Searching           bool
+	PositionHash        PositionHash
 }
 
 type PieceDescriptor struct {
@@ -121,4 +122,16 @@ type AlphaBetaInfo struct {
 	QuiescenceDepth int
 	CurrentDepth    int
 	Line            []string
+}
+
+type MoveEntry struct {
+	Eval int
+}
+
+type PositionEntry struct {
+	MoveEntries map[Move]MoveEntry
+}
+
+type PositionHash struct {
+	PositionEntries map[Pos]PositionEntry
 }

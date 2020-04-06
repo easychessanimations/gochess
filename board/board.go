@@ -1195,6 +1195,12 @@ func (b *Board) AlphaBeta(info AlphaBetaInfo) (Move, int) {
 				if score > info.Alpha {
 					b.Alphas++
 
+					pe := b.PositionHash.GetPositionEntry(b.Pos)
+
+					me := pe.GetMoveEntry(plm)
+
+					me.Eval = score
+
 					bm = plm
 					info.Alpha = score
 				}
@@ -1233,6 +1239,10 @@ func (b *Board) Stop() {
 
 func (b *Board) Go(depth int, quiescenceDepth int) (Move, int) {
 	b.StartPerf()
+
+	b.PositionHash = PositionHash{}
+
+	b.PositionHash.Init()
 
 	fmt.Printf("go depth %d\n", depth)
 
