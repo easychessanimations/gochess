@@ -7,6 +7,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/easychessanimations/gochess/board"
@@ -180,7 +181,9 @@ func (eng *UciEngine) Position(args []string) {
 	if len(args) > 0 {
 		if args[0] == "moves" {
 			if len(args) > 1 {
-
+				for i := 1; i < len(args); i++ {
+					eng.Board.MakeAlgebMove(args[i], board.ADD_SAN)
+				}
 			} else {
 				fmt.Println("no move list specified in moves argument")
 			}
@@ -196,8 +199,33 @@ func (eng *UciEngine) ListUci() {
 	}
 }
 
+func (eng *UciEngine) Go(args []string) {
+	depth := board.DEFAULT_SEARCH_DEPTH
+
+	for len(args) > 0 {
+		if args[0] == "depth" {
+			if len(args) > 1 {
+				parseDepth, err := strconv.ParseInt(args[1], 10, 32)
+				if err != nil {
+					fmt.Printf("invalid depth argument to go command, assuming depth %d\n", depth)
+				} else {
+					depth = int(parseDepth)
+				}
+				args = args[2:]
+			} else {
+				fmt.Printf("empty depth argument to go command, assuming depth %d\n", depth)
+				args = args[1:]
+			}
+		} else {
+			args = args[1:]
+		}
+	}
+
+	go eng.Board.Go(depth)
+}
+
 func (eng *UciEngine) ExecuteUciCommand(command string) {
-	if command == "stop" {
+	if (command == "stop") || (command == "s") {
 		eng.Stop()
 	} else if command == "uci" {
 		eng.Uci()
@@ -221,6 +249,8 @@ func (eng *UciEngine) ExecuteUciCommand(command string) {
 			eng.SetOptionFromTokens(args)
 		} else if command == "position" {
 			eng.Position(args)
+		} else if command == "go" {
+			eng.Go(args)
 		} else {
 			go eng.Board.ExecCommand(command)
 		}

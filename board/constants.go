@@ -12,6 +12,8 @@ import (
 /////////////////////////////////////////////////////////////////////
 // constants
 
+var NO_MOVE = Move{FromSq: utils.NO_SQUARE}
+
 const STOP_AT_FIRST = true
 const ALL_ATTACKS = false
 const ADD_SAN = true
@@ -53,6 +55,7 @@ const NON_PAWN_MOVE_BONUS = 1000
 const SEARCH_MAX_DEPTH = 100
 const DEFAULT_QUIESCENCE_DEPTH = 0
 const DEFAULT_UCI_VARIANT_STRING = "standard"
+const DEFAULT_SEARCH_DEPTH = 10
 
 var UCI_OPTIONS = []utils.UciOption{
 	{

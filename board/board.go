@@ -145,7 +145,29 @@ func (b *Board) ReportMaterial() string {
 	return buff
 }
 
+func (b *Board) AlgebToMove(algeb string) Move {
+	lms := b.LegalMovesForAllPieces()
+
+	for _, lm := range lms {
+		if b.MoveToAlgeb(lm) == algeb {
+			return lm
+		}
+	}
+
+	return NO_MOVE
+}
+
+func (b *Board) MakeAlgebMove(algeb string, addSan bool) {
+	move := b.AlgebToMove(algeb)
+
+	if move != NO_MOVE {
+		b.Push(move, addSan)
+	}
+}
+
 func (b *Board) ExecCommand(command string) bool {
+	b.SortedSanMoveBuff = b.MovesSortedBySan(b.LegalMovesForAllPieces())
+
 	i, err := strconv.ParseInt(command, 10, 32)
 
 	if err == nil {
