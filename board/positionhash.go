@@ -1,5 +1,7 @@
 package board
 
+import "github.com/easychessanimations/gochess/utils"
+
 /////////////////////////////////////////////////////////////////////
 // imports
 
@@ -13,7 +15,7 @@ func (ph *PositionHash) Init() {
 }
 
 func (pe *PositionEntry) Init() {
-	pe.MoveEntries = make(map[Move]MoveEntry)
+	pe.MoveEntries = make(map[utils.Move]MoveEntry)
 }
 
 func (ph *PositionHash) GetPositionEntry(pos Pos) PositionEntry {
@@ -32,7 +34,7 @@ func (ph *PositionHash) GetPositionEntry(pos Pos) PositionEntry {
 	return pe
 }
 
-func (pe *PositionEntry) GetMoveEntry(move Move) MoveEntry {
+func (pe *PositionEntry) GetMoveEntry(move utils.Move) MoveEntry {
 	me, ok := pe.MoveEntries[move]
 
 	if ok {
@@ -46,7 +48,7 @@ func (pe *PositionEntry) GetMoveEntry(move Move) MoveEntry {
 	return me
 }
 
-func (pe *PositionEntry) SetMoveEntry(move Move, me MoveEntry) {
+func (pe *PositionEntry) SetMoveEntry(move utils.Move, me MoveEntry) {
 	pe.MoveEntries[move] = me
 }
 

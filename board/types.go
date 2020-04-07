@@ -21,7 +21,7 @@ type BoardRep [MAX_RANKS][MAX_FILES]utils.Piece
 
 type CastlingRight struct {
 	Color          utils.PieceColor
-	Side           CastlingSide
+	Side           utils.CastlingSide
 	CanCastle      bool
 	RookOrigSquare utils.Square
 	RookOrigPiece  utils.Piece
@@ -42,7 +42,7 @@ type Pos struct {
 
 type MoveStackItem struct {
 	Pos  Pos
-	Move Move
+	Move utils.Move
 	San  string
 }
 
@@ -58,7 +58,7 @@ type Board struct {
 	Start                             time.Time
 	LogFunc                           func(string)
 	LogAnalysisInfoFunc               func(string)
-	SortedSanMoveBuff                 MoveBuff
+	SortedSanMoveBuff                 utils.MoveBuff
 	SelDepth                          int
 	Alphas                            int
 	Betas                             int
@@ -67,60 +67,8 @@ type Board struct {
 	TestBoard                         *Board
 	GetUciOptionByNameWithDefaultFunc func(string, utils.UciOption) utils.UciOption
 	MultipvInfos                      MultipvInfos
-	ExcludedMoves                     []Move
-	DisabledMove                      Move
-}
-
-type Move struct {
-	FromSq          utils.Square
-	ToSq            utils.Square
-	Capture         bool
-	PawnCapture     bool
-	PawnPushByOne   bool
-	PawnPushByTwo   bool
-	EpSquare        utils.Square
-	EpCapture       bool
-	EpClearSquare   utils.Square
-	PromotionPiece  utils.Piece
-	PromotionSquare utils.Square
-	Castling        bool
-	CastlingSide    CastlingSide
-	RookOrigPiece   utils.Piece
-}
-
-type MoveEvalBuffItem struct {
-	Move Move
-	Eval int
-}
-
-type MoveEvalBuff []MoveEvalBuffItem
-
-func (meb MoveEvalBuff) Len() int {
-	return len(meb)
-}
-func (meb MoveEvalBuff) Swap(i, j int) {
-	meb[i], meb[j] = meb[j], meb[i]
-}
-func (meb MoveEvalBuff) Less(i, j int) bool {
-	return meb[i].Eval > meb[j].Eval
-}
-
-type MoveBuffItem struct {
-	Move  Move
-	San   string
-	Algeb string
-}
-
-type MoveBuff []MoveBuffItem
-
-func (mb MoveBuff) Len() int {
-	return len(mb)
-}
-func (mb MoveBuff) Swap(i, j int) {
-	mb[i], mb[j] = mb[j], mb[i]
-}
-func (mb MoveBuff) Less(i, j int) bool {
-	return mb[i].San < mb[j].San
+	ExcludedMoves                     []utils.Move
+	DisabledMove                      utils.Move
 }
 
 type AlphaBetaInfo struct {
@@ -137,7 +85,7 @@ type MoveEntry struct {
 }
 
 type PositionEntry struct {
-	MoveEntries map[Move]MoveEntry
+	MoveEntries map[utils.Move]MoveEntry
 }
 
 type PositionHash struct {
@@ -154,7 +102,7 @@ type MultipvInfo struct {
 	Betas    int
 	Score    int
 	Pv       string
-	PvMoves  []Move
+	PvMoves  []utils.Move
 }
 
 type MultipvInfos []MultipvInfo

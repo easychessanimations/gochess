@@ -12,16 +12,11 @@ import (
 /////////////////////////////////////////////////////////////////////
 // constants
 
-var NO_MOVE = Move{FromSq: utils.NO_SQUARE}
+var NO_MOVE = utils.Move{FromSq: utils.NO_SQUARE}
 
 const STOP_AT_FIRST = true
 const ALL_ATTACKS = false
 const ADD_SAN = true
-
-type CastlingSide uint8
-
-const KING_SIDE CastlingSide = 1
-const QUEEN_SIDE CastlingSide = 0
 
 var PIECE_VALUES [utils.MAX_PIECE_KINDS]int
 

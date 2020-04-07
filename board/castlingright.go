@@ -20,7 +20,7 @@ func (cr *CastlingRight) Clear() {
 
 // https://en.wikipedia.org/wiki/X-FEN
 
-func (cr *CastlingRight) Init(color utils.PieceColor, side CastlingSide, b *Board) {
+func (cr *CastlingRight) Init(color utils.PieceColor, side utils.CastlingSide, b *Board) {
 	cr.Color = color
 	cr.Side = side
 	cr.Clear()

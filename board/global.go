@@ -14,10 +14,10 @@ import (
 /////////////////////////////////////////////////////////////////////
 // global functions
 
-func CastlingLetter(color utils.PieceColor, side CastlingSide) string {
+func CastlingLetter(color utils.PieceColor, side utils.CastlingSide) string {
 	letter := "k"
 
-	if side == QUEEN_SIDE {
+	if side == utils.QUEEN_SIDE {
 		letter = "q"
 	}
 

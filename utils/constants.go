@@ -26,6 +26,9 @@ const (
 const WHITE PieceColor = 1
 const BLACK PieceColor = 0
 
+const KING_SIDE CastlingSide = 1
+const QUEEN_SIDE CastlingSide = 0
+
 var DIRECTION_STRING_TO_PIECE_DIRECTION = map[string]PieceDirection{
 	"n":  PieceDirection{0, -1},
 	"ne": PieceDirection{1, -1},

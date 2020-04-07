@@ -32,8 +32,8 @@ func (mpvinfo *MultipvInfo) ToString(multipv int) string {
 	)
 }
 
-func (b *Board) CreateMoveEvalBuff(moves []Move) MoveEvalBuff {
-	meb := MoveEvalBuff{}
+func (b *Board) CreateMoveEvalBuff(moves []utils.Move) utils.MoveEvalBuff {
+	meb := utils.MoveEvalBuff{}
 
 	pe, ok := b.PositionHash.PositionEntries[b.Pos]
 
@@ -47,7 +47,7 @@ func (b *Board) CreateMoveEvalBuff(moves []Move) MoveEvalBuff {
 				eval = me.Eval
 			}
 
-			meb = append(meb, MoveEvalBuffItem{
+			meb = append(meb, utils.MoveEvalBuffItem{
 				Move: move,
 				Eval: eval,
 			})
@@ -66,7 +66,7 @@ func (b *Board) CreateMoveEvalBuff(moves []Move) MoveEvalBuff {
 				eval += NON_PAWN_MOVE_BONUS
 			}
 
-			meb = append(meb, MoveEvalBuffItem{
+			meb = append(meb, utils.MoveEvalBuffItem{
 				Move: move,
 				Eval: eval,
 			})
@@ -76,7 +76,7 @@ func (b *Board) CreateMoveEvalBuff(moves []Move) MoveEvalBuff {
 	return meb
 }
 
-func (b *Board) GetPv(maxDepth int) (string, []Move) {
+func (b *Board) GetPv(maxDepth int) (string, []utils.Move) {
 	b.TestBoard = &Board{}
 
 	b.TestBoard.Init(b.Variant)
@@ -87,7 +87,7 @@ func (b *Board) GetPv(maxDepth int) (string, []Move) {
 
 	pv := []string{}
 
-	pvMoves := []Move{}
+	pvMoves := []utils.Move{}
 
 	for i := 0; i < maxDepth; i++ {
 		lms := b.TestBoard.LegalMovesForAllPieces()
@@ -115,14 +115,14 @@ func (b *Board) GetPv(maxDepth int) (string, []Move) {
 }
 
 // https://www.chessprogramming.org/Alpha-Beta
-func (b *Board) AlphaBeta(info AlphaBetaInfo) (Move, int) {
+func (b *Board) AlphaBeta(info AlphaBetaInfo) (utils.Move, int) {
 	b.Nodes++
 
 	if info.CurrentDepth > b.SelDepth {
 		b.SelDepth = info.CurrentDepth
 	}
 
-	bm := Move{}
+	bm := utils.Move{}
 
 	if !b.Searching {
 		return bm, b.EvalForTurn()
@@ -224,20 +224,20 @@ func (b *Board) Stop() {
 	b.Searching = false
 }
 
-func (b *Board) Go(depth int) (Move, int) {
+func (b *Board) Go(depth int) (utils.Move, int) {
 	b.StartPerf()
 
 	b.PositionHash = PositionHash{}
 
 	b.PositionHash.Init()
 
-	bm := Move{}
+	bm := utils.Move{}
 
 	score := -INFINITE_SCORE
 
 	bestPv := ""
 
-	pvMoves := []Move{}
+	pvMoves := []utils.Move{}
 
 	quiescenceDepthUciOption := b.GetUciOptionByNameWithDefault("Quiescence Depth", utils.UciOption{
 		ValueInt: 0,
@@ -271,7 +271,7 @@ func (b *Board) Go(depth int) (Move, int) {
 	))
 
 	for iterDepth := 1; iterDepth <= depth; iterDepth++ {
-		b.ExcludedMoves = []Move{}
+		b.ExcludedMoves = []utils.Move{}
 
 		for multipv := 1; multipv <= maxMultipv; multipv++ {
 			b.SelDepth = 0
