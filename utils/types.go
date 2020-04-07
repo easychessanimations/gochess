@@ -44,9 +44,10 @@ type PieceColor uint8
 type PieceDirection Square
 
 type Piece struct {
-	Kind      PieceKind
-	Color     PieceColor
-	Direction PieceDirection
+	Kind         PieceKind
+	Color        PieceColor
+	Direction    PieceDirection
+	PushDisabled bool
 }
 
 type PieceDescriptor struct {
@@ -73,6 +74,7 @@ type Move struct {
 	Castling        bool
 	CastlingSide    CastlingSide
 	RookOrigPiece   Piece
+	SentryPush      bool
 }
 
 type MoveList []Move

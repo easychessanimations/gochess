@@ -8,8 +8,16 @@ package utils
 /////////////////////////////////////////////////////////////////////
 // about
 
-/*func (ml *MoveList) Filter(filterOk func(Move) bool) MoveList {
+func (ml *MoveList) Filter(filterOk func(Move) bool) MoveList {
+	filtered := MoveList{}
 
-}*/
+	for _, move := range *ml {
+		if filterOk(move) {
+			filtered = append(filtered, move)
+		}
+	}
+
+	return filtered
+}
 
 /////////////////////////////////////////////////////////////////////

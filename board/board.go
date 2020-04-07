@@ -19,6 +19,8 @@ import (
 /////////////////////////////////////////////////////////////////////
 // member functions
 
+var DEBUG = false
+
 func (b *Board) IS_ATOMIC() bool {
 	return b.Variant == utils.VARIANT_ATOMIC
 }
@@ -370,6 +372,17 @@ func (b *Board) LegalMovesToString() string {
 
 func (b *Board) Print() {
 	b.Log(b.ToString())
+
+	/*DEBUG = true
+	var rank int8
+	var file int8
+	for rank = 0; rank < b.NumRanks; rank++ {
+		for file = 0; file < b.NumFiles; file++ {
+			sq := utils.Square{file, rank}
+			fmt.Println(sq, len(b.AttacksOnSquareBySentry(sq, utils.WHITE, ALL_ATTACKS)))
+		}
+	}
+	DEBUG = false*/
 }
 
 func (b *Board) Init(variant utils.VariantKey) {
@@ -569,6 +582,10 @@ func (b *Board) MoveToSan(move utils.Move) string {
 
 	if move.IsPromotion() {
 		buff += "=" + move.PromotionPiece.ToStringUpper()
+
+		if move.PromotionSquare != utils.NO_SQUARE {
+			buff += "@" + b.SquareToAlgeb(move.PromotionSquare)
+		}
 	}
 
 	return buff + checkStr
@@ -587,6 +604,7 @@ func (b *Board) LancerMovesToSquare(lancer utils.Piece, fromSq utils.Square, toS
 					Color:     lancer.Color,
 					Direction: ld,
 				},
+				PromotionSquare: utils.NO_SQUARE,
 			}
 
 			lms = append(lms, move)
@@ -644,6 +662,42 @@ func (b *Board) PslmsForVectorPieceAtSquare(p utils.Piece, sq utils.Square) []ut
 						if pdesc.CanJumpOverOwnPiece {
 							// for pieces that can jump over their own piece just skip this move
 							capture = false
+						}
+					} else {
+						if p.Kind == utils.Sentry {
+							// sentry push
+							// add manually
+							add = false
+							// no more moves for sentry
+							ok = false
+							if p.PushDisabled {
+								// pushed sentry cannot push
+							} else {
+								top := b.PieceAtSquare(currentSq)
+
+								topInv := top.ColorInverse()
+
+								if top.Kind == utils.Sentry {
+									// disable push for pushed sentry
+									top.PushDisabled = true
+								}
+
+								pushes := utils.MoveList(b.PslmsForPieceAtSquare(topInv, currentSq))
+
+								pushes = pushes.Filter(utils.NonPawnPushByTwo)
+
+								for _, pslm := range pushes {
+									move := utils.Move{
+										FromSq:          sq,
+										ToSq:            currentSq,
+										SentryPush:      true,
+										PromotionPiece:  top,
+										PromotionSquare: pslm.ToSq,
+									}
+
+									pslms = append(pslms, move)
+								}
+							}
 						}
 					}
 				}
@@ -757,9 +811,63 @@ func (b *Board) AttacksOnSquareByVectorPiece(sq utils.Square, p utils.Piece, sto
 	return attacks
 }
 
+func (b *Board) SquaresForPiece(p utils.Piece) []utils.Square {
+	sqs := []utils.Square{}
+
+	var rank int8
+	var file int8
+	for rank = 0; rank < b.NumRanks; rank++ {
+		for file = 0; file < b.NumFiles; file++ {
+			sq := utils.Square{file, rank}
+			testp := b.PieceAtSquare(sq)
+			if testp.EqualTo(p) {
+				sqs = append(sqs, sq)
+			}
+		}
+	}
+
+	return sqs
+}
+
+func (b *Board) AttacksOnSquareBySentry(sq utils.Square, color utils.PieceColor, stopAtFirst bool) []utils.Move {
+	sentry := utils.Piece{
+		Kind:  utils.Sentry,
+		Color: color,
+	}
+
+	ssqs := b.SquaresForPiece(sentry)
+
+	attacks := []utils.Move{}
+
+	for _, ssq := range ssqs {
+		splms := utils.MoveList(b.PslmsForPieceAtSquare(sentry, ssq))
+
+		splms = splms.Filter(utils.SentryPush)
+
+		for _, splm := range splms {
+			if splm.PromotionSquare.EqualTo(sq) {
+				attack := utils.Move{
+					FromSq: splm.FromSq,
+					ToSq:   splm.PromotionSquare,
+				}
+
+				attacks = append(attacks, attack)
+			}
+		}
+	}
+
+	return attacks
+}
+
+// TODO: these attacks don't work in move to san
+
 func (b *Board) AttacksOnSquareByPiece(sq utils.Square, p utils.Piece, stopAtFirst bool) []utils.Move {
 	if p.Kind == utils.Pawn {
 		return b.AttacksOnSquareByPawn(sq, p.Color, stopAtFirst)
+	}
+
+	if p.Kind == utils.Sentry {
+		return b.AttacksOnSquareBySentry(sq, p.Color, stopAtFirst)
 	}
 
 	return b.AttacksOnSquareByVectorPiece(sq, p, stopAtFirst)
@@ -785,6 +893,13 @@ func (b *Board) AttackingPieceKinds() []utils.PieceKind {
 		apks = append(apks, []utils.PieceKind{
 			utils.Elephant,
 			utils.Hawk,
+		}...)
+	}
+
+	if b.Variant == utils.VARIANT_EIGHTPIECE {
+		apks = append(apks, []utils.PieceKind{
+			utils.Sentry,
+			// TODO: lancer attacks
 		}...)
 	}
 
@@ -1050,11 +1165,12 @@ func (b *Board) CreatePromotionMoves(
 		ppc.Color = color
 
 		promotionMove := utils.Move{
-			FromSq:         fromsq,
-			ToSq:           tosq,
-			PawnCapture:    pawnCapture,
-			PawnPushByOne:  pawnPushByOne,
-			PromotionPiece: ppc,
+			FromSq:          fromsq,
+			ToSq:            tosq,
+			PawnCapture:     pawnCapture,
+			PawnPushByOne:   pawnPushByOne,
+			PromotionPiece:  ppc,
+			PromotionSquare: utils.NO_SQUARE,
 		}
 
 		promotionMoves = append(promotionMoves, promotionMove)
@@ -1083,7 +1199,7 @@ func (b *Board) Push(move utils.Move, addSan bool) {
 	b.SetPieceAtSquare(move.FromSq, utils.NO_PIECE)
 
 	if move.IsPromotion() {
-		b.SetPieceAtSquare(move.ToSq, move.PromotionPiece)
+		b.SetPieceAtSquare(move.EffectivePromotionSquare(), move.PromotionPiece)
 	}
 
 	if move.EpCapture {

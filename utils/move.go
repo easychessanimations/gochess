@@ -9,7 +9,7 @@ package utils
 // member functions
 
 func (m *Move) IsCapture() bool {
-	return m.Capture || m.PawnCapture || m.EpCapture
+	return m.Capture || m.PawnCapture || m.EpCapture || m.SentryPush
 }
 
 func (m *Move) IsPawnMove() bool {
@@ -26,6 +26,14 @@ func (m *Move) IsPromotion() bool {
 
 func (m *Move) RoughlyEqualTo(testm Move) bool {
 	return m.FromSq.EqualTo(testm.FromSq) && m.ToSq.EqualTo(testm.ToSq)
+}
+
+func (m *Move) EffectivePromotionSquare() Square {
+	if m.PromotionSquare == NO_SQUARE {
+		return m.ToSq
+	}
+
+	return m.PromotionSquare
 }
 
 /////////////////////////////////////////////////////////////////////

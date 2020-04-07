@@ -12,6 +12,14 @@ import (
 /////////////////////////////////////////////////////////////////////
 // global functions
 
+func NonPawnPushByTwo(move Move) bool {
+	return !move.PawnPushByTwo
+}
+
+func SentryPush(move Move) bool {
+	return move.SentryPush
+}
+
 func VariantKeyStringToVariantKey(vks string) VariantKey {
 	vk, ok := VARIANT_KEY_STRING_TO_VARIANT_KEY[vks]
 
@@ -63,7 +71,11 @@ func PieceLetterToPiece(pieceLetter string) Piece {
 		dirStr = pieceLetter[1:]
 	}
 
-	return Piece{pieceKind, color, DirectionStringToPieceDirection(dirStr)}
+	return Piece{
+		Kind:      pieceKind,
+		Color:     color,
+		Direction: DirectionStringToPieceDirection(dirStr),
+	}
 }
 
 func DirectionStringToPieceDirection(dirStr string) PieceDirection {

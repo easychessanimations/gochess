@@ -3,3 +3,9 @@ jailer regular
 1lsesqkbnr/1ppppppp/3j4/p2J4/P7/8/1PPPPPPP/1LneSQKBNR b Kk - 5 4 -
 jailer pass
 1lsesqkbnr/1ppppppp/3j4/p2K4/P7/8/1PPPPPPP/1LneSQ1BNR b Kk - 5 4 -
+sentry push
+jlsesqkb1r/pppppppp/7n/8/3P4/8/PPP1PPPP/JLneSQKBNR w KQkq - 1 2 -
+jlsesqkb1r/pppppppp/7n/8/8/3P4/PPP1PPPP/JLneSQKBNR w KQkq - 1 2 -
+sentry check
+jlsesqkb1r/pppppppp/5n2/6S1/8/3P4/PPP1PPPP/JLne1QKBNR b KQkq - 2 2 -
+jlses1kb1r/ppp1pppp/3q1nLne1/3p4/8/3P1N2/PPP1PPPP/J1SQKB1R w KQkq - 2 4 -
