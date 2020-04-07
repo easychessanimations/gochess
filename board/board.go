@@ -112,81 +112,6 @@ func (b *Board) PieceAtSquare(sq utils.Square) utils.Piece {
 	return utils.NO_PIECE
 }
 
-func (b *Board) SetFromRawFen(fen string) {
-	var file int8 = 0
-	var rank int8 = 0
-	for index := 0; index < len(fen); {
-		chr := fen[index : index+1]
-		if (chr >= "0") && (chr <= "9") {
-			for cumul := chr[0] - "0"[0]; cumul > 0; cumul-- {
-				b.SetPieceAtSquare(utils.Square{file, rank}, utils.NO_PIECE)
-				file++
-			}
-		} else if chr == "/" {
-			rank++
-			file = 0
-		} else {
-			pieceLetter := chr
-			if (chr == "l") || (chr == "L") {
-				index++
-				dirFirst := fen[index : index+1]
-				dirSecond := ""
-				if (dirFirst == "n") || (dirFirst == "s") {
-					index++
-					dirSecond = fen[index : index+1]
-					if (dirSecond != "w") && (dirSecond != "e") {
-						dirSecond = ""
-					}
-				}
-				pieceLetter = chr + dirFirst + dirSecond
-			}
-			b.SetPieceAtSquare(utils.Square{file, rank}, utils.PieceLetterToPiece(pieceLetter))
-			file++
-		}
-		index++
-	}
-}
-
-func (b *Board) ResetVariantFromUciOption() {
-	variantUciOption := b.GetUciOptionByNameWithDefault("UCI_Variant", utils.UciOption{
-		Value: "standard",
-	})
-
-	b.Variant = utils.VariantKeyStringToVariantKey(variantUciOption.Value)
-
-	b.Reset()
-}
-
-func (b *Board) SetFromVariantUciOptionAndFen(fen string) {
-	b.ResetVariantFromUciOption()
-
-	b.SetFromFen(fen)
-}
-
-func (b *Board) SetFromFen(fen string) {
-	fenParts := strings.Split(fen, " ")
-
-	b.SetFromRawFen(fenParts[0])
-
-	b.Pos.Turn.SetFromFen(fenParts[1])
-
-	b.Pos.CastlingRights.SetFromFen(fenParts[2], b)
-
-	b.Pos.EpSquare = b.SquareFromAlgeb(fenParts[3])
-
-	hmc, _ := strconv.ParseInt(fenParts[4], 10, 32)
-
-	b.Pos.HalfmoveClock = int(hmc)
-
-	fmn, _ := strconv.ParseInt(fenParts[5], 10, 32)
-
-	b.Pos.FullmoveNumber = int(fmn)
-
-	if b.IS_EIGHTPIECE() {
-		b.DisabledMove = b.AlgebToMoveRaw(fenParts[6])
-	}
-}
-
 func (b *Board) Line() string {
 	buff := "Line : "
 
@@ -384,88 +309,8 @@ func (b *Board) Print() {
 	DEBUG = false*/
 }
 
-func (b *Board) Init(variant utils.VariantKey) {
-	// set variant
-	b.Variant = variant
-
-	// initialize rep to size required by variant
-	b.NumFiles = utils.NumFiles(variant)
-	b.LastFile = b.NumFiles - 1
-	b.NumRanks = utils.NumRanks(variant)
-	b.LastRank = b.NumRanks - 1
-
-	var rank int8
-	var file int8
-	for rank = 0; rank < b.NumRanks; rank++ {
-		for file = 0; file < b.NumFiles; file++ {
-			b.Pos.Rep[rank][file] = utils.NO_PIECE
-		}
-	}
-
-	// init move stack
-	b.MoveStack = make([]MoveStackItem, 0)
-
-	// init position
-	b.Pos.Init(b)
-}
-
 func (b *Board) HasSquare(sq utils.Square) bool {
 	return (sq.File >= 0) && (sq.File < b.NumFiles) && (sq.Rank >= 0) && (sq.Rank < b.NumRanks)
-}
-
-func (b *Board) ReportRawFen() string {
-	buff := ""
-	cumul := 0
-
-	var file int8
-	var rank int8
-	for rank = 0; rank < b.NumRanks; rank++ {
-		for file = 0; file < b.NumFiles; file++ {
-			p := b.PieceAtSquare(utils.Square{file, rank})
-
-			if p == utils.NO_PIECE {
-				cumul++
-			} else {
-				if cumul > 0 {
-					buff += string([]byte{"0"[0] + byte(cumul)})
-					cumul = 0
-				}
-
-				buff += p.ToString()
-			}
-		}
-
-		if cumul > 0 {
-			buff += string([]byte{"0"[0] + byte(cumul)})
-			cumul = 0
-		}
-
-		if rank < (b.NumRanks - 1) {
-			buff += "/"
-		}
-	}
-
-	return buff
-}
-
-func (b *Board) ReportFen() string {
-	buff := b.ReportRawFen()
-
-	buff += " " + b.Pos.Turn.ToString()
-
-	buff += " " + b.Pos.CastlingRights.ToString(b)
-
-	buff += " " + b.SquareToAlgeb(b.Pos.EpSquare)
-
-	buff += " " + fmt.Sprintf("%d", b.Pos.HalfmoveClock)
-
-	buff += " " + fmt.Sprintf("%d", b.Pos.FullmoveNumber)
-
-	if b.IS_EIGHTPIECE() {
-		buff += " " + b.MoveToAlgeb(b.DisabledMove)
-	}
-
-	return buff
 }
 
 func (b *Board) SquareToFileLetter(sq utils.Square) string {
@@ -670,10 +515,6 @@ func (b *Board) KingsAdjacent() bool {
 	return false
 }
 
-func (b *Board) Reset() {
-	b.SetFromFen(utils.StartFenForVariant(b.Variant))
-}
-
 func (b *Board) MovesSortedBySan(moves []utils.Move) utils.MoveBuff {
 	mb := make(utils.MoveBuff, 0)
 
@@ -689,35 +530,96 @@ func (b *Board) MovesSortedBySan(moves []utils.Move) utils.MoveBuff {
 	return mb
 }
 
-func (b *Board) CreatePromotionMoves(
-	fromsq utils.Square,
-	tosq utils.Square,
-	pawnCapture bool,
-	pawnPushByOne bool,
-	color utils.PieceColor,
-) []utils.Move {
-	promotionMoves := make([]utils.Move, 0)
-
-	promotionPieces, _ := utils.PROMOTION_PIECES[b.Variant]
-
-	for _, pp := range promotionPieces {
-		ppc := pp
-
-		ppc.Color = color
-
-		promotionMove := utils.Move{
-			FromSq:          fromsq,
-			ToSq:            tosq,
-			PawnCapture:     pawnCapture,
-			PawnPushByOne:   pawnPushByOne,
-			PromotionPiece:  ppc,
-			PromotionSquare: utils.NO_SQUARE,
-		}
-
-		promotionMoves = append(promotionMoves, promotionMove)
+func (b *Board) PromotionRank(color utils.PieceColor) int8 {
+	if color == utils.WHITE {
+		return 0
 	}
 
-	return promotionMoves
+	return 7
+}
+
+func (b *Board) CastlingRank(color utils.PieceColor) int8 {
+	if color == utils.WHITE {
+		return 7
+	}
+
+	return 0
+}
+
+func (b *Board) RookCastlingTargetSq(color utils.PieceColor, side utils.CastlingSide) utils.Square {
+	rank := b.CastlingRank(color)
+
+	var file int8 = 2
+
+	if side == utils.KING_SIDE {
+		file = 5
+	}
+
+	return utils.Square{file, rank}
+}
+
+func (b *Board) KingCastlingTargetSq(color utils.PieceColor, side utils.CastlingSide) utils.Square {
+	rank := b.CastlingRank(color)
+
+	var file int8 = 3
+
+	if side == utils.KING_SIDE {
+		file = 6
+	}
+
+	return utils.Square{file, rank}
+}
+
+func (b *Board) SquaresInDirection(origSq utils.Square, dir utils.PieceDirection) []utils.Square {
+	sqs := make([]utils.Square, 0)
+
+	currentSq := origSq.Add(dir)
+
+	for b.HasSquare(currentSq) {
+		sqs = append(sqs, currentSq)
+
+		currentSq = currentSq.Add(dir)
+	}
+
+	return sqs
+}
+
+func (b *Board) WhereIsKing(color utils.PieceColor) utils.Square {
+	var rank int8
+	var file int8
+	for rank = 0; rank < b.NumRanks; rank++ {
+		for file = 0; file < b.NumFiles; file++ {
+			p := b.Pos.Rep[rank][file]
+			if (p.Kind == utils.King) && (p.Color == color) {
+				return utils.Square{file, rank}
+			}
+		}
+	}
+
+	return utils.NO_SQUARE
+}
+
+func (b *Board) LineToString(line []utils.Move) string {
+	buff := []string{}
+
+	for _, move := range line {
+		buff = append(buff, b.MoveToAlgeb(move))
+	}
+
+	return strings.Join(buff, " ")
+}
+
+func (b *Board) Pop() {
+	l := len(b.MoveStack)
+	if l == 0 {
+		return
+	}
+
+	msi := b.MoveStack[l-1]
+
+	b.Pos = msi.Pos
+
+	b.MoveStack = b.MoveStack[:l-1]
 }
 
 func (b *Board) Push(move utils.Move, addSan bool) {
@@ -808,98 +710,6 @@ func (b *Board) Push(move utils.Move, addSan bool) {
 		move,
 		san,
 	})
-}
-
-func (b *Board) Pop() {
-	l := len(b.MoveStack)
-	if l == 0 {
-		return
-	}
-
-	msi := b.MoveStack[l-1]
-
-	b.Pos = msi.Pos
-
-	b.MoveStack = b.MoveStack[:l-1]
-}
-
-func (b *Board) PromotionRank(color utils.PieceColor) int8 {
-	if color == utils.WHITE {
-		return 0
-	}
-
-	return 7
-}
-
-func (b *Board) CastlingRank(color utils.PieceColor) int8 {
-	if color == utils.WHITE {
-		return 7
-	}
-
-	return 0
-}
-
-func (b *Board) RookCastlingTargetSq(color utils.PieceColor, side utils.CastlingSide) utils.Square {
-	rank := b.CastlingRank(color)
-
-	var file int8 = 2
-
-	if side == utils.KING_SIDE {
-		file = 5
-	}
-
-	return utils.Square{file, rank}
-}
-
-func (b *Board) KingCastlingTargetSq(color utils.PieceColor, side utils.CastlingSide) utils.Square {
-	rank := b.CastlingRank(color)
-
-	var file int8 = 3
-
-	if side == utils.KING_SIDE {
-		file = 6
-	}
-
-	return utils.Square{file, rank}
-}
-
-func (b *Board) SquaresInDirection(origSq utils.Square, dir utils.PieceDirection) []utils.Square {
-	sqs := make([]utils.Square, 0)
-
-	currentSq := origSq.Add(dir)
-
-	for b.HasSquare(currentSq) {
-		sqs = append(sqs, currentSq)
-
-		currentSq = currentSq.Add(dir)
-	}
-
-	return sqs
-}
-
-func (b *Board) WhereIsKing(color utils.PieceColor) utils.Square {
-	var rank int8
-	var file int8
-	for rank = 0; rank < b.NumRanks; rank++ {
-		for file = 0; file < b.NumFiles; file++ {
-			p := b.Pos.Rep[rank][file]
-			if (p.Kind == utils.King) && (p.Color == color) {
-				return utils.Square{file, rank}
-			}
-		}
-	}
-
-	return utils.NO_SQUARE
-}
-
-func (b *Board) LineToString(line []utils.Move) string {
-	buff := []string{}
-
-	for _, move := range line {
-		buff = append(buff, b.MoveToAlgeb(move))
-	}
-
-	return strings.Join(buff, " ")
 }
 
 /////////////////////////////////////////////////////////////////////

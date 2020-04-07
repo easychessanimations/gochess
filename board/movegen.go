@@ -10,6 +10,37 @@ import "github.com/easychessanimations/gochess/utils"
 /////////////////////////////////////////////////////////////////////
 // member functions
 
+func (b *Board) CreatePromotionMoves(
+	fromsq utils.Square,
+	tosq utils.Square,
+	pawnCapture bool,
+	pawnPushByOne bool,
+	color utils.PieceColor,
+) []utils.Move {
+	promotionMoves := make([]utils.Move, 0)
+
+	promotionPieces, _ := utils.PROMOTION_PIECES[b.Variant]
+
+	for _, pp := range promotionPieces {
+		ppc := pp
+
+		ppc.Color = color
+
+		promotionMove := utils.Move{
+			FromSq:          fromsq,
+			ToSq:            tosq,
+			PawnCapture:     pawnCapture,
+			PawnPushByOne:   pawnPushByOne,
+			PromotionPiece:  ppc,
+			PromotionSquare: utils.NO_SQUARE,
+		}
+
+		promotionMoves = append(promotionMoves, promotionMove)
+	}
+
+	return promotionMoves
+}
+
 func (b *Board) IsSquareAttackedByPiece(sq utils.Square, p utils.Piece) bool {
 	attacks := b.AttacksOnSquareByPiece(sq, p, STOP_AT_FIRST)
 
