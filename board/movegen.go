@@ -221,7 +221,7 @@ func (b *Board) PslmsForVectorPieceAtSquare(p utils.Piece, sq utils.Square) []ut
 	nudge := false
 
 	if p.Kind == utils.Lancer {
-		if (b.DisabledMove == NO_MOVE) || (!b.DisabledMove.FromSq.EqualTo(sq)) {
+		if (b.Pos.DisabledMove == NO_MOVE) || (!b.Pos.DisabledMove.FromSq.EqualTo(sq)) {
 			// lancer normally can only go in itw own direction
 			directions = []utils.PieceDirection{p.Direction}
 		} else {
@@ -275,6 +275,8 @@ func (b *Board) PslmsForVectorPieceAtSquare(p utils.Piece, sq utils.Square) []ut
 
 								pushes := utils.MoveList(b.PslmsForPieceAtSquare(topInv, currentSq))
 
+								// TODO: take care of pawn pushed to promotion square ( multiplies same move )
+
 								pushes = pushes.Filter(utils.NonPawnPushByTwo)
 
 								for _, pslm := range pushes {
@@ -325,6 +327,27 @@ func (b *Board) PslmsForVectorPieceAtSquare(p utils.Piece, sq utils.Square) []ut
 
 			currentSq = currentSq.Add(dir)
 		}
+	}
+
+	if b.IS_EIGHTPIECE() && (b.Pos.DisabledMove != NO_MOVE) {
+		filteredPslms := []utils.Move{}
+
+		for _, pslm := range pslms {
+			// move cannot be equal to disabled move
+			if !pslm.RoughlyEqualTo(b.Pos.DisabledMove) {
+				if p.Kind == utils.Knight {
+					// any other move by knight is ok
+					filteredPslms = append(filteredPslms, pslm)
+				} else {
+					// vector pieces can only move in directions other than sentry direction
+					if pslm.NormalizedDirection() != b.Pos.DisabledMove.NormalizedDirection() {
+						filteredPslms = append(filteredPslms, pslm)
+					}
+				}
+			}
+		}
+
+		pslms = filteredPslms
 	}
 
 	return pslms

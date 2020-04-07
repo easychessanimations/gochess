@@ -36,4 +36,46 @@ func (m *Move) EffectivePromotionSquare() Square {
 	return m.PromotionSquare
 }
 
+func (m *Move) NormalizedDirection() PieceDirection {
+	fileDiff := m.ToSq.File - m.FromSq.File
+	rankDiff := m.ToSq.Rank - m.FromSq.Rank
+
+	if fileDiff == 0 {
+		if rankDiff > 0 {
+			return PieceDirection{0, 1}
+		} else if rankDiff == 0 {
+			return PieceDirection{0, 0}
+		} else {
+			return PieceDirection{0, -1}
+		}
+	}
+
+	if rankDiff == 0 {
+		if fileDiff > 0 {
+			return PieceDirection{1, 0}
+		} else {
+			return PieceDirection{-1, 0}
+		}
+	}
+
+	// non diagonal direction cannot be normalized
+	if (fileDiff * fileDiff) != (rankDiff * rankDiff) {
+		return PieceDirection{0, 0}
+	}
+
+	if fileDiff > 0 {
+		if rankDiff > 0 {
+			return PieceDirection{1, 1}
+		} else {
+			return PieceDirection{1, -1}
+		}
+	} else {
+		if rankDiff > 0 {
+			return PieceDirection{-1, 1}
+		} else {
+			return PieceDirection{-1, -1}
+		}
+	}
+}
+
 /////////////////////////////////////////////////////////////////////

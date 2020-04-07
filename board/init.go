@@ -100,7 +100,7 @@ func (b *Board) SetFromFen(fen string) {
 	b.Pos.FullmoveNumber = int(fmn)
 
 	if b.IS_EIGHTPIECE() {
-		b.DisabledMove = b.AlgebToMoveRaw(fenParts[6])
+		b.Pos.DisabledMove = b.AlgebToMoveRaw(fenParts[6])
 	}
 }
 
@@ -169,7 +169,7 @@ func (b *Board) ReportFen() string {
 	buff += " " + fmt.Sprintf("%d", b.Pos.FullmoveNumber)
 
 	if b.IS_EIGHTPIECE() {
-		buff += " " + b.MoveToAlgeb(b.DisabledMove)
+		buff += " " + b.MoveToAlgeb(b.Pos.DisabledMove)
 	}
 
 	return buff

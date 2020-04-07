@@ -37,8 +37,6 @@ func (b *Board) Pop() {
 }
 
 func (b *Board) Push(move utils.Move, addSan bool) {
-	b.DisabledMove = NO_MOVE
-
 	san := "?"
 
 	if addSan {
@@ -46,6 +44,10 @@ func (b *Board) Push(move utils.Move, addSan bool) {
 	}
 
 	oldPos := b.Pos.Clone()
+
+	//////////////////////////////////////////////
+
+	b.Pos.DisabledMove = NO_MOVE
 
 	fromp := b.PieceAtSquare(move.FromSq)
 
@@ -67,7 +69,7 @@ func (b *Board) Push(move utils.Move, addSan bool) {
 			ToSq:   move.ToSq,
 		}
 
-		b.DisabledMove = disabledMove
+		b.Pos.DisabledMove = disabledMove
 	}
 
 	if move.EpCapture {

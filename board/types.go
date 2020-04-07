@@ -38,6 +38,7 @@ type Pos struct {
 	EpSquare       utils.Square
 	HalfmoveClock  int
 	FullmoveNumber int
+	DisabledMove   utils.Move
 }
 
 type MoveStackItem struct {
@@ -68,7 +69,6 @@ type Board struct {
 	GetUciOptionByNameWithDefaultFunc func(string, utils.UciOption) utils.UciOption
 	MultipvInfos                      MultipvInfos
 	ExcludedMoves                     []utils.Move
-	DisabledMove                      utils.Move
 }
 
 type AlphaBetaInfo struct {
