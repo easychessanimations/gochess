@@ -100,6 +100,7 @@ var UCI_COMMAND_ALIASES = map[string]string{
 	"vs": "setoption name UCI_Variant value seirawan\ni",
 	"ve": "setoption name UCI_Variant value eightpiece\ni",
 	"q":  "setoption name Quiescence Depth value 100",
+	"m":  "setoption name MultiPV value 5",
 }
 
 /////////////////////////////////////////////////////////////////////

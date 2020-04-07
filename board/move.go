@@ -26,4 +26,8 @@ func (m *Move) IsPromotion() bool {
 	return m.PromotionPiece != utils.NO_PIECE
 }
 
+func (m *Move) RoughlyEqualTo(testm Move) bool {
+	return m.FromSq.EqualTo(testm.FromSq) && m.ToSq.EqualTo(testm.ToSq)
+}
+
 /////////////////////////////////////////////////////////////////////

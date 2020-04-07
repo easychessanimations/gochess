@@ -16,9 +16,10 @@ import (
 /////////////////////////////////////////////////////////////////////
 // member functions
 
-func (mpvinfo *MultipvInfo) ToString() string {
+func (mpvinfo *MultipvInfo) ToString(multipv int) string {
 	return fmt.Sprintf(
-		"depth %d seldepth %d nodes %d time %.0f nps %.0f alphas %d betas %d score cp %d pv %s",
+		"multipv %d depth %d seldepth %d nodes %d time %.0f nps %.0f alphas %d betas %d score cp %d pv %s",
+		multipv,
 		mpvinfo.Depth,
 		mpvinfo.SelDepth,
 		mpvinfo.Nodes,
@@ -142,7 +143,15 @@ func (b *Board) AlphaBeta(info AlphaBetaInfo) (Move, int) {
 	for _, mebi := range meb {
 		plm := mebi.Move
 
-		if isNormalSearch || plm.IsCapture() {
+		isMoveExcluded := false
+
+		for _, em := range b.ExcludedMoves {
+			if (info.CurrentDepth == 0) && (plm == em) {
+				isMoveExcluded = true
+			}
+		}
+
+		if (isNormalSearch || plm.IsCapture()) && (!isMoveExcluded) {
 			b.Push(plm, !ADD_SAN)
 
 			if !b.IsInCheck(b.Pos.Turn.Inverse()) {
@@ -238,53 +247,85 @@ func (b *Board) Go(depth int) (Move, int) {
 		ValueInt: DEFAULT_MULTIPV,
 	})
 
-	b.Multipvs = make([]MultipvInfo, multipvUciOption.ValueInt)
+	maxMultipv := multipvUciOption.ValueInt
+
+	lms := b.LegalMovesForAllPieces()
+
+	llms := len(lms)
+
+	if llms < maxMultipv {
+		maxMultipv = llms
+		if maxMultipv <= 0 {
+			maxMultipv = 1
+		}
+		fmt.Printf("multipv adjusted to %d due to number of legal moves", maxMultipv)
+	}
+
+	b.MultipvInfos = make([]MultipvInfo, maxMultipv)
 
 	b.Log(fmt.Sprintf(
 		"go depth %d quiescence depth %d multipv %d",
 		depth,
 		quiescenceDepthUciOption.ValueInt,
-		multipvUciOption.ValueInt,
+		maxMultipv,
 	))
 
 	for iterDepth := 1; iterDepth <= depth; iterDepth++ {
-		b.SelDepth = 0
+		b.ExcludedMoves = []Move{}
 
-		alphaBetaInfo := AlphaBetaInfo{
-			Alpha:           -INFINITE_SCORE,
-			Beta:            INFINITE_SCORE,
-			Depth:           iterDepth,
-			QuiescenceDepth: quiescenceDepthUciOption.ValueInt,
-			CurrentDepth:    0,
+		for multipv := 1; multipv <= maxMultipv; multipv++ {
+			b.SelDepth = 0
+
+			alphaBetaInfo := AlphaBetaInfo{
+				Alpha:           -INFINITE_SCORE,
+				Beta:            INFINITE_SCORE,
+				Depth:           iterDepth,
+				QuiescenceDepth: quiescenceDepthUciOption.ValueInt,
+				CurrentDepth:    0,
+			}
+
+			bm, score = b.AlphaBeta(alphaBetaInfo)
+
+			if !b.Searching {
+				break
+			}
+
+			nps, elapsed := b.GetNps()
+
+			bestPv, pvMoves = b.GetPv(iterDepth)
+
+			mpvinfo := MultipvInfo{
+				Depth:    iterDepth,
+				SelDepth: b.SelDepth,
+				Nodes:    b.Nodes,
+				Time:     elapsed,
+				Nps:      nps,
+				Alphas:   b.Alphas,
+				Betas:    b.Betas,
+				Score:    score,
+				Pv:       bestPv,
+				PvMoves:  pvMoves,
+			}
+
+			b.MultipvInfos[multipv-1] = mpvinfo
+
+			b.ExcludedMoves = append(b.ExcludedMoves, pvMoves[0])
 		}
 
-		bm, score = b.AlphaBeta(alphaBetaInfo)
+		sort.Sort(b.MultipvInfos)
+
+		for multipv := 1; multipv <= maxMultipv; multipv++ {
+			b.LogAnalysisInfo(b.MultipvInfos[multipv-1].ToString(multipv))
+		}
 
 		if !b.Searching {
 			break
 		}
-
-		nps, elapsed := b.GetNps()
-
-		bestPv, pvMoves = b.GetPv(iterDepth)
-
-		mpvinfo := MultipvInfo{
-			Depth:    iterDepth,
-			SelDepth: b.SelDepth,
-			Nodes:    b.Nodes,
-			Time:     elapsed,
-			Nps:      nps,
-			Alphas:   b.Alphas,
-			Betas:    b.Betas,
-			Score:    score,
-			Pv:       bestPv,
-			PvMoves:  pvMoves,
-		}
-
-		fmt.Println(mpvinfo.ToString())
 	}
 
-	bestPvParts := strings.Split(bestPv, " ")
+	bestMultipv := b.MultipvInfos[0]
+
+	bestPvParts := strings.Split(bestMultipv.Pv, " ")
 
 	if len(bestPvParts) > 1 {
 		fmt.Println(fmt.Sprintf("bestmove %s ponder %s", bestPvParts[0], bestPvParts[1]))
@@ -296,8 +337,8 @@ func (b *Board) Go(depth int) (Move, int) {
 
 	b.Searching = false
 
-	if len(pvMoves) > 0 {
-		return pvMoves[0], score
+	if len(bestMultipv.PvMoves) > 0 {
+		return bestMultipv.PvMoves[0], score
 	}
 
 	return bm, score

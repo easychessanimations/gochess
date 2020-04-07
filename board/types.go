@@ -66,7 +66,8 @@ type Board struct {
 	PositionHash                      PositionHash
 	TestBoard                         *Board
 	GetUciOptionByNameWithDefaultFunc func(string, utils.UciOption) utils.UciOption
-	Multipvs                          []MultipvInfo
+	MultipvInfos                      MultipvInfos
+	ExcludedMoves                     []Move
 }
 
 type Move struct {
@@ -153,6 +154,21 @@ type MultipvInfo struct {
 	Score    int
 	Pv       string
 	PvMoves  []Move
+}
+
+type MultipvInfos []MultipvInfo
+
+func (mpi MultipvInfos) Len() int {
+	return len(mpi)
+}
+func (mpi MultipvInfos) Swap(i, j int) {
+	mpi[i], mpi[j] = mpi[j], mpi[i]
+}
+func (mpi MultipvInfos) Less(i, j int) bool {
+	if mpi[i].Depth > mpi[j].Depth {
+		return true
+	}
+	return mpi[i].Score > mpi[j].Score
 }
 
 /////////////////////////////////////////////////////////////////////
