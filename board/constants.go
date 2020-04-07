@@ -56,6 +56,8 @@ const SEARCH_MAX_DEPTH = 100
 const DEFAULT_QUIESCENCE_DEPTH = 0
 const DEFAULT_UCI_VARIANT_STRING = "standard"
 const DEFAULT_SEARCH_DEPTH = 10
+const MAX_MULTIPV = 500
+const DEFAULT_MULTIPV = 1
 
 var UCI_OPTIONS = []utils.UciOption{
 	{
@@ -71,6 +73,15 @@ var UCI_OPTIONS = []utils.UciOption{
 			"eightpiece",
 		},
 		DefaultBool: true,
+	},
+	{
+		Kind:       "spin",
+		Name:       "MultiPV",
+		ValueKind:  "int",
+		MinInt:     0,
+		MaxInt:     MAX_MULTIPV,
+		DefaultInt: DEFAULT_MULTIPV,
+		ValueInt:   DEFAULT_MULTIPV,
 	},
 	{
 		Kind:       "spin",

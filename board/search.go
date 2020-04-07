@@ -16,6 +16,21 @@ import (
 /////////////////////////////////////////////////////////////////////
 // member functions
 
+func (mpvinfo *MultipvInfo) ToString() string {
+	return fmt.Sprintf(
+		"depth %d seldepth %d nodes %d time %.0f nps %.0f alphas %d betas %d score cp %d pv %s",
+		mpvinfo.Depth,
+		mpvinfo.SelDepth,
+		mpvinfo.Nodes,
+		mpvinfo.Time,
+		mpvinfo.Nps,
+		mpvinfo.Alphas,
+		mpvinfo.Betas,
+		mpvinfo.Score,
+		mpvinfo.Pv,
+	)
+}
+
 func (b *Board) CreateMoveEvalBuff(moves []Move) MoveEvalBuff {
 	meb := MoveEvalBuff{}
 
@@ -219,7 +234,18 @@ func (b *Board) Go(depth int) (Move, int) {
 		ValueInt: 0,
 	})
 
-	b.Log(fmt.Sprintf("go depth %d quiescence depth %d", depth, quiescenceDepthUciOption.ValueInt))
+	multipvUciOption := b.GetUciOptionByNameWithDefault("MultiPV", utils.UciOption{
+		ValueInt: DEFAULT_MULTIPV,
+	})
+
+	b.Multipvs = make([]MultipvInfo, multipvUciOption.ValueInt)
+
+	b.Log(fmt.Sprintf(
+		"go depth %d quiescence depth %d multipv %d",
+		depth,
+		quiescenceDepthUciOption.ValueInt,
+		multipvUciOption.ValueInt,
+	))
 
 	for iterDepth := 1; iterDepth <= depth; iterDepth++ {
 		b.SelDepth = 0
@@ -242,18 +268,20 @@ func (b *Board) Go(depth int) (Move, int) {
 
 		bestPv, pvMoves = b.GetPv(iterDepth)
 
-		b.LogAnalysisInfo(fmt.Sprintf(
-			"depth %d seldepth %d nodes %d time %.0f nps %.0f alphas %d betas %d score cp %d pv %s",
-			iterDepth,
-			b.SelDepth,
-			b.Nodes,
-			elapsed,
-			nps,
-			b.Alphas,
-			b.Betas,
-			score,
-			bestPv,
-		))
+		mpvinfo := MultipvInfo{
+			Depth:    iterDepth,
+			SelDepth: b.SelDepth,
+			Nodes:    b.Nodes,
+			Time:     elapsed,
+			Nps:      nps,
+			Alphas:   b.Alphas,
+			Betas:    b.Betas,
+			Score:    score,
+			Pv:       bestPv,
+			PvMoves:  pvMoves,
+		}
+
+		fmt.Println(mpvinfo.ToString())
 	}
 
 	bestPvParts := strings.Split(bestPv, " ")

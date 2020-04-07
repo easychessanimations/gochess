@@ -66,6 +66,7 @@ type Board struct {
 	PositionHash                      PositionHash
 	TestBoard                         *Board
 	GetUciOptionByNameWithDefaultFunc func(string, utils.UciOption) utils.UciOption
+	Multipvs                          []MultipvInfo
 }
 
 type Move struct {
@@ -139,6 +140,19 @@ type PositionEntry struct {
 
 type PositionHash struct {
 	PositionEntries map[Pos]PositionEntry
+}
+
+type MultipvInfo struct {
+	Depth    int
+	SelDepth int
+	Nodes    int
+	Time     float32
+	Nps      float32
+	Alphas   int
+	Betas    int
+	Score    int
+	Pv       string
+	PvMoves  []Move
 }
 
 /////////////////////////////////////////////////////////////////////
