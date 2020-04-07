@@ -19,6 +19,35 @@ import (
 /////////////////////////////////////////////////////////////////////
 // member functions
 
+func (b *Board) IS_ATOMIC() bool {
+	return b.Variant == utils.VARIANT_ATOMIC
+}
+
+func (b *Board) IsExploded(color utils.PieceColor) bool {
+	wk := b.WhereIsKing(color)
+
+	return wk == utils.NO_SQUARE
+}
+
+func (b *Board) AdjacentSquares(sq utils.Square) []utils.Square {
+	asqs := []utils.Square{}
+
+	var df int8
+	var dr int8
+	for df = -1; df <= 1; df++ {
+		for dr = -1; dr <= 1; dr++ {
+			if (df != 0) || (dr != 0) {
+				testsq := sq.Add(utils.PieceDirection{df, dr})
+				if b.HasSquare(testsq) {
+					asqs = append(asqs, testsq)
+				}
+			}
+		}
+	}
+
+	return asqs
+}
+
 func (b *Board) GetUciOptionByNameWithDefault(name string, uciOption utils.UciOption) utils.UciOption {
 	if b.GetUciOptionByNameWithDefaultFunc != nil {
 		return b.GetUciOptionByNameWithDefaultFunc(name, uciOption)
@@ -662,12 +691,43 @@ func (b *Board) IsSquareAttackedByColor(sq utils.Square, color utils.PieceColor)
 	return false
 }
 
+func (b *Board) KingsAdjacent() bool {
+	wk := b.WhereIsKing(utils.WHITE)
+
+	if wk == utils.NO_SQUARE {
+		return false
+	}
+
+	testk := utils.Piece{Kind: utils.King, Color: utils.BLACK}
+
+	for _, sq := range b.AdjacentSquares(wk) {
+		testp := b.PieceAtSquare(sq)
+		if testp.KindColorEqualTo(testk) {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (b *Board) IsInCheck(color utils.PieceColor) bool {
 	wk := b.WhereIsKing(color)
 
 	if wk == utils.NO_SQUARE {
 		// missing king is considered check
 		return true
+	}
+
+	if b.IS_ATOMIC() {
+		if b.IsExploded(color.Inverse()) {
+			// no check if opponent king exploded but our king not
+			return false
+		}
+
+		if b.KingsAdjacent() {
+			// no check when kings adjacent
+			return false
+		}
 	}
 
 	return b.IsSquareAttackedByColor(wk, color.Inverse())
@@ -890,6 +950,14 @@ func (b *Board) Push(move Move, addSan bool) {
 
 	b.SetPieceAtSquare(move.FromSq, utils.NO_PIECE)
 
+	if move.IsPromotion() {
+		b.SetPieceAtSquare(move.ToSq, move.PromotionPiece)
+	}
+
+	if move.EpCapture {
+		b.SetPieceAtSquare(move.EpClearSquare, utils.NO_PIECE)
+	}
+
 	if move.Castling {
 		b.SetPieceAtSquare(move.ToSq, utils.NO_PIECE)
 		kctsq := b.KingCastlingTargetSq(b.Pos.Turn, move.CastlingSide)
@@ -898,6 +966,21 @@ func (b *Board) Push(move Move, addSan bool) {
 		b.SetPieceAtSquare(rctsq, move.RookOrigPiece)
 	} else {
 		b.SetPieceAtSquare(move.ToSq, fromp)
+	}
+
+	if b.IS_ATOMIC() {
+		if move.IsCapture() {
+			// atomic explosion
+			b.SetPieceAtSquare(move.ToSq, utils.NO_PIECE)
+
+			for _, sq := range b.AdjacentSquares(move.ToSq) {
+				p := b.PieceAtSquare(sq)
+
+				if p.Kind != utils.Pawn {
+					b.SetPieceAtSquare(sq, utils.NO_PIECE)
+				}
+			}
+		}
 	}
 
 	var side CastlingSide
@@ -919,14 +1002,6 @@ func (b *Board) Push(move Move, addSan bool) {
 
 	if move.PawnPushByTwo {
 		b.Pos.EpSquare = move.EpSquare
-	}
-
-	if move.EpCapture {
-		b.SetPieceAtSquare(move.EpClearSquare, utils.NO_PIECE)
-	}
-
-	if move.IsPromotion() {
-		b.SetPieceAtSquare(move.ToSq, move.PromotionPiece)
 	}
 
 	if move.ShouldDeleteHalfmoveClock() {
@@ -1152,6 +1227,10 @@ func (b *Board) Material(color utils.PieceColor) (int, int, int) {
 	pslms := b.PslmsForAllPiecesOfColor(color)
 
 	mobility += MOBILITY_BONUS * len(pslms)
+
+	if b.IsExploded(color) {
+		material -= (MATE_SCORE / 2)
+	}
 
 	return material, materialBonus, mobility
 }
