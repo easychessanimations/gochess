@@ -275,9 +275,9 @@ func (b *Board) PslmsForVectorPieceAtSquare(p utils.Piece, sq utils.Square) []ut
 
 								pushes := utils.MoveList(b.PslmsForPieceAtSquare(topInv, currentSq))
 
-								// TODO: take care of pawn pushed to promotion square ( multiplies same move )
-
 								pushes = pushes.Filter(utils.NonPawnPushByTwo)
+
+								alreadyAdded := map[utils.Move]bool{}
 
 								for _, pslm := range pushes {
 									move := utils.Move{
@@ -288,7 +288,13 @@ func (b *Board) PslmsForVectorPieceAtSquare(p utils.Piece, sq utils.Square) []ut
 										PromotionSquare: pslm.ToSq,
 									}
 
-									pslms = append(pslms, move)
+									_, found := alreadyAdded[move]
+
+									if !found {
+										pslms = append(pslms, move)
+
+										alreadyAdded[move] = true
+									}
 								}
 							}
 						}
