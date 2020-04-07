@@ -77,7 +77,7 @@ func (b *Board) IsSquareJailedForColor(sq utils.Square, color utils.PieceColor) 
 	for _, rasq := range rasqs {
 		p := b.PieceAtSquare(rasq)
 
-		if (p.Kind == utils.Jailer) && (p.Color == color) {
+		if (p.Kind == utils.Jailer) && (p.Color == color.Inverse()) {
 			return true
 		}
 	}
@@ -950,12 +950,32 @@ func (b *Board) PslmsForPawnAtSquare(p utils.Piece, sq utils.Square) []Move {
 	return pslms
 }
 
-func (b *Board) PslmsForPieceAtSquare(p utils.Piece, sq utils.Square) []Move {
+func (b *Board) PslmsForPieceAtSquareInner(p utils.Piece, sq utils.Square) []Move {
 	if p.Kind == utils.Pawn {
 		return b.PslmsForPawnAtSquare(p, sq)
 	}
 
 	return b.PslmsForVectorPieceAtSquare(p, sq)
+}
+
+func (b *Board) PslmsForPieceAtSquare(p utils.Piece, sq utils.Square) []Move {
+	if b.IsSquareJailedForColor(sq, p.Color) {
+		// jailed pieces have no pseudo legal moves
+		if p.Kind == utils.King {
+			// except for king which can pass
+			passMove := Move{
+				FromSq:  sq,
+				ToSq:    sq,
+				Capture: true,
+			}
+
+			return []Move{passMove}
+		}
+
+		return []Move{}
+	}
+
+	return b.PslmsForPieceAtSquareInner(p, sq)
 }
 
 func (b *Board) PslmsForAllPiecesOfColor(color utils.PieceColor) []Move {
