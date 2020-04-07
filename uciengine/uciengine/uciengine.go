@@ -169,7 +169,7 @@ func (eng *UciEngine) Position(args []string) {
 			if i >= (len(args) - 1) {
 				return
 			} else {
-				args = args[i+1:]
+				args = args[i:]
 			}
 		} else {
 			fmt.Println("no fen specified in fen argument")
