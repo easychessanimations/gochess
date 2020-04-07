@@ -37,6 +37,8 @@ func (b *Board) Pop() {
 }
 
 func (b *Board) Push(move utils.Move, addSan bool) {
+	b.DisabledMove = NO_MOVE
+
 	san := "?"
 
 	if addSan {
