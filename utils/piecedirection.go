@@ -18,4 +18,8 @@ func (pd PieceDirection) ToString() string {
 	return ""
 }
 
+func (pd *PieceDirection) EqualTo(testpd PieceDirection) bool {
+	return (pd.File == testpd.File) && (pd.Rank == testpd.Rank)
+}
+
 /////////////////////////////////////////////////////////////////////

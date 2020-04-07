@@ -84,7 +84,7 @@ var START_FENS = map[VariantKey]string{
 	VARIANT_STANDARD:   STANDARD_START_FEN,
 	VARIANT_ATOMIC:     "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
 	VARIANT_SEIRAWAN:   "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR[EHeh] w KQBCDFGkqbcdfg - 0 1",
-	VARIANT_EIGHTPIECE: "jlsesqkbnr/pppppppp/8/8/8/8/PPPPPPPP/JLneSQKBNR w KQkq - 0 1",
+	VARIANT_EIGHTPIECE: "jlsesqkbnr/pppppppp/8/8/8/8/PPPPPPPP/JLneSQKBNR w KQkq - 0 1 -",
 }
 
 var VARIANT_KEY_STRING_TO_VARIANT_KEY = map[string]VariantKey{
@@ -142,6 +142,17 @@ var PROMOTION_PIECES = map[VariantKey][]Piece{
 
 var NO_PIECE = Piece{Kind: NO_PIECE_KIND}
 var NO_SQUARE = Square{-1, -1}
+
+var LANCER_DIRECTIONS = []PieceDirection{
+	PieceDirection{1, 0},
+	PieceDirection{-1, 0},
+	PieceDirection{0, 1},
+	PieceDirection{0, -1},
+	PieceDirection{1, 1},
+	PieceDirection{1, -1},
+	PieceDirection{-1, 1},
+	PieceDirection{-1, -1},
+}
 
 var PIECE_KIND_TO_PIECE_DESCRIPTOR = map[PieceKind]PieceDescriptor{
 	Knight: PieceDescriptor{
@@ -234,18 +245,9 @@ var PIECE_KIND_TO_PIECE_DESCRIPTOR = map[PieceKind]PieceDescriptor{
 		CanCapture:          false,
 	},
 	Lancer: PieceDescriptor{
-		Directions: []PieceDirection{
-			PieceDirection{1, 0},
-			PieceDirection{-1, 0},
-			PieceDirection{0, 1},
-			PieceDirection{0, -1},
-			PieceDirection{1, 1},
-			PieceDirection{1, -1},
-			PieceDirection{-1, 1},
-			PieceDirection{-1, -1},
-		},
+		Directions:          LANCER_DIRECTIONS,
 		Sliding:             true,
-		CanJumpOverOwnPiece: false,
+		CanJumpOverOwnPiece: true,
 		CanCapture:          true,
 	},
 }

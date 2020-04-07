@@ -68,6 +68,7 @@ type Board struct {
 	GetUciOptionByNameWithDefaultFunc func(string, utils.UciOption) utils.UciOption
 	MultipvInfos                      MultipvInfos
 	ExcludedMoves                     []Move
+	DisabledMove                      Move
 }
 
 type Move struct {

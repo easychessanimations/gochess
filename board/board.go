@@ -23,6 +23,10 @@ func (b *Board) IS_ATOMIC() bool {
 	return b.Variant == utils.VARIANT_ATOMIC
 }
 
+func (b *Board) IS_EIGHTPIECE() bool {
+	return b.Variant == utils.VARIANT_EIGHTPIECE
+}
+
 func (b *Board) IsExploded(color utils.PieceColor) bool {
 	wk := b.WhereIsKing(color)
 
@@ -46,6 +50,39 @@ func (b *Board) AdjacentSquares(sq utils.Square) []utils.Square {
 	}
 
 	return asqs
+}
+
+func (b *Board) RookAdjacentSquares(sq utils.Square) []utils.Square {
+	rasqs := []utils.Square{}
+
+	var df int8
+	var dr int8
+	for df = -1; df <= 1; df++ {
+		for dr = -1; dr <= 1; dr++ {
+			if (df*df + dr*dr) == 1 {
+				testsq := sq.Add(utils.PieceDirection{df, dr})
+				if b.HasSquare(testsq) {
+					rasqs = append(rasqs, testsq)
+				}
+			}
+		}
+	}
+
+	return rasqs
+}
+
+func (b *Board) IsSquareJailedForColor(sq utils.Square, color utils.PieceColor) bool {
+	rasqs := b.RookAdjacentSquares(sq)
+
+	for _, rasq := range rasqs {
+		p := b.PieceAtSquare(rasq)
+
+		if (p.Kind == utils.Jailer) && (p.Color == color) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (b *Board) GetUciOptionByNameWithDefault(name string, uciOption utils.UciOption) utils.UciOption {
@@ -143,6 +180,10 @@ func (b *Board) SetFromFen(fen string) {
 	fmn, _ := strconv.ParseInt(fenParts[5], 10, 32)
 
 	b.Pos.FullmoveNumber = int(fmn)
+
+	if b.IS_EIGHTPIECE() {
+		b.DisabledMove = b.AlgebToMoveRaw(fenParts[6])
+	}
 }
 
 func (b *Board) Line() string {
@@ -174,6 +215,22 @@ func (b *Board) ReportMaterial() string {
 	return buff
 }
 
+func (b *Board) AlgebToMoveRaw(algeb string) Move {
+	if algeb == "-" {
+		return NO_MOVE
+	}
+
+	fromsq := b.SquareFromAlgeb(algeb[0:2])
+	tosq := b.SquareFromAlgeb(algeb[2:4])
+
+	move := Move{
+		FromSq: fromsq,
+		ToSq:   tosq,
+	}
+
+	return move
+}
+
 func (b *Board) AlgebToMove(algeb string) Move {
 	lms := b.LegalMovesForAllPieces()
 
@@ -203,6 +260,8 @@ func (b *Board) ExecCommand(command string) bool {
 		move := b.SortedSanMoveBuff[i-1].Move
 
 		b.Push(move, ADD_SAN)
+
+		b.Print()
 
 		return true
 	} else {
@@ -390,6 +449,10 @@ func (b *Board) ReportFen() string {
 
 	buff += " " + fmt.Sprintf("%d", b.Pos.FullmoveNumber)
 
+	if b.IS_EIGHTPIECE() {
+		buff += " " + b.MoveToAlgeb(b.DisabledMove)
+	}
+
 	return buff
 }
 
@@ -417,6 +480,10 @@ func (b *Board) SquareFromAlgeb(algeb string) utils.Square {
 }
 
 func (b *Board) MoveToAlgeb(move Move) string {
+	if move == NO_MOVE {
+		return "-"
+	}
+
 	return b.SquareToAlgeb(move.FromSq) + b.SquareToAlgeb(move.ToSq)
 }
 
@@ -507,6 +574,28 @@ func (b *Board) MoveToSan(move Move) string {
 	return buff + checkStr
 }
 
+func (b *Board) LancerMovesToSquare(lancer utils.Piece, fromSq utils.Square, toSq utils.Square, nudge bool) []Move {
+	lms := []Move{}
+
+	for _, ld := range utils.LANCER_DIRECTIONS {
+		if (!nudge) || ld.EqualTo(lancer.Direction) {
+			move := Move{
+				FromSq: fromSq,
+				ToSq:   toSq,
+				PromotionPiece: utils.Piece{
+					Kind:      utils.Lancer,
+					Color:     lancer.Color,
+					Direction: ld,
+				},
+			}
+
+			lms = append(lms, move)
+		}
+	}
+
+	return lms
+}
+
 func (b *Board) PslmsForVectorPieceAtSquare(p utils.Piece, sq utils.Square) []Move {
 	pslms := make([]Move, 0)
 
@@ -518,7 +607,21 @@ func (b *Board) PslmsForVectorPieceAtSquare(p utils.Piece, sq utils.Square) []Mo
 
 	currentSq := sq
 
-	for _, dir := range pdesc.Directions {
+	directions := pdesc.Directions
+
+	nudge := false
+
+	if p.Kind == utils.Lancer {
+		if (b.DisabledMove == NO_MOVE) || (!b.DisabledMove.FromSq.EqualTo(sq)) {
+			// lancer normally can only go in itw own direction
+			directions = []utils.PieceDirection{p.Direction}
+		} else {
+			// nudged lancer
+			nudge = true
+		}
+	}
+
+	for _, dir := range directions {
 		ok := true
 
 		currentSq = sq.Add(dir)
@@ -537,6 +640,11 @@ func (b *Board) PslmsForVectorPieceAtSquare(p utils.Piece, sq utils.Square) []Mo
 					if top.Color == p.Color {
 						// cannot capture own piece
 						add = false
+
+						if pdesc.CanJumpOverOwnPiece {
+							// for pieces that can jump over their own piece just skip this move
+							capture = false
+						}
 					}
 				}
 
@@ -560,7 +668,11 @@ func (b *Board) PslmsForVectorPieceAtSquare(p utils.Piece, sq utils.Square) []Mo
 				}
 
 				if add {
-					pslms = append(pslms, pslm)
+					if p.Kind == utils.Lancer {
+						pslms = append(pslms, b.LancerMovesToSquare(p, sq, currentSq, nudge)...)
+					} else {
+						pslms = append(pslms, pslm)
+					}
 				}
 			} else {
 				ok = false
