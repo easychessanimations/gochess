@@ -5,8 +5,10 @@ package board
 
 import (
 	"fmt"
+	"math/rand"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/easychessanimations/gochess/utils"
 )
@@ -15,6 +17,131 @@ import (
 
 /////////////////////////////////////////////////////////////////////
 // member functions
+
+func (b *Board) Material(color utils.PieceColor) (int, int, int) {
+	material := 0
+	materialBonus := 0
+	mobility := 0
+
+	var rank int8
+	var file int8
+	for rank = 0; rank < b.NumRanks; rank++ {
+		for file = 0; file < b.NumFiles; file++ {
+			p := b.PieceAtSquare(utils.Square{file, rank})
+			if (p.Color == color) && (p != utils.NO_PIECE) {
+				material += PIECE_VALUES[p.Kind]
+
+				if p.Kind == utils.Pawn {
+					if (rank >= 3) && (rank <= 4) {
+						if (file >= 3) && (file <= 4) {
+							materialBonus += CENTER_PAWN_BONUS
+						}
+					}
+				}
+
+				if p.Kind == utils.Knight {
+					if (rank <= 1) || (rank >= 6) {
+						materialBonus -= KNIGHT_ON_EDGE_DEDUCTION
+					}
+					if (file <= 1) || (file >= 6) {
+						materialBonus -= KNIGHT_ON_EDGE_DEDUCTION
+					}
+					if (rank <= 0) || (rank >= 7) {
+						materialBonus -= KNIGHT_CLOSE_TO_EDGE_DEDUCTION
+					}
+					if (file <= 0) || (file >= 7) {
+						materialBonus -= KNIGHT_CLOSE_TO_EDGE_DEDUCTION
+					}
+				}
+			}
+		}
+	}
+
+	pslms := b.PslmsForAllPiecesOfColor(color)
+
+	mobility += MOBILITY_BONUS * len(pslms)
+
+	if b.IsExploded(color) {
+		material -= (MATE_SCORE / 2)
+	}
+
+	return material, materialBonus, mobility
+}
+
+func (b *Board) MaterialBalance() int {
+	materialWhite, materialBonusWhite, mobilityWhite := b.Material(utils.WHITE)
+	materialBlack, materialBonusBlack, mobilityBlack := b.Material(utils.BLACK)
+	return materialWhite + materialBonusWhite + mobilityWhite - (materialBlack + materialBonusBlack + mobilityBlack)
+}
+
+func (b *Board) Eval() int {
+	return b.MaterialBalance() + rand.Intn(RANDOM_BONUS)
+}
+
+func (b *Board) EvalForColor(color utils.PieceColor) int {
+	eval := b.Eval()
+
+	if color == utils.WHITE {
+		return eval
+	}
+
+	return -eval
+}
+
+func (b *Board) EvalForTurn() int {
+	return b.EvalForColor(b.Pos.Turn)
+	//return rand.Intn(RANDOM_BONUS)
+}
+
+func (b *Board) StartPerf() {
+	b.Nodes = 0
+	b.Alphas = 0
+	b.Betas = 0
+
+	b.Searching = true
+
+	b.Start = time.Now()
+}
+
+func (b *Board) GetNps() (float32, float32) {
+	elapsed := float32(time.Now().Sub(b.Start)) / float32(1e9)
+
+	nps := float32(b.Nodes) / float32(elapsed)
+
+	return nps, elapsed
+}
+
+func (b *Board) StopPerf() {
+	nps, elapsed := b.GetNps()
+
+	b.Log(fmt.Sprintf("perf elapsed %.2f nodes %d nps %.0f", elapsed, b.Nodes, nps))
+}
+
+func (b *Board) PerfRecursive(depth int, maxDepth int) {
+	b.Nodes++
+
+	if depth > maxDepth {
+		return
+	}
+
+	lms := b.LegalMovesForAllPieces()
+
+	for _, lm := range lms {
+		b.Push(lm, !ADD_SAN)
+		b.PerfRecursive(depth+1, maxDepth)
+		b.Pop()
+	}
+}
+
+func (b *Board) Perf(maxDepth int) {
+	b.StartPerf()
+
+	b.Log(fmt.Sprintf("perf up to depth %d", maxDepth))
+
+	b.PerfRecursive(0, maxDepth)
+
+	b.StopPerf()
+}
 
 func (mpvinfo *MultipvInfo) ToString(multipv int) string {
 	return fmt.Sprintf(
