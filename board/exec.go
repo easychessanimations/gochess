@@ -59,6 +59,15 @@ func (b *Board) Push(move utils.Move, addSan bool) {
 		b.SetPieceAtSquare(move.EffectivePromotionSquare(), move.PromotionPiece)
 	}
 
+	if move.SentryPush {
+		disabledMove := utils.Move{
+			FromSq: move.PromotionSquare,
+			ToSq:   move.ToSq,
+		}
+
+		b.DisabledMove = disabledMove
+	}
+
 	if move.EpCapture {
 		b.SetPieceAtSquare(move.EpClearSquare, utils.NO_PIECE)
 	}
