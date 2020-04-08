@@ -69,7 +69,7 @@ func (b *Board) MoveToAlgeb(move utils.Move) string {
 	buff := b.SquareToAlgeb(move.FromSq) + b.SquareToAlgeb(move.ToSq)
 
 	if move.PromotionPiece != utils.NO_PIECE {
-		buff += move.PromotionPiece.LetterLower()
+		buff += move.PromotionPiece.ToStringLower()
 
 		if move.PromotionSquare != utils.NO_SQUARE {
 			buff += "@" + b.SquareToAlgeb(move.PromotionSquare)
