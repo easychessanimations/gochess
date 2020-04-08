@@ -14,3 +14,5 @@ jlsesqkbnr/ppp1pppp/8/3p1Lw2/3P4/8/PPP1PPPP/J1SQKBNR b KQkq - 0 2 -
 jlse1qkbnr/ppp1pppp/8/3p1s2/6Lse1/8/PPPPPPPP/1JSQKBNR w Kkq - 0 3 g4f5
 castle with jailer
 j1sqkbnr/1p2pppp/p1p3Lne1/3p4/3P4/3Q2lse1/jPPSPPPP/J3KBNR w KQkq - 0 5 -
+pawn push by two only on pawn base rank
+jlsesqkbnr/ppp2ppp/8/3pp3/8/5N1P/PPPPPPP1/JLneSQKB1R w KQkq - 0 3 -

@@ -235,6 +235,14 @@ func (b *Board) PawnRankDir(color utils.PieceColor) int8 {
 	return rankDir
 }
 
+func (b *Board) PawnBaseRank(color utils.PieceColor) int8 {
+	if color == utils.WHITE {
+		return 1
+	}
+
+	return 6
+}
+
 func (b *Board) PromotionRank(color utils.PieceColor) int8 {
 	if color == utils.WHITE {
 		return 0

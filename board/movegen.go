@@ -424,7 +424,7 @@ func (b *Board) PslmsForPawnAtSquare(p utils.Piece, sq utils.Square) []utils.Mov
 
 			pushTwoSq := pushOneSq.Add(utils.PieceDirection{0, rankDir})
 
-			if b.HasSquare(pushTwoSq) {
+			if b.HasSquare(pushTwoSq) && sq.Rank == b.PawnBaseRank(p.Color) {
 				if b.IsSquareEmpty(pushTwoSq) {
 					epsq := utils.NO_SQUARE
 
