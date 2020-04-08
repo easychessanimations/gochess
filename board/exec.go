@@ -59,10 +59,6 @@ func (b *Board) Push(move utils.Move, addSan bool) {
 
 	b.SetPieceAtSquare(move.FromSq, utils.NO_PIECE)
 
-	if move.IsPromotion() {
-		b.SetPieceAtSquare(move.EffectivePromotionSquare(), move.PromotionPiece)
-	}
-
 	if move.SentryPush {
 		disabledMove := utils.Move{
 			FromSq: move.PromotionSquare,
@@ -84,6 +80,10 @@ func (b *Board) Push(move utils.Move, addSan bool) {
 		b.SetPieceAtSquare(rctsq, move.RookOrigPiece)
 	} else {
 		b.SetPieceAtSquare(move.ToSq, fromp)
+	}
+
+	if move.IsPromotion() {
+		b.SetPieceAtSquare(move.EffectivePromotionSquare(), move.PromotionPiece)
 	}
 
 	if b.IS_ATOMIC() {

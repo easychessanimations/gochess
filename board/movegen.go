@@ -114,6 +114,74 @@ func (b *Board) AttacksOnSquareBySentry(sq utils.Square, color utils.PieceColor,
 	return attacks
 }
 
+func (b *Board) AttacksOnSquareByLancer(sq utils.Square, color utils.PieceColor, stopAtFirst bool) []utils.Move {
+	lsqs := b.SquaresForPieceKind(utils.Lancer, color)
+
+	attacks := []utils.Move{}
+
+	for _, lsq := range lsqs {
+		lancer := b.PieceAtSquare(lsq)
+
+		if b.IsSquareJailedForColor(lsq, color) {
+			continue
+		}
+
+		testmove := utils.Move{
+			FromSq: lsq,
+			ToSq:   sq,
+		}
+
+		nudge := b.Pos.DisabledMove != NO_MOVE
+
+		tmNormDir := testmove.NormalizedDirection()
+
+		if nudge {
+			if tmNormDir == b.Pos.DisabledMove.NormalizedDirection() {
+				continue
+			}
+
+			nudge = lsq == b.Pos.DisabledMove.FromSq
+		}
+
+		if ((tmNormDir.File != 0) || (tmNormDir.Rank != 0)) && ((tmNormDir == lancer.Direction) || nudge) {
+			ok := true
+
+			currentSq := lsq.Add(tmNormDir)
+
+			for ok {
+				if b.HasSquare(currentSq) {
+					testp := b.PieceAtSquare(currentSq)
+
+					if (testp == utils.NO_PIECE) || (testp.Color == lancer.Color) {
+						// ok
+					} else {
+						attack := utils.Move{
+							FromSq: lsq,
+							ToSq:   sq,
+						}
+
+						if currentSq.EqualTo(sq) {
+							if stopAtFirst {
+								return []utils.Move{attack}
+							} else {
+								attacks = append(attacks, attack)
+							}
+						}
+
+						ok = false
+					}
+				} else {
+					ok = false
+				}
+
+				currentSq = currentSq.Add(tmNormDir)
+			}
+		}
+	}
+
+	return attacks
+}
+
 func (b *Board) AttacksOnSquareByPiece(sq utils.Square, p utils.Piece, stopAtFirst bool) []utils.Move {
 	if p.Kind == utils.Pawn {
 		return b.AttacksOnSquareByPawn(sq, p.Color, stopAtFirst)
@@ -121,6 +189,10 @@ func (b *Board) AttacksOnSquareByPiece(sq utils.Square, p utils.Piece, stopAtFir
 
 	if p.Kind == utils.Sentry {
 		return b.AttacksOnSquareBySentry(sq, p.Color, stopAtFirst)
+	}
+
+	if p.Kind == utils.Lancer {
+		return b.AttacksOnSquareByLancer(sq, p.Color, stopAtFirst)
 	}
 
 	return b.AttacksOnSquareByVectorPiece(sq, p, stopAtFirst)

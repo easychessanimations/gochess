@@ -194,6 +194,24 @@ func (b *Board) SquaresForPiece(p utils.Piece) []utils.Square {
 	return sqs
 }
 
+func (b *Board) SquaresForPieceKind(pk utils.PieceKind, color utils.PieceColor) []utils.Square {
+	sqs := []utils.Square{}
+
+	var rank int8
+	var file int8
+	for rank = 0; rank < b.NumRanks; rank++ {
+		for file = 0; file < b.NumFiles; file++ {
+			sq := utils.Square{file, rank}
+			testp := b.PieceAtSquare(sq)
+			if (testp.Kind == pk) && (testp.Color == color) {
+				sqs = append(sqs, sq)
+			}
+		}
+	}
+
+	return sqs
+}
+
 /////////////////////////////////////////////////////////////////////
 
 func (b *Board) AttackingPieceKinds() []utils.PieceKind {
@@ -216,7 +234,7 @@ func (b *Board) AttackingPieceKinds() []utils.PieceKind {
 	if b.Variant == utils.VARIANT_EIGHTPIECE {
 		apks = append(apks, []utils.PieceKind{
 			utils.Sentry,
-			// TODO: lancer attacks
+			utils.Lancer,
 		}...)
 	}
 
