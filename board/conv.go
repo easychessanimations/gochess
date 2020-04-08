@@ -66,7 +66,17 @@ func (b *Board) MoveToAlgeb(move utils.Move) string {
 		return "-"
 	}
 
-	return b.SquareToAlgeb(move.FromSq) + b.SquareToAlgeb(move.ToSq)
+	buff := b.SquareToAlgeb(move.FromSq) + b.SquareToAlgeb(move.ToSq)
+
+	if move.PromotionPiece != utils.NO_PIECE {
+		buff += move.PromotionPiece.LetterLower()
+
+		if move.PromotionSquare != utils.NO_SQUARE {
+			buff += "@" + b.SquareToAlgeb(move.PromotionSquare)
+		}
+	}
+
+	return buff
 }
 
 func (b *Board) MoveToSan(move utils.Move) string {

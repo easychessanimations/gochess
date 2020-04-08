@@ -24,6 +24,10 @@ func (p *Piece) LetterUpper() string {
 	return strings.ToUpper(p.Letter())
 }
 
+func (p *Piece) LetterLower() string {
+	return strings.ToLower(p.Letter())
+}
+
 func (p *Piece) ToString() string {
 	return p.Letter() + p.Direction.ToString()
 }
