@@ -156,6 +156,18 @@ func (cr *CastlingRight) Free(b *Board) bool {
 		return false
 	}
 
+	if b.IS_EIGHTPIECE() {
+		if b.IsSquareJailedForColor(wk, cr.Color) {
+			// jailed king cannot castle
+			return false
+		}
+
+		if b.IsSquareJailedForColor(cr.RookOrigSquare, cr.Color) {
+			// jailed rook cannot castle
+			return false
+		}
+	}
+
 	// all the squares between the king's initial and final squares (including the final square) should be empty
 	// except for the king and castling rook ( skip )
 	kctsq := b.KingCastlingTargetSq(cr.Color, cr.Side)

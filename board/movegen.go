@@ -114,8 +114,6 @@ func (b *Board) AttacksOnSquareBySentry(sq utils.Square, color utils.PieceColor,
 	return attacks
 }
 
-// TODO: these attacks don't work in move to san
-
 func (b *Board) AttacksOnSquareByPiece(sq utils.Square, p utils.Piece, stopAtFirst bool) []utils.Move {
 	if p.Kind == utils.Pawn {
 		return b.AttacksOnSquareByPawn(sq, p.Color, stopAtFirst)
@@ -190,8 +188,9 @@ func (b *Board) LancerMovesToSquare(lancer utils.Piece, fromSq utils.Square, toS
 	for _, ld := range utils.LANCER_DIRECTIONS {
 		if (!nudge) || ld.EqualTo(lancer.Direction) {
 			move := utils.Move{
-				FromSq: fromSq,
-				ToSq:   toSq,
+				FromSq:  fromSq,
+				ToSq:    toSq,
+				Capture: !b.IsSquareEmpty(toSq),
 				PromotionPiece: utils.Piece{
 					Kind:      utils.Lancer,
 					Color:     lancer.Color,
@@ -275,7 +274,13 @@ func (b *Board) PslmsForVectorPieceAtSquare(p utils.Piece, sq utils.Square) []ut
 									top.PushDisabled = true
 								}
 
+								// remove sentry for the time of move generation
+								b.SetPieceAtSquare(sq, utils.NO_PIECE)
+
 								pushes := utils.MoveList(b.PslmsForPieceAtSquare(topInv, currentSq))
+
+								// put back sentry
+								b.SetPieceAtSquare(sq, p)
 
 								pushes = pushes.Filter(utils.NonPawnPushByTwo)
 

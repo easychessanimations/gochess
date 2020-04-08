@@ -11,3 +11,6 @@ jlsesqkb1r/pppppppp/5n2/6S1/8/3P4/PPP1PPPP/JLne1QKBNR b KQkq - 2 2 -
 jlses1kb1r/ppp1pppp/3q1nLne1/3p4/8/3P1N2/PPP1PPPP/J1SQKB1R w KQkq - 2 4 -
 lancer nudge
 jlsesqkbnr/ppp1pppp/8/3p1Lw2/3P4/8/PPP1PPPP/J1SQKBNR b KQkq - 0 2 -
+jlse1qkbnr/ppp1pppp/8/3p1s2/6Lse1/8/PPPPPPPP/1JSQKBNR w Kkq - 0 3 g4f5
+castle with jailer
+j1sqkbnr/1p2pppp/p1p3Lne1/3p4/3P4/3Q2lse1/jPPSPPPP/J3KBNR w KQkq - 0 5 -

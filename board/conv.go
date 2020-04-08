@@ -97,8 +97,31 @@ func (b *Board) MoveToSan(move utils.Move) string {
 
 	qualifier := ""
 
+	testPiece := fromPiece
+
 	if fromPiece.Kind != utils.Pawn {
-		pslAttacks := b.AttacksOnSquareByPiece(move.ToSq, fromPiece, ALL_ATTACKS)
+		oldPos := b.Pos
+
+		if fromPiece.Kind == utils.Sentry {
+			// for disambiguation need to replace all sentrys with bishop
+			testPiece = utils.Piece{
+				Kind:  utils.Bishop,
+				Color: fromPiece.Color,
+			}
+
+			ssqs := b.SquaresForPiece(fromPiece)
+
+			for _, sqs := range ssqs {
+				b.SetPieceAtSquare(sqs, testPiece)
+			}
+		}
+
+		pslAttacks := b.AttacksOnSquareByPiece(move.ToSq, testPiece, ALL_ATTACKS)
+
+		if fromPiece.Kind == utils.Sentry {
+			// put back sentrys
+			b.Pos = oldPos
+		}
 
 		attacks := b.PickLegalMovesFrom(pslAttacks, b.Pos.Turn)
 
