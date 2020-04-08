@@ -30,7 +30,7 @@ func (b *Board) SquareFromAlgeb(algeb string) utils.Square {
 		return utils.NO_SQUARE
 	}
 
-	return utils.Square{int8(algeb[0] - "a"[0]), int8(byte(b.LastRank) - algeb[1] - "1"[0])}
+	return utils.Square{int8(algeb[0] - "a"[0]), int8(byte(b.LastRank) - (algeb[1] - "1"[0]))}
 }
 
 func (b *Board) AlgebToMoveRaw(algeb string) utils.Move {

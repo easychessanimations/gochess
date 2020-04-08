@@ -254,18 +254,18 @@ func (b *Board) AttacksOnSquareByVectorPiece(sq utils.Square, p utils.Piece, sto
 	return attacks
 }
 
-func (b *Board) LancerMovesToSquare(color utils.PieceColor, moveDir utils.PieceDirection, fromSq utils.Square, toSq utils.Square, nudge bool) []utils.Move {
+func (b *Board) LancerMovesToSquare(lancer utils.Piece, moveDir utils.PieceDirection, fromSq utils.Square, toSq utils.Square) []utils.Move {
 	lms := []utils.Move{}
 
 	for _, ld := range utils.LANCER_DIRECTIONS {
-		if (!nudge) || ld.EqualTo(moveDir) {
+		if (lancer.Direction == moveDir) || (ld == moveDir) {
 			move := utils.Move{
 				FromSq:  fromSq,
 				ToSq:    toSq,
 				Capture: !b.IsSquareEmpty(toSq),
 				PromotionPiece: utils.Piece{
 					Kind:      utils.Lancer,
-					Color:     color,
+					Color:     lancer.Color,
 					Direction: ld,
 				},
 				PromotionSquare: utils.NO_SQUARE,
@@ -291,15 +291,10 @@ func (b *Board) PslmsForVectorPieceAtSquare(p utils.Piece, sq utils.Square) []ut
 
 	directions := pdesc.Directions
 
-	nudge := false
-
 	if p.Kind == utils.Lancer {
 		if (b.Pos.DisabledMove == NO_MOVE) || (!b.Pos.DisabledMove.FromSq.EqualTo(sq)) {
 			// lancer normally can only go in itw own direction
 			directions = []utils.PieceDirection{p.Direction}
-		} else {
-			// nudged lancer
-			nudge = true
 		}
 	}
 
@@ -425,7 +420,7 @@ func (b *Board) PslmsForVectorPieceAtSquare(p utils.Piece, sq utils.Square) []ut
 
 				if add {
 					if p.Kind == utils.Lancer {
-						pslms = append(pslms, b.LancerMovesToSquare(p.Color, dir, sq, currentSq, nudge)...)
+						pslms = append(pslms, b.LancerMovesToSquare(p, dir, sq, currentSq)...)
 					} else {
 						pslms = append(pslms, pslm)
 					}
