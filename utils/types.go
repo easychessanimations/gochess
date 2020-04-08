@@ -75,6 +75,7 @@ type Move struct {
 	CastlingSide    CastlingSide
 	RookOrigPiece   Piece
 	SentryPush      bool
+	AsIs            bool
 }
 
 type MoveList []Move

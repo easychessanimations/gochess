@@ -1,6 +1,8 @@
 package board
 
-import "github.com/easychessanimations/gochess/utils"
+import (
+	"github.com/easychessanimations/gochess/utils"
+)
 
 /////////////////////////////////////////////////////////////////////
 // imports
@@ -279,6 +281,29 @@ func (b *Board) PslmsForVectorPieceAtSquare(p utils.Piece, sq utils.Square) []ut
 
 								alreadyAdded := map[utils.Move]bool{}
 
+								if top.Kind == utils.Lancer {
+									// lancer nudge
+									for _, easq := range b.EmptyAdjacentSquares(currentSq) {
+										move := utils.Move{
+											FromSq:     sq,
+											ToSq:       currentSq,
+											SentryPush: true,
+											PromotionPiece: utils.Piece{
+												Kind:  utils.Lancer,
+												Color: top.Color,
+												Direction: utils.PieceDirection{
+													File: easq.File - currentSq.File,
+													Rank: easq.Rank - currentSq.Rank,
+												},
+											},
+											PromotionSquare: easq,
+											AsIs:            true,
+										}
+
+										pushes = append(pushes, move)
+									}
+								}
+
 								for _, pslm := range pushes {
 									move := utils.Move{
 										FromSq:          sq,
@@ -286,6 +311,10 @@ func (b *Board) PslmsForVectorPieceAtSquare(p utils.Piece, sq utils.Square) []ut
 										SentryPush:      true,
 										PromotionPiece:  top,
 										PromotionSquare: pslm.ToSq,
+									}
+
+									if pslm.AsIs {
+										move = pslm
 									}
 
 									_, found := alreadyAdded[move]

@@ -9,3 +9,5 @@ jlsesqkb1r/pppppppp/7n/8/8/3P4/PPP1PPPP/JLneSQKBNR w KQkq - 1 2 -
 sentry check
 jlsesqkb1r/pppppppp/5n2/6S1/8/3P4/PPP1PPPP/JLne1QKBNR b KQkq - 2 2 -
 jlses1kb1r/ppp1pppp/3q1nLne1/3p4/8/3P1N2/PPP1PPPP/J1SQKB1R w KQkq - 2 4 -
+lancer nudge
+jlsesqkbnr/ppp1pppp/8/3p1Lw2/3P4/8/PPP1PPPP/J1SQKBNR b KQkq - 0 2 -

@@ -75,6 +75,20 @@ func (b *Board) AdjacentSquares(sq utils.Square) []utils.Square {
 	return asqs
 }
 
+func (b *Board) EmptyAdjacentSquares(sq utils.Square) []utils.Square {
+	asqs := b.AdjacentSquares(sq)
+
+	easqs := []utils.Square{}
+
+	for _, testsq := range asqs {
+		if b.IsSquareEmpty(testsq) {
+			easqs = append(easqs, testsq)
+		}
+	}
+
+	return easqs
+}
+
 func (b *Board) RookAdjacentSquares(sq utils.Square) []utils.Square {
 	rasqs := []utils.Square{}
 

@@ -10,14 +10,22 @@ import "strings"
 /////////////////////////////////////////////////////////////////////
 // member functions
 
-func (p *Piece) ToString() string {
+func (p *Piece) Letter() string {
 	letter, _ := PIECE_KIND_TO_PIECE_LETTER[p.Kind]
 
 	if p.Color == WHITE {
 		letter = strings.ToUpper(letter)
 	}
 
-	return letter + p.Direction.ToString()
+	return letter
+}
+
+func (p *Piece) LetterUpper() string {
+	return strings.ToUpper(p.Letter())
+}
+
+func (p *Piece) ToString() string {
+	return p.Letter() + p.Direction.ToString()
 }
 
 func (p *Piece) ToStringUpper() string {

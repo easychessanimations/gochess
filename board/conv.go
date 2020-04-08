@@ -93,7 +93,7 @@ func (b *Board) MoveToSan(move utils.Move) string {
 	fromAlgeb := b.SquareToAlgeb(move.FromSq)
 	toAlgeb := b.SquareToAlgeb(move.ToSq)
 	fromPiece := b.PieceAtSquare(move.FromSq)
-	pieceLetter := fromPiece.ToStringUpper()
+	pieceLetter := fromPiece.LetterUpper()
 
 	qualifier := ""
 
