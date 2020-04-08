@@ -1,1 +1,1 @@
-go run uciengine/main.go
+go run uciengine/gochess.go
