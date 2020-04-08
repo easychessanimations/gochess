@@ -254,18 +254,18 @@ func (b *Board) AttacksOnSquareByVectorPiece(sq utils.Square, p utils.Piece, sto
 	return attacks
 }
 
-func (b *Board) LancerMovesToSquare(lancer utils.Piece, fromSq utils.Square, toSq utils.Square, nudge bool) []utils.Move {
+func (b *Board) LancerMovesToSquare(color utils.PieceColor, moveDir utils.PieceDirection, fromSq utils.Square, toSq utils.Square, nudge bool) []utils.Move {
 	lms := []utils.Move{}
 
 	for _, ld := range utils.LANCER_DIRECTIONS {
-		if (!nudge) || ld.EqualTo(lancer.Direction) {
+		if (!nudge) || ld.EqualTo(moveDir) {
 			move := utils.Move{
 				FromSq:  fromSq,
 				ToSq:    toSq,
 				Capture: !b.IsSquareEmpty(toSq),
 				PromotionPiece: utils.Piece{
 					Kind:      utils.Lancer,
-					Color:     lancer.Color,
+					Color:     color,
 					Direction: ld,
 				},
 				PromotionSquare: utils.NO_SQUARE,
@@ -341,10 +341,7 @@ func (b *Board) PslmsForVectorPieceAtSquare(p utils.Piece, sq utils.Square) []ut
 
 								topInv := top.ColorInverse()
 
-								if top.Kind == utils.Sentry {
-									// disable push for pushed sentry
-									top.PushDisabled = true
-								}
+								top.PushDisabled = true
 
 								// remove sentry for the time of move generation
 								b.SetPieceAtSquare(sq, utils.NO_PIECE)
@@ -428,7 +425,7 @@ func (b *Board) PslmsForVectorPieceAtSquare(p utils.Piece, sq utils.Square) []ut
 
 				if add {
 					if p.Kind == utils.Lancer {
-						pslms = append(pslms, b.LancerMovesToSquare(p, sq, currentSq, nudge)...)
+						pslms = append(pslms, b.LancerMovesToSquare(p.Color, dir, sq, currentSq, nudge)...)
 					} else {
 						pslms = append(pslms, pslm)
 					}
@@ -579,7 +576,7 @@ func (b *Board) PslmsForPieceAtSquareInner(p utils.Piece, sq utils.Square) []uti
 }
 
 func (b *Board) PslmsForPieceAtSquare(p utils.Piece, sq utils.Square) []utils.Move {
-	if b.IsSquareJailedForColor(sq, p.Color) {
+	if b.IsSquareJailedForColor(sq, p.Color) && (!p.PushDisabled) {
 		// jailed pieces have no pseudo legal moves
 		if p.Kind == utils.King {
 			// except for king which can pass
