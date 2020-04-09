@@ -75,7 +75,7 @@ func ForwardFill(col Color, bb Bitboard) Bitboard {
 	return bb
 }
 
-// BackwardSpan computes backward span wrt color.
+// BackwardSpan computes backward span wrt color
 func BackwardSpan(col Color, bb Bitboard) Bitboard {
 	if col == White {
 		return SouthSpan(bb)
@@ -86,7 +86,7 @@ func BackwardSpan(col Color, bb Bitboard) Bitboard {
 	return bb
 }
 
-// BackwardFill computes forward fill wrt color.
+// BackwardFill computes forward fill wrt color
 func BackwardFill(col Color, bb Bitboard) Bitboard {
 	if col == White {
 		return SouthFill(bb)
@@ -97,7 +97,7 @@ func BackwardFill(col Color, bb Bitboard) Bitboard {
 	return bb
 }
 
-// NorthFill returns a bitboard with all north bits set.
+// NorthFill returns a bitboard with all north bits set
 func NorthFill(bb Bitboard) Bitboard {
 	bb |= (bb << 8)
 	bb |= (bb << 16)
@@ -105,12 +105,12 @@ func NorthFill(bb Bitboard) Bitboard {
 	return bb
 }
 
-// NorthSpan is like NorthFill shifted on up.
+// NorthSpan is like NorthFill shifted on up
 func NorthSpan(bb Bitboard) Bitboard {
 	return NorthFill(North(bb))
 }
 
-// SouthFill returns a bitboard with all south bits set.
+// SouthFill returns a bitboard with all south bits set
 func SouthFill(bb Bitboard) Bitboard {
 	bb |= (bb >> 8)
 	bb |= (bb >> 16)
@@ -118,36 +118,36 @@ func SouthFill(bb Bitboard) Bitboard {
 	return bb
 }
 
-// SouthSpan is like SouthFill shifted on up.
+// SouthSpan is like SouthFill shifted on up
 func SouthSpan(bb Bitboard) Bitboard {
 	return SouthFill(South(bb))
 }
 
-// Has returns bb if sq is occupied in bitboard.
+// Has returns bb if sq is occupied in bitboard
 func (bb Bitboard) Has(sq Square) bool {
 	return bb>>sq&1 != 0
 }
 
-// AsSquare returns the occupied square if the bitboard has a single piece.
-// If the board has more then one piece the result is undefined.
+// AsSquare returns the occupied square if the bitboard has a single piece
+// if the board has more then one piece the result is undefined
 // https://golang.org/pkg/math/bits/#TrailingZeros64
 func (bb Bitboard) AsSquare() Square {
 	return Square(bits.TrailingZeros64(uint64(bb)) & 0x3f)
 }
 
-// LSB picks a square in the board.
-// Returns empty board for empty board.
+// LSB picks a square in the board
+// returns empty board for empty board
 func (bb Bitboard) LSB() Bitboard {
 	return bb & (-bb)
 }
 
-// Count returns the number of squares set in bb.
+// count returns the number of squares set in bb
 // https://golang.org/pkg/math/bits/#OnesCount64
 func (bb Bitboard) Count() int32 {
 	return int32(bits.OnesCount64(uint64(bb)))
 }
 
-// Pop pops a set square from the bitboard.
+// Pop pops a set square from the bitboard
 func (bb *Bitboard) Pop() Square {
 	sq := *bb & (-*bb)
 	*bb -= sq
