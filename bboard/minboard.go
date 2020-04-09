@@ -4,6 +4,9 @@ package minboard
 // imports
 
 import (
+	"fmt"
+
+	"github.com/easychessanimations/gochess/butils"
 	"github.com/easychessanimations/gochess/utils"
 )
 
@@ -11,6 +14,12 @@ import (
 
 /////////////////////////////////////////////////////////////////////
 // member functions
+
+func init() {
+	fmt.Println("bboard init")
+	fmt.Println("square array size", butils.SquareArraySize)
+	fmt.Println("square e1", butils.SquareE1)
+}
 
 func (b *Board) Init(variant utils.VariantKey) {
 
