@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/easychessanimations/gochess/minboard"
+	minboard "github.com/easychessanimations/gochess/bboard"
 	"github.com/easychessanimations/gochess/utils"
 )
 
