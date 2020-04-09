@@ -42,4 +42,37 @@ type Move uint32
 // Castle represents the castling rights mask
 type Castle uint
 
+// state
+type state struct {
+	Zobrist         uint64                    // Zobrist key, can be zero
+	Move            Move                      // last move played.
+	HalfmoveClock   int                       // last ply when a pawn was moved or a capture was made.
+	EnpassantSquare Square                    // en passant square. If no e.p, then SquareA1.
+	CastlingAbility Castle                    // remaining castling rights.
+	ByFigure        [FigureArraySize]Bitboard // bitboards of square occupancy by figure.
+	ByColor         [ColorArraySize]Bitboard  // bitboards of square occupancy by color.
+
+	IsCheckedKnown   bool // true if it's known whether the current player is in check or not.
+	IsChecked        bool // true if current player is in check. If true then IsCheckedKnown is also true.
+	GivesCheckMove   Move // last move checkd with GivesCheck.
+	GivesCheckResult bool // true if last move gives check.
+}
+
+// Position represents the chess board and keeps track of the move history
+type Position struct {
+	sideToMove Color // which side is to move. sideToMove is updated by DoMove and UndoMove.
+	Ply        int   // current ply
+
+	pieces          [SquareArraySize]Piece // tracks pieces at each square
+	fullmoveCounter int                    // fullmove counter, incremented after black move
+	states          []state                // a state for each Ply
+	curr            *state                 // current state
+}
+
+type castleInfo struct {
+	Castle Castle
+	Piece  [2]Piece
+	Square [2]Square
+}
+
 /////////////////////////////////////////////////////////////////////

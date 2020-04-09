@@ -213,4 +213,108 @@ var castleToString = [...]string{
 	"-", "K", "Q", "KQ", "k", "Kk", "Qk", "KQk", "q", "Kq", "Qq", "KQq", "kq", "Kkq", "Qkq", "KQkq",
 }
 
+const (
+	// Violent indicates captures (including en passant) and queen promotions.
+	Violent int = 1 << iota
+	// Quiet are all other moves including minor promotions and castling.
+	Quiet
+	// All moves.
+	All = Violent | Quiet
+)
+
+var (
+	// FENStartPos is the FEN string of the starting position
+	FENStartPos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+
+	// which castle rights are lost when pieces are moved
+	lostCastleRights = [64]Castle{
+		SquareA1: WhiteOOO,
+		SquareE1: WhiteOOO | WhiteOO,
+		SquareH1: WhiteOO,
+		SquareA8: BlackOOO,
+		SquareE8: BlackOOO | BlackOO,
+		SquareH8: BlackOO,
+	}
+
+	// the zobrist* arrays contain magic numbers used for Zobrist hashing
+	// more information on Zobrist hashing can be found in the paper:
+	// http://research.cs.wisc.edu/techreports/1970/TR88.pdf
+	zobristPiece     [PieceArraySize][SquareArraySize]uint64
+	zobristEnpassant [SquareArraySize]uint64
+	zobristCastle    [CastleArraySize]uint64
+	zobristColor     [ColorArraySize]uint64
+
+	// maps runes to figures
+	symbolToFigure = [256]Figure{
+		'p': Pawn, 'n': Knight, 'b': Bishop, 'r': Rook, 'q': Queen, 'k': King,
+		'P': Pawn, 'N': Knight, 'B': Bishop, 'R': Rook, 'Q': Queen, 'K': King,
+	}
+	// maps pieces to symbols
+	prettyPieceToSymbol = []string{".", "?", "♟", "♙", "♞", "♘", "♝", "♗", "♜", "♖", "♛", "♕", "♚", "♔"}
+)
+
+// conversions
+var (
+	colorToSymbol      = "?bw"
+	pieceToSymbol      = ".?pPnNbBrRqQkK"
+	symbolToCastleInfo = map[rune]castleInfo{
+		'K': castleInfo{
+			Castle: WhiteOO,
+			Piece:  [2]Piece{WhiteKing, WhiteRook},
+			Square: [2]Square{SquareE1, SquareH1},
+		},
+		'k': castleInfo{
+			Castle: BlackOO,
+			Piece:  [2]Piece{BlackKing, BlackRook},
+			Square: [2]Square{SquareE8, SquareH8},
+		},
+		'Q': castleInfo{
+			Castle: WhiteOOO,
+			Piece:  [2]Piece{WhiteKing, WhiteRook},
+			Square: [2]Square{SquareE1, SquareA1},
+		},
+		'q': castleInfo{
+			Castle: BlackOOO,
+			Piece:  [2]Piece{BlackKing, BlackRook},
+			Square: [2]Square{SquareE8, SquareA8},
+		},
+	}
+	symbolToColor = map[string]Color{
+		"w": White,
+		"b": Black,
+	}
+	symbolToPiece = map[rune]Piece{
+		'p': BlackPawn,
+		'n': BlackKnight,
+		'b': BlackBishop,
+		'r': BlackRook,
+		'q': BlackQueen,
+		'k': BlackKing,
+
+		'P': WhitePawn,
+		'N': WhiteKnight,
+		'B': WhiteBishop,
+		'R': WhiteRook,
+		'Q': WhiteQueen,
+		'K': WhiteKing,
+	}
+)
+
+var (
+	// bbPawnAttack contains pawn's attack tables
+	bbPawnAttack [64]Bitboard
+	// bbKnightAttack contains knight's attack tables
+	bbKnightAttack [64]Bitboard
+	// bbKingAttack contains king's attack tables (excluding castling)
+	bbKingAttack [64]Bitboard
+	bbKingArea   [64]Bitboard
+	// bbSuperAttack contains queen piece's attack tables. This queen can jump
+	bbSuperAttack [64]Bitboard
+
+	rookMagic    [64]magicInfo
+	rookDeltas   = [][2]int{{-1, +0}, {+1, +0}, {+0, -1}, {+0, +1}}
+	bishopMagic  [64]magicInfo
+	bishopDeltas = [][2]int{{-1, +1}, {+1, +1}, {+1, -1}, {-1, -1}}
+)
+
 /////////////////////////////////////////////////////////////////////
