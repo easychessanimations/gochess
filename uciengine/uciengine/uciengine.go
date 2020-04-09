@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/easychessanimations/gochess/board"
+	"github.com/easychessanimations/gochess/minboard"
 	"github.com/easychessanimations/gochess/utils"
 )
 
@@ -29,7 +29,7 @@ func (eng *UciEngine) PrintWelcomeMessage() {
 }
 
 func (eng *UciEngine) PrintUciOptions() {
-	for _, uo := range board.UCI_OPTIONS {
+	for _, uo := range minboard.UCI_OPTIONS {
 		uo.PrintUci()
 	}
 }
@@ -45,7 +45,7 @@ func (eng *UciEngine) Uci() {
 }
 
 func (eng *UciEngine) GetOptionByName(name string) (int, *utils.UciOption) {
-	for index, uo := range board.UCI_OPTIONS {
+	for index, uo := range minboard.UCI_OPTIONS {
 		if uo.Name == name {
 			return index, &uo
 		}
@@ -61,7 +61,7 @@ func (eng *UciEngine) SetOption(name string, value string) {
 		fmt.Println("unknown uci option")
 	} else {
 		uo.SetFromString(value)
-		board.UCI_OPTIONS[index] = *uo
+		minboard.UCI_OPTIONS[index] = *uo
 
 		// handle UCI_Variant as a special option
 		if name == "UCI_Variant" {
@@ -182,7 +182,7 @@ func (eng *UciEngine) Position(args []string) {
 		if args[0] == "moves" {
 			if len(args) > 1 {
 				for i := 1; i < len(args); i++ {
-					eng.Board.MakeAlgebMove(args[i], board.ADD_SAN)
+					eng.Board.MakeAlgebMove(args[i], minboard.ADD_SAN)
 				}
 			} else {
 				fmt.Println("no move list specified in moves argument")
@@ -194,13 +194,13 @@ func (eng *UciEngine) Position(args []string) {
 }
 
 func (eng *UciEngine) ListUci() {
-	for _, uo := range board.UCI_OPTIONS {
+	for _, uo := range minboard.UCI_OPTIONS {
 		fmt.Println(uo.ToString())
 	}
 }
 
 func (eng *UciEngine) Go(args []string) {
-	depth := board.DEFAULT_SEARCH_DEPTH
+	depth := minboard.DEFAULT_SEARCH_DEPTH
 
 	for len(args) > 0 {
 		if args[0] == "depth" {
@@ -276,7 +276,7 @@ func (eng *UciEngine) UciLoop() {
 		if (command == "quit") || (command == "x") {
 			break
 		} else {
-			alias, ok := board.UCI_COMMAND_ALIASES[command]
+			alias, ok := minboard.UCI_COMMAND_ALIASES[command]
 
 			if ok {
 				eng.ExecuteUciCommands(alias)

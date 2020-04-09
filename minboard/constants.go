@@ -1,21 +1,23 @@
-package uciengine
-
-import "github.com/easychessanimations/gochess/minboard"
+package minboard
 
 /////////////////////////////////////////////////////////////////////
 // imports
 
+import (
+	"github.com/easychessanimations/gochess/utils"
+)
+
 /////////////////////////////////////////////////////////////////////
 
 /////////////////////////////////////////////////////////////////////
-// types
+// constants
 
-type UciEngine struct {
-	Name        string
-	Description string
-	Author      string
-	Board       minboard.Board
-	Interactive bool
-}
+const ADD_SAN = true
+
+const DEFAULT_SEARCH_DEPTH = 10
+
+var UCI_OPTIONS = []utils.UciOption{}
+
+var UCI_COMMAND_ALIASES = map[string]string{}
 
 /////////////////////////////////////////////////////////////////////
