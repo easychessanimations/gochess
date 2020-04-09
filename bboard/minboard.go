@@ -18,7 +18,11 @@ import (
 func init() {
 	fmt.Println("bboard init")
 	fmt.Println("square array size", butils.SquareArraySize)
-	fmt.Println("square e1", butils.SquareE1)
+	fmt.Println("square e1 =", butils.SquareE1)
+	sq := butils.RankFile(5, 6)
+	fmt.Println("square from rank 5 file 6 =", sq, ", as string =", sq.String())
+	sq, _ = butils.SquareFromString("d4")
+	fmt.Println("square from string d4 =", sq)
 }
 
 func (b *Board) Init(variant utils.VariantKey) {
