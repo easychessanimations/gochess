@@ -21,6 +21,7 @@ func init() {
 	fmt.Println("square e1 =", butils.SquareE1)
 	sq := butils.RankFile(5, 6)
 	fmt.Println("square from rank 5 file 6 =", sq, ", as string =", sq.String())
+	fmt.Println("rank of", sq, "=", sq.Rank(), ", file of", sq, "=", sq.File())
 	sq, _ = butils.SquareFromString("d4")
 	fmt.Println("square from string d4 =", sq)
 }
