@@ -24,7 +24,7 @@ func init() {
 	fmt.Println("rank of", sq, "=", sq.Rank(), ", file of", sq, "=", sq.File())
 	sq, _ = butils.SquareFromString("d4")
 	fmt.Println("square from string d4 =", sq)
-	pos := butils.NewPosition()
+	pos, _ := butils.PositionFromFEN(butils.FENStartPos)
 	pos.PrettyPrint()
 }
 
