@@ -86,23 +86,23 @@ func slidingAttack(sq Square, deltas [][2]int, occupancy Bitboard) Bitboard {
 		for r0, f0 := r, f; ; {
 			r0, f0 = r0+d[0], f0+d[1]
 			if 0 > r0 || r0 >= 8 || 0 > f0 || f0 >= 8 {
-				break // Stop when outside of the board.
+				break // stop when outside of the board
 			}
 			sq0 := RankFile(r0, f0)
 			bb |= sq0.Bitboard()
 			if occupancy.Has(sq0) {
-				break // Stop when a piece was hit.
+				break // stop when a piece was hit
 			}
 		}
 	}
 	return bb
 }
 
-// spell hashes bb using magic.
+// spell hashes bb using magic
 //
-// magic stores in the upper 4 bits the shift.
+// magic stores in the upper 4 bits the shift
 // spell will return a number between 0 and 1<<shift that can be used
-// to index in an array of size 1<<shift.
+// to index in an array of size 1<<shift
 func spell(magic uint64, bb Bitboard) uint {
 	shift := uint(magic >> 58)
 	mul := magic * uint64(bb)
@@ -110,8 +110,8 @@ func spell(magic uint64, bb Bitboard) uint {
 }
 
 type magicInfo struct {
-	mask  Bitboard   // square's mask.
-	magic uint64     // magic multiplier. first 6 bits are 64-shift.
+	mask  Bitboard   // square's mask
+	magic uint64     // magic multiplier. first 6 bits are 64-shift
 	store []Bitboard // attack boards of size 1<<shift
 }
 
@@ -120,18 +120,18 @@ func (mi *magicInfo) Attack(ref Bitboard) Bitboard {
 }
 
 type wizard struct {
-	// Sliding deltas.
+	// sliding deltas
 	Deltas        [][2]int
-	MinShift      uint // Which shifts to search.
+	MinShift      uint // which shifts to search
 	MaxShift      uint
-	MaxNumEntries uint // How much to search.
+	MaxNumEntries uint // how much to search
 	Rand          *rand.Rand
 
 	numMagicTests uint
 	magics        [64]uint64
-	shifts        [64]uint // Number of bits for indexes.
+	shifts        [64]uint // number of bits for indexes
 
-	store     []Bitboard // Temporary store to check hash collisions.
+	store     []Bitboard // temporary store to check hash collisions
 	reference []Bitboard
 	occupancy []Bitboard
 }
@@ -140,7 +140,7 @@ func (wiz *wizard) tryMagicNumber(mi *magicInfo, sq Square, magic uint64) bool {
 	wiz.numMagicTests++
 	shift := 64 - uint(magic>>58)
 
-	// Clear store.
+	// clear store
 	if len(wiz.store) < 1<<shift {
 		wiz.store = make([]Bitboard, 1<<shift)
 	}
@@ -148,7 +148,7 @@ func (wiz *wizard) tryMagicNumber(mi *magicInfo, sq Square, magic uint64) bool {
 		wiz.store[j] = 0
 	}
 
-	// Verify that magic gives a perfect hash.
+	// verify that magic gives a perfect hash
 	for i, bb := range wiz.reference {
 		index := spell(magic, bb)
 		if wiz.store[index] != 0 && wiz.store[index] != wiz.occupancy[i] {
@@ -157,7 +157,7 @@ func (wiz *wizard) tryMagicNumber(mi *magicInfo, sq Square, magic uint64) bool {
 		wiz.store[index] = wiz.occupancy[i]
 	}
 
-	// Perfect hash, store it.
+	// perfect hash, store it
 	wiz.magics[sq] = magic
 	wiz.shifts[sq] = shift
 
@@ -176,20 +176,20 @@ func (wiz *wizard) randMagic() uint64 {
 	return r << 1
 }
 
-// mask is the attack set on empty board minus the border.
+// mask is the attack set on empty board minus the border
 func (wiz *wizard) mask(sq Square) Bitboard {
-	// Compute border. Trick source: stockfish.
+	// compute border, trick source: stockfish
 	border := (BbRank1 | BbRank8) &^ RankBb(sq.Rank())
 	border |= (BbFileA | BbFileH) &^ FileBb(sq.File())
 	return slidingAttack(sq, wiz.Deltas, BbEmpty) &^ border
 }
 
-// prepare computes reference and occupancy tables for a square.
+// prepare computes reference and occupancy tables for a square
 func (wiz *wizard) prepare(sq Square) {
 	wiz.reference = wiz.reference[:0]
 	wiz.occupancy = wiz.occupancy[:0]
 
-	// Carry-Rippler trick to enumerate all subsets of mask.
+	// Carry-Rippler trick to enumerate all subsets of mask
 	for mask, subset := wiz.mask(sq), Bitboard(0); ; {
 		attack := slidingAttack(sq, wiz.Deltas, subset)
 		wiz.reference = append(wiz.reference, subset)
@@ -203,14 +203,14 @@ func (wiz *wizard) prepare(sq Square) {
 
 func (wiz *wizard) searchSquareMagic(sq Square, mi *magicInfo) {
 	if wiz.shifts[sq] != 0 && wiz.shifts[sq] <= wiz.MinShift {
-		return // Don't search if shift is low enough.
+		return // don't search if shift is low enough
 	}
 
-	// Try magic numbers with small shifts.
+	// try magic numbers with small shifts
 	wiz.prepare(sq)
 	mask := wiz.mask(sq)
 	for i := 0; i < 100 || wiz.shifts[sq] == 0; i++ {
-		// Pick a smaller shift than current best.
+		// pick a smaller shift than current best
 		var shift uint
 		if wiz.shifts[sq] == 0 {
 			shift = wiz.MaxShift
@@ -221,7 +221,7 @@ func (wiz *wizard) searchSquareMagic(sq Square, mi *magicInfo) {
 			panic("shift too large, should fit in 4 bits")
 		}
 
-		// Pick a good magic and test whether it gives a perfect hash.
+		// pick a good magic and test whether it gives a perfect hash
 		var magic uint64
 		for bits.OnesCount64(uint64(mask)*magic) < 8 {
 			magic = wiz.randMagic()>>6 + uint64(64-shift)<<58
@@ -230,7 +230,7 @@ func (wiz *wizard) searchSquareMagic(sq Square, mi *magicInfo) {
 	}
 }
 
-// SearchMagic finds new magics.
+// SearchMagic finds new magics
 func (wiz *wizard) searchMagic(mi []magicInfo) {
 	numEntries := uint(math.MaxUint32)
 	minShift := uint(math.MaxUint32)
@@ -262,8 +262,8 @@ func initRookMagic() {
 		Rand:          rand.New(rand.NewSource(1)),
 	}
 
-	// A set of known good magics for rook.
-	// Finding good rook magics is slow, so we just use some precomputed values.
+	// a set of known good magics for rook
+	// finding good rook magics is slow, so we just use some precomputed values
 	magics := [SquareArraySize]struct {
 		square Square
 		magic  uint64
@@ -281,7 +281,7 @@ func initRookMagic() {
 		wiz.SetMagic(rookMagic[:], m.square, m.magic)
 	}
 
-	// Enable the next line to find new magics.
+	// enable the next line to find new magics
 	// wiz.searchMagic(rookMagic[:])
 }
 
@@ -294,37 +294,37 @@ func initBishopMagic() {
 		Rand:          rand.New(rand.NewSource(1)),
 	}
 
-	// Bishop magics, unlike rook magics are easy to find.
+	// bishop magics, unlike rook magics are easy to find
 	wiz.searchMagic(bishopMagic[:])
 }
 
-// KnightMobility returns all squares a knight can reach from sq.
+// KnightMobility returns all squares a knight can reach from sq
 func KnightMobility(sq Square) Bitboard {
 	return bbKnightAttack[sq]
 }
 
-// BishopMobility returns the squares a bishop can reach from sq given all pieces.
+// BishopMobility returns the squares a bishop can reach from sq given all pieces
 func BishopMobility(sq Square, all Bitboard) Bitboard {
 	return bishopMagic[sq].Attack(all)
 }
 
-// RookMobility returns the squares a rook can reach from sq given all pieces.
+// RookMobility returns the squares a rook can reach from sq given all pieces
 func RookMobility(sq Square, all Bitboard) Bitboard {
 	return rookMagic[sq].Attack(all)
 }
 
-// QueenMobility returns the squares a queen can reach from sq given all pieces.
+// QueenMobility returns the squares a queen can reach from sq given all pieces
 func QueenMobility(sq Square, all Bitboard) Bitboard {
 	return rookMagic[sq].Attack(all) | bishopMagic[sq].Attack(all)
 }
 
-// SuperQueenMobility returns the squares a queen can reach from sq on an empty board.
+// SuperQueenMobility returns the squares a queen can reach from sq on an empty board
 func SuperQueenMobility(sq Square) Bitboard {
 	return bbSuperAttack[sq]
 }
 
-// KingMobility returns all squares a king can reach from sq.
-// Doesn't include castling.
+// KingMobility returns all squares a king can reach from sq
+// doesn't include castling
 func KingMobility(sq Square) Bitboard {
 	return bbKingAttack[sq]
 }
