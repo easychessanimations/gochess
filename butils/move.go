@@ -75,7 +75,7 @@ func (m Move) IsViolent() bool {
 	return m.Target().Figure() == Queen
 }
 
-// IsQuiet returns true if the move is not violent.
+// IsQuiet returns true if the move is not violent
 func (m Move) IsQuiet() bool {
 	return !m.IsViolent()
 }

@@ -8,16 +8,16 @@ package butils
 /////////////////////////////////////////////////////////////////////
 // member functions
 
-// Color returns piece's color.
+// Color returns piece's color
 // 21844	=       101010101010100b
-// TODO: adding 3 more pieces
+// TODO: adding more pieces
 // 1398100	= 101010101010101010100b
 
 func (pi Piece) Color() Color {
 	return Color(21844 >> pi & 3)
 }
 
-// Figure returns piece's figure.
+// Figure returns piece's figure
 func (pi Piece) Figure() Figure {
 	return Figure(pi) >> 1
 }
