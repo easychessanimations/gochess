@@ -162,7 +162,7 @@ func (b *Board) ExecCommand(command string) bool {
 
 			return true
 		} else if command == "perf" {
-			b.Perf(3)
+			b.Perf(4)
 
 			return true
 		} else if command == "d" {
