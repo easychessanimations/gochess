@@ -9,7 +9,7 @@ package butils
 // constants
 
 const (
-	// Set of possible chess colors.
+	// set of possible chess colors
 
 	NoColor Color = iota
 	Black
@@ -22,7 +22,7 @@ const (
 )
 
 const (
-	// Set of possible chess figures.
+	// set of possible chess figures
 
 	NoFigure Figure = iota
 	Pawn
@@ -190,18 +190,18 @@ var (
 )
 
 const (
-	// WhiteOO indicates that White can castle on King side.
+	// WhiteOO indicates that White can castle on King side
 	WhiteOO Castle = 1 << iota
-	// WhiteOOO indicates that White can castle on Queen side.
+	// WhiteOOO indicates that White can castle on Queen side
 	WhiteOOO
-	// BlackOO indicates that Black can castle on King side.
+	// BlackOO indicates that Black can castle on King side
 	BlackOO
-	// BlackOOO indicates that Black can castle on Queen side.
+	// BlackOOO indicates that Black can castle on Queen side
 	BlackOOO
 
-	// NoCastle indicates no castling rights.
+	// NoCastle indicates no castling rights
 	NoCastle Castle = 0
-	// AnyCastle indicates all castling rights.
+	// AnyCastle indicates all castling rights
 	AnyCastle Castle = WhiteOO | WhiteOOO | BlackOO | BlackOOO
 
 	CastleArraySize = int(AnyCastle + 1)
@@ -214,11 +214,11 @@ var castleToString = [...]string{
 }
 
 const (
-	// Violent indicates captures (including en passant) and queen promotions.
+	// Violent indicates captures (including en passant) and queen promotions
 	Violent int = 1 << iota
-	// Quiet are all other moves including minor promotions and castling.
+	// Quiet are all other moves including minor promotions and castling
 	Quiet
-	// All moves.
+	// All moves
 	All = Violent | Quiet
 )
 
