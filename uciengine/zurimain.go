@@ -542,7 +542,16 @@ func (uci *UCI) InteractiveMode() error {
 
 	eval := Evaluate(pos)
 
-	fmt.Println("\nEval: White M =", eval.Accum[White].M, ", White E =", eval.Accum[White].E, ", Black M =", eval.Accum[Black].M, ", Black E =", eval.Accum[Black].E, "All M =", eval.Accum[NoColor].M, ", All E =", eval.Accum[NoColor].E)
+	fmt.Println(
+		"\nEval: White cp M =", ScaleToCentipawns(eval.Accum[White].M),
+		", White cp E =", ScaleToCentipawns(eval.Accum[White].E),
+		", Black cp M =", ScaleToCentipawns(eval.Accum[Black].M),
+		", Black cp E =", ScaleToCentipawns(eval.Accum[Black].E),
+	)
+	fmt.Println(
+		"Eval: All cp M =", ScaleToCentipawns(eval.Accum[NoColor].M),
+		", All cp E =", ScaleToCentipawns(eval.Accum[NoColor].E),
+	)
 
 	return nil
 }

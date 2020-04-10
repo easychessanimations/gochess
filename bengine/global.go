@@ -516,6 +516,12 @@ func resize(v []int8) []int8 {
 	return v
 }
 
+// scaleToCentipawns scales a score in the original scale to centipawns
+func ScaleToCentipawns(score int32) int32 {
+	// divides by 128 and rounds to the nearest integer
+	return (score + 128 + score>>31) >> 8
+}
+
 /////////////////////////////////////////////////////////////////////
 
 /////////////////////////////////////////////////////////////////////
