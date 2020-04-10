@@ -162,6 +162,8 @@ func (uci *UCI) Execute(line string) error {
 		return uci.stop(line)
 	case "s":
 		return uci.stop(line)
+	case "g":
+		return uci.go_("go depth 10")
 	case "uci":
 		return uci.uci(line)
 	case "ponderhit":

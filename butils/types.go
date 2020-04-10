@@ -35,7 +35,7 @@ type MoveType uint8
 //   00.f0.00.00 - target
 //   0f.00.00.00 - capture
 //   f0.00.00.00 - piece
-type Move uint32
+type Move uint64
 
 // TODO: extend move to 64 bit, to allow for more move information
 
