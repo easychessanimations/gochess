@@ -6,6 +6,7 @@ package butils
 import (
 	"fmt"
 	"math/rand"
+	"sort"
 	"strconv"
 )
 
@@ -349,6 +350,26 @@ func (pos *Position) HasLegalMoves() bool {
 	return false
 }
 
+// LegalMoves returns all legal moves from the position
+func (pos *Position) LegalMoves() []Move {
+	var moves []Move
+
+	pos.GenerateMoves(Violent|Quiet, &moves)
+
+	legalMoves := []Move{}
+
+	for _, m := range moves {
+		pos.DoMove(m)
+		checked := pos.IsChecked(pos.Them())
+		pos.UndoMove()
+		if !checked { // check if move didn't leave the player in check
+			legalMoves = append(legalMoves, m)
+		}
+	}
+
+	return legalMoves
+}
+
 // InsufficientMaterial returns true if the position is theoretical draw
 func (pos *Position) InsufficientMaterial() bool {
 	// K vs K is draw
@@ -478,6 +499,26 @@ func (pos *Position) GivesCheck(m Move) bool {
 	return false
 }
 
+// SortedLegalMoves returns the legal moves from the position sorted by SAN
+func (pos *Position) SortedLegalMoves() MoveBuff {
+	legalMoves := pos.LegalMoves()
+	mb := MoveBuff{}
+	for _, m := range legalMoves {
+		mb = append(mb, MoveBuffItem{Move: m, San: m.LAN(), Algeb: m.UCI()})
+	}
+	sort.Sort(mb)
+	return mb
+}
+
+// LegalMovesString lists the legal moves fromt the position numbered and sorted by SAN as string
+func (pos *Position) LegalMovesString() string {
+	buff := ""
+	for i, mbi := range pos.SortedLegalMoves() {
+		buff += fmt.Sprintf("%d. %s [ %s ] ", i+1, mbi.San, mbi.Algeb)
+	}
+	return buff
+}
+
 // PrettyPrint pretty prints the current position to string
 func (pos *Position) PrettyPrintString() string {
 	buff := ""
@@ -499,7 +540,8 @@ func (pos *Position) PrettyPrintString() string {
 	}
 
 	//buff += fmt.Sprintf("zobrist = %v\n", pos.Zobrist())
-	buff += fmt.Sprintf("\n%v", pos.String())
+	buff += fmt.Sprintf("\n%v\n", pos.String())
+	buff += fmt.Sprintf("\n%v", pos.LegalMovesString())
 
 	return buff
 }
@@ -604,7 +646,7 @@ func (pos *Position) DoMove(move Move) {
 	curr.GivesCheckResult = false
 }
 
-// UndoMove takes back the last move
+// UndoMove takes back the last move, there should be at least one move on the stack
 func (pos *Position) UndoMove() {
 	move := pos.LastMove()
 	pos.SetSideToMove(pos.Them())
@@ -624,6 +666,15 @@ func (pos *Position) UndoMove() {
 		pos.fullmoveCounter--
 	}
 	pos.popState()
+}
+
+// UndoMoveSafe takes back the last move, does nothing if there is no move on the stack
+func (pos *Position) UndoMoveSafe() {
+	if len(pos.states) <= 1 {
+		return
+	}
+
+	pos.UndoMove()
 }
 
 func (pos *Position) genPawnPromotions(kind int, moves *[]Move) {

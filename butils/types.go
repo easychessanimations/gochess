@@ -69,10 +69,32 @@ type Position struct {
 	curr            *state                 // current state
 }
 
+// castle info
 type castleInfo struct {
 	Castle Castle
 	Piece  [2]Piece
 	Square [2]Square
+}
+
+// MoveBuffItem hold a move together with its SAN and algebraic representation
+type MoveBuffItem struct {
+	Move  Move
+	San   string
+	Algeb string
+}
+
+// MoveBuff holds a list of MoveBuffItems
+type MoveBuff []MoveBuffItem
+
+// sorting functions to sort MoveBuff by SAN
+func (mb MoveBuff) Len() int {
+	return len(mb)
+}
+func (mb MoveBuff) Swap(i, j int) {
+	mb[i], mb[j] = mb[j], mb[i]
+}
+func (mb MoveBuff) Less(i, j int) bool {
+	return mb[i].San < mb[j].San
 }
 
 /////////////////////////////////////////////////////////////////////

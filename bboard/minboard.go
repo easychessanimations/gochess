@@ -43,10 +43,6 @@ func (b *Board) Print() {
 	b.Log(b.Pos.PrettyPrintString())
 }
 
-func (b *Board) ExecCommand(command string) {
-
-}
-
 func (b *Board) SetFromVariantUciOptionAndFen(fen string) {
 
 }
@@ -56,7 +52,21 @@ func (b *Board) MakeAlgebMove(algeb string, addSan bool) {
 }
 
 func (b *Board) ResetVariantFromUciOption() {
+	variantUciOption := b.GetUciOptionByNameWithDefault("UCI_Variant", utils.UciOption{
+		Value: "standard",
+	})
 
+	b.Variant = utils.VariantKeyStringToVariantKey(variantUciOption.Value)
+
+	b.Reset()
+}
+
+func (b *Board) GetUciOptionByNameWithDefault(name string, uciOption utils.UciOption) utils.UciOption {
+	if b.GetUciOptionByNameWithDefaultFunc != nil {
+		return b.GetUciOptionByNameWithDefaultFunc(name, uciOption)
+	}
+
+	return uciOption
 }
 
 /////////////////////////////////////////////////////////////////////
