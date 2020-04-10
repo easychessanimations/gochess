@@ -556,9 +556,11 @@ func (uci *UCI) MakeMoveByIndex(cmd string) error {
 
 	if err != nil {
 		i = int64(rand.Intn(len(lms)))
+	} else {
+		i--
 	}
 
-	move := lms[i-1]
+	move := lms[i]
 
 	pos.DoMove(move)
 
