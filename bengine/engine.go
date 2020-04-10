@@ -131,4 +131,114 @@ func (eng *Engine) endPosition() (int32, bool) {
 	return 0, false
 }
 
+// retrieveHash gets from GlobalHashTable the current position
+func (eng *Engine) retrieveHash() hashEntry {
+	entry := GlobalHashTable.get(eng.Position)
+	if entry.kind == 0 || entry.move != NullMove && !eng.Position.IsPseudoLegal(entry.move) {
+		eng.Stats.CacheMiss++
+		return hashEntry{}
+	}
+
+	// return mate score relative to root
+	// the score was adjusted relative to position before the hash table was updated
+	if entry.score < KnownLossScore {
+		entry.score += int16(eng.ply())
+	} else if entry.score > KnownWinScore {
+		entry.score -= int16(eng.ply())
+	}
+
+	eng.Stats.CacheHit++
+	return entry
+}
+
+// updateHash updates GlobalHashTable with the current position
+func (eng *Engine) updateHash(flags hashFlags, depth, score int32, move Move, static int32) {
+	// if search is stopped then score cannot be trusted
+	if eng.stopped {
+		return
+	}
+	// update principal variation table in exact nodes
+	if flags&exact != 0 {
+		eng.pvTable.Put(eng.Position, move)
+	}
+	if eng.ply() == 0 && (len(eng.ignoreRootMoves) != 0 || len(eng.onlyRootMoves) != 0) {
+		// at root if there are moves to ignore (e.g. because of multipv)
+		// then this is an incomplete search, so don't update the hash
+		return
+	}
+
+	// save the mate score relative to the current position
+	// when retrieving from hash the score will be adjusted relative to root
+	if score < KnownLossScore {
+		score -= eng.ply()
+	} else if score > KnownWinScore {
+		score += eng.ply()
+	}
+
+	GlobalHashTable.put(eng.Position, hashEntry{
+		kind:   flags,
+		score:  int16(score),
+		depth:  int8(depth),
+		move:   move,
+		static: int16(static),
+	})
+}
+
+// searchQuiescence evaluates the position after solving all captures.
+//
+// This is a very limited search which considers only some violent moves.
+// Depth is ignored, so hash uses depth 0. Search continues until
+// stand pat or no capture can improve the score.
+func (eng *Engine) searchQuiescence(α, β int32) int32 {
+	eng.Stats.Nodes++
+
+	entry := eng.retrieveHash()
+	if score := int32(entry.score); isInBounds(entry.kind, α, β, score) {
+		return score
+	}
+
+	static := eng.cachedScore(&entry)
+	if static >= β {
+		// Stand pat if the static score is already a cut-off.
+		eng.updateHash(failedHigh|hasStatic, 0, static, entry.move, static)
+		return static
+	}
+
+	pos := eng.Position
+	us := pos.Us()
+	inCheck := pos.IsChecked(us)
+	localα := max(α, static)
+	bestMove := entry.move
+
+	eng.stack.GenerateMoves(Violent, NullMove)
+	for move := eng.stack.PopMove(); move != NullMove; move = eng.stack.PopMove() {
+		// Prune futile moves that would anyway result in a stand-pat at that next depth.
+		if !inCheck && isFutile(pos, static, α, futilityMargin, move) ||
+			!inCheck && seeSign(pos, move) {
+			continue
+		}
+
+		// Discard illegal or losing captures.
+		eng.DoMove(move)
+		if eng.Position.IsChecked(us) {
+			eng.UndoMove()
+			continue
+		}
+		score := -eng.searchQuiescence(-β, -localα)
+		eng.UndoMove()
+
+		if score >= β {
+			eng.updateHash(failedHigh|hasStatic, 0, score, move, static)
+			return score
+		}
+		if score > localα {
+			localα = score
+			bestMove = move
+		}
+	}
+
+	eng.updateHash(getBound(α, β, localα)|hasStatic, 0, localα, bestMove, static)
+	return localα
+}
+
 /////////////////////////////////////////////////////////////////////

@@ -15,6 +15,16 @@ import (
 /////////////////////////////////////////////////////////////////////
 // global variables
 
+// mvvlva values based on one pawn = 10
+var mvvlvaBonus = [...]int16{0, 10, 40, 45, 68, 145, 256}
+
+// piece bonuses when calulating the see
+// the values are fixed to approximatively the figure bonus in mid game
+var seeBonus = [FigureArraySize]int32{0, 100, 357, 377, 712, 12534, 20000}
+
+// gaps from Best Increments for the Average Case of Shellsort, Marcin Ciura
+var shellSortGaps = [...]int{132, 57, 23, 10, 4, 1}
+
 // distance stores the number of king steps required
 // to reach from one square to another on an empty board
 var distance [SquareArraySize][SquareArraySize]int32
@@ -60,6 +70,44 @@ var murmurSeed = [ColorArraySize]uint64{
 
 /////////////////////////////////////////////////////////////////////
 // global functions
+
+// mvvlva computes Most Valuable Victim / Least Valuable Aggressor
+// https://chessprogramming.wikispaces.com/MVV-LVA
+func mvvlva(m Move) int16 {
+	a := m.Target().Figure()
+	v := m.Capture().Figure()
+	return mvvlvaBonus[v]*64 - mvvlvaBonus[a]
+}
+
+// isInBounds returns true if score matches range defined by α, β and flags
+func isInBounds(flags hashFlags, α, β, score int32) bool {
+	if flags&exact != 0 {
+		// simply return if the score is exact
+		return true
+	}
+	if flags&failedLow != 0 && score <= α {
+		// previously the move failed low so the actual score is at most
+		// entry.score; if that is lower than α this will also fail low
+		return true
+	}
+	if flags&failedHigh != 0 && score >= β {
+		// previously the move failed high so the actual score is at least
+		// entry.score; if that's higher than β this will also fail high
+		return true
+	}
+	return false
+}
+
+// getBound returns the bound for score relative to α and β
+func getBound(α, β, score int32) hashFlags {
+	if score <= α {
+		return failedLow
+	}
+	if score >= β {
+		return failedHigh
+	}
+	return exact
+}
 
 // max returns maximum of a and b
 func max(a, b int32) int32 {
@@ -228,6 +276,157 @@ func historyHash(m Move) uint32 {
 	// to minimize the number of misses
 	h := uint32(m) * 438650727
 	return (h + (h << 17)) >> 20
+}
+
+// isFutile return true if m cannot raise the current static
+// evaluation above α; this is just an heuristic and mistakes
+// can happen
+func isFutile(pos *Position, static, α, margin int32, m Move) bool {
+	if m.MoveType() == Promotion || m.Piece().Figure() == Pawn && BbPawnStartRank.Has(m.To()) {
+		// promotion and passed pawns can increase the static evaluation
+		// by more than futilityMargin
+		return false
+	}
+	δ := futilityFigureBonus[m.Capture().Figure()]
+	return static+δ+margin < α
+}
+
+func seeScore(m Move) int32 {
+	score := seeBonus[m.Capture().Figure()]
+	if m.MoveType() == Promotion {
+		score -= seeBonus[Pawn]
+		score += seeBonus[m.Target().Figure()]
+	}
+	return score
+}
+
+// see returns the static exchange evaluation for m, where is
+// valid for current position (not yet executed)
+//
+// https://chessprogramming.wikispaces.com/Static+Exchange+Evaluation
+// https://chessprogramming.wikispaces.com/SEE+-+The+Swap+Algorithm
+//
+// the implementation here is optimized for the common case when there
+// isn't any capture following the move; the score returned is based
+// on some fixed values for figures, different from the ones
+// defined in material.go
+func see(pos *Position, m Move) int32 {
+	us := pos.Us()
+	sq := m.To()
+	bb := sq.Bitboard()
+	target := m.Target() // piece in position
+	bb27 := bb &^ (BbRank1 | BbRank8)
+	bb18 := bb & (BbRank1 | BbRank8)
+
+	var occ [ColorArraySize]Bitboard
+	occ[White] = pos.ByColor(White)
+	occ[Black] = pos.ByColor(Black)
+
+	// occupancy tables as if moves are executed
+	occ[us] &^= m.From().Bitboard()
+	occ[us] |= m.To().Bitboard()
+	occ[us.Opposite()] &^= m.CaptureSquare().Bitboard()
+	us = us.Opposite()
+
+	all := occ[White] | occ[Black]
+
+	// adjust score for move
+	score := seeScore(m)
+	tmp := [16]int32{score}
+	gain := tmp[:1]
+
+	for score >= 0 {
+		// try every figure in order of value
+		var fig Figure                  // attacking figure
+		var att Bitboard                // attackers
+		var pawn, bishop, rook Bitboard // mobilies for our figures
+
+		ours := occ[us]
+		mt := Normal
+
+		// pawn attacks
+		pawn = Backward(us, West(bb27)|East(bb27))
+		if att = pawn & ours & pos.ByFigure(Pawn); att != 0 {
+			fig = Pawn
+			goto makeMove
+		}
+
+		if att = KnightMobility(sq) & ours & pos.ByFigure(Knight); att != 0 {
+			fig = Knight
+			goto makeMove
+		}
+
+		if SuperQueenMobility(sq)&ours == 0 {
+			// no other figure can attack sq so we give up early
+			break
+		}
+
+		bishop = BishopMobility(sq, all)
+		if att = bishop & ours & pos.ByFigure(Bishop); att != 0 {
+			fig = Bishop
+			goto makeMove
+		}
+
+		rook = RookMobility(sq, all)
+		if att = rook & ours & pos.ByFigure(Rook); att != 0 {
+			fig = Rook
+			goto makeMove
+		}
+
+		// pawn promotions are considered queens minus the pawn
+		pawn = Backward(us, West(bb18)|East(bb18))
+		if att = pawn & ours & pos.ByFigure(Pawn); att != 0 {
+			fig, mt = Queen, Promotion
+			goto makeMove
+		}
+
+		if att = (rook | bishop) & ours & pos.ByFigure(Queen); att != 0 {
+			fig = Queen
+			goto makeMove
+		}
+
+		if att = KingMobility(sq) & ours & pos.ByFigure(King); att != 0 {
+			fig = King
+			goto makeMove
+		}
+
+		// no attack found
+		break
+
+	makeMove:
+		// make a new pseudo-legal move of the smallest attacker
+		from := att.LSB()
+		attacker := ColorFigure(us, fig)
+		m := MakeMove(mt, from.AsSquare(), sq, target, attacker)
+		target = attacker // attacker becomes the new target
+
+		// update score
+		score = seeScore(m) - score
+		gain = append(gain, score)
+
+		// update occupancy tables for executing the move
+		occ[us] = occ[us] &^ from
+		all = all &^ from
+
+		// switch sides
+		us = us.Opposite()
+	}
+
+	for i := len(gain) - 2; i >= 0; i-- {
+		if -gain[i+1] < gain[i] {
+			gain[i] = -gain[i+1]
+		}
+	}
+	return gain[0]
+}
+
+// seeSign return true if see(m) < 0
+func seeSign(pos *Position, m Move) bool {
+	if m.Piece().Figure() <= m.Capture().Figure() {
+		// Even if m.Piece() is captured, we are still positive.
+		return false
+	}
+	return see(pos, m) < 0
 }
 
 /////////////////////////////////////////////////////////////////////
