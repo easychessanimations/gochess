@@ -11,6 +11,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"math/rand"
 	"os"
 	"os/exec"
 	"regexp"
@@ -131,14 +132,14 @@ var reCmd = regexp.MustCompile(`^[[:word:]]+\b`)
 
 func (uci *UCI) Execute(line string) error {
 	line = strings.TrimSpace(line)
-	if line == "" {
+	/*if line == "" {
 		return nil
-	}
+	}*/
 
 	cmd := reCmd.FindString(line)
-	if cmd == "" {
+	/*if cmd == "" {
 		return fmt.Errorf("invalid command line")
-	}
+	}*/
 
 	// These commands do not expect the engine to be idle.
 	switch cmd {
@@ -152,6 +153,11 @@ func (uci *UCI) Execute(line string) error {
 		return errQuit
 	case "i":
 		return uci.InteractiveMode()
+	case "d":
+		return uci.UndoMoveSafe()
+	case "r":
+		uci.position("position startpos")
+		return uci.InteractiveMode()
 	case "stop":
 		return uci.stop(line)
 	case "s":
@@ -160,6 +166,8 @@ func (uci *UCI) Execute(line string) error {
 		return uci.uci(line)
 	case "ponderhit":
 		return uci.ponderhit(line)
+	default:
+		return uci.MakeMoveByIndex(cmd)
 	}
 
 	// Make sure that the engine is idle.
@@ -531,6 +539,40 @@ func (uci *UCI) InteractiveMode() error {
 	eval := Evaluate(pos)
 
 	fmt.Println("\nEval: White M =", eval.Accum[White].M, ", White E =", eval.Accum[White].E, ", Black M =", eval.Accum[Black].M, ", Black E =", eval.Accum[Black].E)
+
+	return nil
+}
+
+func (uci *UCI) MakeMoveByIndex(cmd string) error {
+	pos := uci.Engine.Position
+
+	lms := pos.LegalMoves()
+
+	if len(lms) == 0 {
+		return nil
+	}
+
+	i, err := strconv.ParseInt(cmd, 10, 32)
+
+	if err != nil {
+		i = int64(rand.Intn(len(lms)))
+	}
+
+	move := lms[i-1]
+
+	pos.DoMove(move)
+
+	uci.InteractiveMode()
+
+	return nil
+}
+
+func (uci *UCI) UndoMoveSafe() error {
+	pos := uci.Engine.Position
+
+	pos.UndoMoveSafe()
+
+	uci.InteractiveMode()
 
 	return nil
 }
