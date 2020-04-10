@@ -31,12 +31,12 @@ func MakeMove(moveType MoveType, from, to Square, capture, target Piece) Move {
 		piece = ColorFigure(target.Color(), Pawn)
 	}
 
-	return Move(from)<<0 +
-		Move(to)<<8 +
-		Move(moveType)<<16 +
-		Move(target)<<20 +
-		Move(capture)<<24 +
-		Move(piece)<<28
+	return Move(from)<<MOVE_FROM_SHIFT +
+		Move(to)<<MOVE_TO_SHIFT +
+		Move(moveType)<<MOVE_TYPE_SHIFT +
+		Move(target)<<MOVE_TARGET_SHIFT +
+		Move(capture)<<MOVE_CAPTURE_SHIFT +
+		Move(piece)<<MOVE_PIECE_SHIFT
 }
 
 // SquareFromString parses a square from a string

@@ -4,6 +4,7 @@ package bengine
 // imports
 
 import (
+	"fmt"
 	"sync"
 	"time"
 	"unsafe"
@@ -545,7 +546,7 @@ func init() {
 
 // global
 func init() {
-
+	fmt.Println("piece array size", PieceArraySize)
 }
 
 /////////////////////////////////////////////////////////////////////

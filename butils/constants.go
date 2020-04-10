@@ -24,17 +24,26 @@ const (
 const (
 	// set of possible chess figures
 
-	NoFigure Figure = iota
-	Pawn
-	Knight
-	Bishop
-	Rook
-	Queen
-	King
+	NoFigure Figure = iota // 0
+	Pawn                   // 1
+	Knight                 // 2
+	Bishop                 // 3
+	Rook                   // 4
+	Queen                  // 5
+	King                   // 6
+	_                      // 7
+	_                      // 8
+	_                      // 9
+	_                      // 10
+	_                      // 11
+	_                      // 12
+	_                      // 13
+	_                      // 14
+	_                      // 15
 
-	FigureArraySize = int(iota)
-	FigureMinValue  = Pawn
-	FigureMaxValue  = King
+	FigureArraySize = int(iota) // 16
+	FigureMinValue  = Pawn      // 1
+	FigureMaxValue  = King      // 6
 )
 
 // piece constants must stay in sync with ColorFigure
@@ -57,8 +66,24 @@ const (
 	WhiteKing                // 13
 	_                        // 14
 	_                        // 15
+	_                        // 16
+	_                        // 17
+	_                        // 18
+	_                        // 19
+	_                        // 20
+	_                        // 21
+	_                        // 22
+	_                        // 23
+	_                        // 24
+	_                        // 25
+	_                        // 26
+	_                        // 27
+	_                        // 28
+	_                        // 29
+	_                        // 30
+	_                        // 31
 
-	PieceArraySize = int(iota) // 16
+	PieceArraySize = int(iota) // 32
 	PieceMinValue  = BlackPawn // 2
 	PieceMaxValue  = WhiteKing // 13
 )
@@ -67,7 +92,7 @@ const (
 // PieceArraySize = 2 ^ PIECE_ARRAY_SIZE_IN_BITS
 // TODO: PIECE_ARRAY_SIZE_IN_BITS should be used instead of
 // hard coded constants everywhere in the code
-const PIECE_ARRAY_SIZE_IN_BITS = 4
+const PIECE_ARRAY_SIZE_IN_BITS = 5
 
 // move types
 const (
