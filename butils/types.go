@@ -23,6 +23,10 @@ type Bitboard uint64
 // square identifies the location on the board
 type Square uint
 
+// SQUARE_SIZE_IN_BITS is the size of the Square data structure in bits
+// this should be used when constructing and deconstructing a move
+const SQUARE_SIZE_IN_BITS = 8
+
 // MoveType defines the move type
 type MoveType uint8
 
@@ -36,6 +40,17 @@ type MoveType uint8
 //   0f.00.00.00 - capture
 //   f0.00.00.00 - piece
 type Move uint64
+
+// piece mask
+const PIECE_MASK = PieceArraySize - 1
+
+// constants for recording the shifts of move representation parts
+const MOVE_FROM_SHIFT = 0
+const MOVE_TO_SHIFT = SQUARE_SIZE_IN_BITS                               // originally 8
+const MOVE_TYPE_SHIFT = MOVE_TO_SHIFT + SQUARE_SIZE_IN_BITS             // originally 16
+const MOVE_TARGET_SHIFT = MOVE_TYPE_SHIFT + PIECE_ARRAY_SIZE_IN_BITS    // originally 20
+const MOVE_CAPTURE_SHIFT = MOVE_TARGET_SHIFT + PIECE_ARRAY_SIZE_IN_BITS // originally 24
+const MOVE_PIECE_SHIFT = MOVE_CAPTURE_SHIFT + PIECE_ARRAY_SIZE_IN_BITS  // originally 28
 
 // TODO: extend move to 64 bit, to allow for more move information
 

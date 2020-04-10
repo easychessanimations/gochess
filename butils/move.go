@@ -34,17 +34,17 @@ func (m Move) CaptureSquare() Square {
 
 // Capture returns the captured pieces
 func (m Move) Capture() Piece {
-	return Piece(m >> 24 & 0xf)
+	return Piece((m >> MOVE_CAPTURE_SHIFT) & Move(PIECE_MASK))
 }
 
 // Target returns the piece on the to square after the move is executed
 func (m Move) Target() Piece {
-	return Piece(m >> 20 & 0xf)
+	return Piece((m >> MOVE_TARGET_SHIFT) & Move(PIECE_MASK))
 }
 
 // Piece returns the piece moved
 func (m Move) Piece() Piece {
-	return Piece(m >> 28 & 0xf)
+	return Piece((m >> MOVE_PIECE_SHIFT) & Move(PIECE_MASK))
 }
 
 // Color returns which player is moving
