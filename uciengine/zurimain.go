@@ -150,6 +150,8 @@ func (uci *UCI) Execute(line string) error {
 		return errQuit
 	case "x":
 		return errQuit
+	case "i":
+		return uci.InteractiveMode()
 	case "stop":
 		return uci.stop(line)
 	case "s":
@@ -517,3 +519,20 @@ func main() {
 		log.Println(scan.Err())
 	}
 }
+
+//////////////////////////////////////////////////////////////////////
+// custom commands
+
+func (uci *UCI) InteractiveMode() error {
+	pos := uci.Engine.Position
+
+	pos.PrettyPrint()
+
+	eval := Evaluate(pos)
+
+	fmt.Println("\nEval: White M =", eval.Accum[White].M, ", White E =", eval.Accum[White].E, ", Black M =", eval.Accum[Black].M, ", Black E =", eval.Accum[Black].E)
+
+	return nil
+}
+
+//////////////////////////////////////////////////////////////////////
