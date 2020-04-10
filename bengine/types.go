@@ -15,9 +15,19 @@ import (
 /////////////////////////////////////////////////////////////////////
 // types
 
+// feature type
+type featureType string
+
+type FeatureInfo struct {
+	Name  featureType // name of this feature
+	Start int         // start position in the weights array
+	Num   int         // number of weights used
+}
+
 // Score represents a pair of mid and end game scores
 type Score struct {
 	M, E int32 // mid game, end game
+	I    int   // index in Weights
 }
 
 // Accum accumulates scores

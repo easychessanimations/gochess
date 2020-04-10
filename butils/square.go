@@ -8,6 +8,13 @@ package butils
 /////////////////////////////////////////////////////////////////////
 // member functions
 
+// POV returns the square from col's point of view
+// that is for Black the rank is flipped, file stays the same
+// useful in evaluation based on king's or pawns' positions
+func (sq Square) POV(col Color) Square {
+	return sq ^ (Square(col-2) & 0x38)
+}
+
 // Rank returns a number from 0 to 7 representing the rank of the square
 func (sq Square) Rank() int {
 	return int(sq / 8)
