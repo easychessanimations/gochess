@@ -6,6 +6,7 @@ package minboard
 import (
 	"fmt"
 
+	"github.com/easychessanimations/gochess/bengine"
 	"github.com/easychessanimations/gochess/butils"
 	"github.com/easychessanimations/gochess/utils"
 )
@@ -32,7 +33,9 @@ func (b *Board) Reset() {
 }
 
 func (b *Board) Go(depth int) {
+	score := bengine.Score{}
 
+	fmt.Println(score)
 }
 
 func (b *Board) Stop() {
