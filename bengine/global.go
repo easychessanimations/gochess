@@ -501,6 +501,14 @@ func seeSign(pos *Position, m Move) bool {
 	return see(pos, m) < 0
 }
 
+// resize
+func resize(v []int8) []int8 {
+	for len(v) < len(Weights) {
+		v = append(v, 0)
+	}
+	return v
+}
+
 /////////////////////////////////////////////////////////////////////
 
 /////////////////////////////////////////////////////////////////////
@@ -520,6 +528,11 @@ func init() {
 			distance[i][j] = max(f, r)
 		}
 	}
+}
+
+// global
+func init() {
+
 }
 
 /////////////////////////////////////////////////////////////////////

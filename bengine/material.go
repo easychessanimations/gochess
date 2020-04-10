@@ -49,12 +49,14 @@ func Evaluate(pos *Position) Eval {
 	return e
 }
 
+// evaluatePawnsAndShelter evaluates pawns and shelter
 func evaluatePawnsAndShelter(pos *Position, us Color) (accum Accum) {
 	evaluatePawns(pos, us, &accum)
 	evaluateShelter(pos, us, &accum)
 	return accum
 }
 
+// evaluatePawns evaluates pawns
 func evaluatePawns(pos *Position, us Color, accum *Accum) {
 	groupBySquare(fPawnSquare, us, Pawns(pos, us), accum)
 	groupByBoard(fBackwardPawns, BackwardPawns(pos, us), accum)
@@ -65,6 +67,7 @@ func evaluatePawns(pos *Position, us Color, accum *Accum) {
 	groupByRank(fPassedPawnRank, us, PassedPawns(pos, us), accum)
 }
 
+// evaluateShelter evaluates shelter
 func evaluateShelter(pos *Position, us Color, accum *Accum) {
 	// king's position and mobility
 	bb := Kings(pos, us)

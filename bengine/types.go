@@ -32,7 +32,8 @@ type Score struct {
 
 // Accum accumulates scores
 type Accum struct {
-	M, E int32 // mid game, end game
+	M, E   int32  // mid game, end game
+	Values []int8 // input values
 }
 
 // Options keeps engine's options
