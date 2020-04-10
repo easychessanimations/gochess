@@ -5,6 +5,7 @@ package bengine
 
 import (
 	"sync"
+	"time"
 	"unsafe"
 
 	. "github.com/easychessanimations/gochess/butils"
@@ -70,6 +71,39 @@ var murmurSeed = [ColorArraySize]uint64{
 
 /////////////////////////////////////////////////////////////////////
 // global functions
+
+// NewTimeControl returns a new time control with no time limit
+// no depth limit, zero time increment and zero moves to go
+func NewTimeControl(pos *Position, predicted bool) *TimeControl {
+	return &TimeControl{
+		WTime:      infinite,
+		WInc:       0,
+		BTime:      infinite,
+		BInc:       0,
+		Depth:      64,
+		MovesToGo:  defaultMovesToGo,
+		sideToMove: pos.Us(),
+		predicted:  predicted,
+		branch:     32,
+	}
+}
+
+// NewFixedDepthTimeControl returns a TimeControl which limits the search depth
+func NewFixedDepthTimeControl(pos *Position, depth int32) *TimeControl {
+	tc := NewTimeControl(pos, false)
+	tc.Depth = depth
+	tc.MovesToGo = 1
+	return tc
+}
+
+// NewDeadlineTimeControl returns a TimeControl corresponding to a single move before deadline
+func NewDeadlineTimeControl(pos *Position, deadline time.Duration) *TimeControl {
+	tc := NewTimeControl(pos, false)
+	tc.WTime = deadline
+	tc.BTime = deadline
+	tc.MovesToGo = 1
+	return tc
+}
 
 // mvvlva computes Most Valuable Victim / Least Valuable Aggressor
 // https://chessprogramming.wikispaces.com/MVV-LVA

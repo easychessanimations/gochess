@@ -1,2 +1,2 @@
 
-go run zurichess\zurichess\main.go
+go run uciengine\zurimain.go
