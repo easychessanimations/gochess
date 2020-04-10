@@ -202,7 +202,8 @@ func getFeatureStart(feature featureType, num int) int {
 		Num:   num,
 	}
 	for i := 0; i < num; i++ {
-		Weights = append(Weights, Score{M: 0, E: 0, I: len(Weights)})
+		//Weights = append(Weights, Score{M: 0, E: 0, I: len(Weights)})
+		Weights = append(Weights, Score{M: 0, E: 0})
 	}
 	return FeaturesMap[feature].Start
 }

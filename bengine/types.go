@@ -27,13 +27,13 @@ type FeatureInfo struct {
 // Score represents a pair of mid and end game scores
 type Score struct {
 	M, E int32 // mid game, end game
-	I    int   // index in Weights
+	//I    int   // index in Weights
 }
 
 // Accum accumulates scores
 type Accum struct {
-	M, E   int32  // mid game, end game
-	Values []int8 // input values
+	M, E int32 // mid game, end game
+	//Values []int8 // input values
 }
 
 // Options keeps engine's options
