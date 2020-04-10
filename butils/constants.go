@@ -41,27 +41,33 @@ const (
 // the order of pieces must match Polyglot format:
 // http://hgm.nubati.net/book_format.html
 const (
-	NoPiece Piece = iota
-	_
-	BlackPawn
-	WhitePawn
-	BlackKnight
-	WhiteKnight
-	BlackBishop
-	WhiteBishop
-	BlackRook
-	WhiteRook
-	BlackQueen
-	WhiteQueen
-	BlackKing
-	WhiteKing
-	_
-	_
+	NoPiece     Piece = iota // 0
+	_                        // 1
+	BlackPawn                // 2
+	WhitePawn                // 3
+	BlackKnight              // 4
+	WhiteKnight              // 5
+	BlackBishop              // 6
+	WhiteBishop              // 7
+	BlackRook                // 8
+	WhiteRook                // 9
+	BlackQueen               // 10
+	WhiteQueen               // 11
+	BlackKing                // 12
+	WhiteKing                // 13
+	_                        // 14
+	_                        // 15
 
-	PieceArraySize = int(iota)
-	PieceMinValue  = BlackPawn
-	PieceMaxValue  = WhiteKing
+	PieceArraySize = int(iota) // 16
+	PieceMinValue  = BlackPawn // 2
+	PieceMaxValue  = WhiteKing // 13
 )
+
+// PieceArraySize should be an exponent of 2
+// PieceArraySize = 2 ^ PIECE_ARRAY_SIZE_IN_BITS
+// TODO: PIECE_ARRAY_SIZE_IN_BITS should be used instead of
+// hard coded constants everywhere in the code
+const PIECE_ARRAY_SIZE_IN_BITS = 4
 
 // move types
 const (
