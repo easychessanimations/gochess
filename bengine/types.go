@@ -15,8 +15,12 @@ import (
 /////////////////////////////////////////////////////////////////////
 // types
 
+/*
 // feature type
 type featureType string
+*/
+
+type featureType int
 
 type FeatureInfo struct {
 	Name  featureType // name of this feature

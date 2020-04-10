@@ -167,7 +167,9 @@ func (uci *UCI) Execute(line string) error {
 	case "ponderhit":
 		return uci.ponderhit(line)
 	default:
-		return uci.MakeMoveByIndex(cmd)
+		if (cmd != "ucinewgame") && (cmd != "position") && (cmd != "go") && (cmd != "setoption") {
+			return uci.MakeMoveByIndex(cmd)
+		}
 	}
 
 	// Make sure that the engine is idle.
@@ -538,7 +540,7 @@ func (uci *UCI) InteractiveMode() error {
 
 	eval := Evaluate(pos)
 
-	fmt.Println("\nEval: White M =", eval.Accum[White].M, ", White E =", eval.Accum[White].E, ", Black M =", eval.Accum[Black].M, ", Black E =", eval.Accum[Black].E)
+	fmt.Println("\nEval: White M =", eval.Accum[White].M, ", White E =", eval.Accum[White].E, ", Black M =", eval.Accum[Black].M, ", Black E =", eval.Accum[Black].E, "All M =", eval.Accum[NoColor].M, ", All E =", eval.Accum[NoColor].E)
 
 	return nil
 }

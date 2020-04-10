@@ -188,6 +188,7 @@ func min(a, b int32) int32 {
 	return b
 }
 
+/*
 // GetFeatureStart gets feature start
 func getFeatureStart(feature featureType, num int) int {
 	featuresMapLock.Lock()
@@ -206,6 +207,11 @@ func getFeatureStart(feature featureType, num int) int {
 		Weights = append(Weights, Score{M: 0, E: 0})
 	}
 	return FeaturesMap[feature].Start
+}
+*/
+
+func getFeatureStart(feature featureType, num int) int {
+	return int(feature)
 }
 
 // groupByCount groups by count
