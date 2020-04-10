@@ -250,7 +250,8 @@ var (
 		'P': Pawn, 'N': Knight, 'B': Bishop, 'R': Rook, 'Q': Queen, 'K': King,
 	}
 	// maps pieces to symbols
-	prettyPieceToSymbol = []string{".", "?", "♟", "♙", "♞", "♘", "♝", "♗", "♜", "♖", "♛", "♕", "♚", "♔"}
+	//prettyPieceToSymbol = []string{".", "?", "♟", "♙", "♞", "♘", "♝", "♗", "♜", "♖", "♛", "♕", "♚", "♔"}
+	prettyPieceToSymbol = []string{" . ", " ? ", " p ", " P ", " n ", " N ", " b ", " B ", " r ", " R ", " q ", " Q ", " k ", " K "}
 )
 
 // conversions

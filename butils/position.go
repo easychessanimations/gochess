@@ -5,7 +5,6 @@ package butils
 
 import (
 	"fmt"
-	"log"
 	"math/rand"
 	"strconv"
 )
@@ -479,10 +478,10 @@ func (pos *Position) GivesCheck(m Move) bool {
 	return false
 }
 
-// PrettyPrint pretty prints the current position to log
-func (pos *Position) PrettyPrint() {
-	log.Println("zobrist =", pos.Zobrist())
-	log.Println("fen =", pos.String())
+// PrettyPrint pretty prints the current position to string
+func (pos *Position) PrettyPrintString() string {
+	buff := ""
+
 	for r := 7; r >= 0; r-- {
 		line := ""
 		for f := 0; f < 8; f++ {
@@ -496,8 +495,18 @@ func (pos *Position) PrettyPrint() {
 		if r == HomeRank(pos.Us()) {
 			line += " *"
 		}
-		log.Println(line)
+		buff += line + "\n"
 	}
+
+	//buff += fmt.Sprintf("zobrist = %v\n", pos.Zobrist())
+	buff += fmt.Sprintf("\n%v", pos.String())
+
+	return buff
+}
+
+// PrettyPrint pretty prints the current position
+func (pos *Position) PrettyPrint() {
+	fmt.Println(pos.PrettyPrintString())
 }
 
 // UCIToMove parses a move given in UCI format
@@ -919,14 +928,14 @@ func (pos *Position) GenerateFigureMoves(fig Figure, kind int, moves *[]Move) {
 }
 
 func init() {
-	fmt.Println("position init")
+	//fmt.Println("position init")
 	r := rand.New(rand.NewSource(5))
 	f := func() uint64 { return uint64(r.Int63())<<32 ^ uint64(r.Int63()) }
 	initZobristPiece(f)
 	initZobristEnpassant(f)
 	initZobristCastle(f)
 	initZobristColor(f)
-	fmt.Println("position init done")
+	//fmt.Println("position init done")
 }
 
 func initZobristPiece(f func() uint64) {

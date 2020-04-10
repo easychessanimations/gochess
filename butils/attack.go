@@ -16,7 +16,7 @@ import (
 // member functions
 
 func init() {
-	fmt.Println("init attacks")
+	//fmt.Println("init attacks")
 	initBbPawnAttack()
 	initBbKnightAttack()
 	initBbKingAttack()
@@ -24,7 +24,7 @@ func init() {
 	initBbSuperAttack()
 	initRookMagic()
 	initBishopMagic()
-	fmt.Println("init attacks done")
+	//fmt.Println("init attacks done")
 }
 
 func initJumpAttack(jump [][2]int, attack []Bitboard) {

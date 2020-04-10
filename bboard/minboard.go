@@ -15,25 +15,20 @@ import (
 /////////////////////////////////////////////////////////////////////
 // member functions
 
-func init() {
-	fmt.Println("bboard init")
-	fmt.Println("square array size", butils.SquareArraySize)
-	fmt.Println("square e1 =", butils.SquareE1)
-	sq := butils.RankFile(5, 6)
-	fmt.Println("square from rank 5 file 6 =", sq, ", as string =", sq.String())
-	fmt.Println("rank of", sq, "=", sq.Rank(), ", file of", sq, "=", sq.File())
-	sq, _ = butils.SquareFromString("d4")
-	fmt.Println("square from string d4 =", sq)
-	pos, _ := butils.PositionFromFEN(butils.FENStartPos)
-	pos.PrettyPrint()
+func (b *Board) Log(content string) {
+	if b.LogFunc != nil {
+		b.LogFunc(content)
+	} else {
+		fmt.Println(content)
+	}
 }
 
 func (b *Board) Init(variant utils.VariantKey) {
-
+	b.Reset()
 }
 
 func (b *Board) Reset() {
-
+	b.Pos, _ = butils.PositionFromFEN(butils.FENStartPos)
 }
 
 func (b *Board) Go(depth int) {
@@ -45,7 +40,7 @@ func (b *Board) Stop() {
 }
 
 func (b *Board) Print() {
-
+	b.Log(b.Pos.PrettyPrintString())
 }
 
 func (b *Board) ExecCommand(command string) {

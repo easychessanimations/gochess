@@ -4,6 +4,7 @@ package minboard
 // imports
 
 import (
+	"github.com/easychessanimations/gochess/butils"
 	"github.com/easychessanimations/gochess/utils"
 )
 
@@ -13,6 +14,7 @@ import (
 // types
 
 type Board struct {
+	Pos                               *butils.Position
 	LogFunc                           func(string)
 	LogAnalysisInfoFunc               func(string)
 	GetUciOptionByNameWithDefaultFunc func(string, utils.UciOption) utils.UciOption
