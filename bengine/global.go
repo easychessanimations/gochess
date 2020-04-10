@@ -61,12 +61,13 @@ var Weights = []Score{
 	{M: 1997, E: -64}, {M: 226, E: 60},
 }
 
+// feature map
 var (
 	FeaturesMap     = make(map[featureType]*FeatureInfo)
 	featuresMapLock sync.Mutex
 )
 
-// engine
+// engine initialized
 var (
 	initialized = false
 )
@@ -187,6 +188,7 @@ func min(a, b int32) int32 {
 	return b
 }
 
+// GetFeatureStart gets feature start
 func getFeatureStart(feature featureType, num int) int {
 	featuresMapLock.Lock()
 	defer featuresMapLock.Unlock()
@@ -205,12 +207,13 @@ func getFeatureStart(feature featureType, num int) int {
 	return FeaturesMap[feature].Start
 }
 
-// group
+// groupByCount groups by count
 func groupByCount(feature featureType, n int32, accum *Accum) {
 	start := getFeatureStart(feature, 1)
 	accum.addN(Weights[start], n)
 }
 
+// groupByBucket groups by bucket
 func groupByBucket(feature featureType, n int, limit int, accum *Accum) {
 	if n >= limit {
 		n = limit - 1
@@ -219,10 +222,12 @@ func groupByBucket(feature featureType, n int, limit int, accum *Accum) {
 	accum.add(Weights[start+n])
 }
 
+// groupByBoard groups by board
 func groupByBoard(feature featureType, bb Bitboard, accum *Accum) {
 	groupByCount(feature, bb.Count(), accum)
 }
 
+// groupBySquare groups by square
 func groupBySquare(feature featureType, us Color, bb Bitboard, accum *Accum) {
 	start := getFeatureStart(feature, 64)
 	for bb != BbEmpty {
@@ -231,6 +236,7 @@ func groupBySquare(feature featureType, us Color, bb Bitboard, accum *Accum) {
 	}
 }
 
+// groupByBool groups by bool
 func groupByBool(feature featureType, b bool, accum *Accum) {
 	start := getFeatureStart(feature, 1)
 	if b {
@@ -238,14 +244,17 @@ func groupByBool(feature featureType, b bool, accum *Accum) {
 	}
 }
 
+// groupByFileSq groups by file square
 func groupByFileSq(feature featureType, us Color, sq Square, accum *Accum) {
 	groupByBucket(feature, sq.POV(us).File(), 8, accum)
 }
 
+// groupByRanksSq groups by rank square
 func groupByRankSq(feature featureType, us Color, sq Square, accum *Accum) {
 	groupByBucket(feature, sq.POV(us).Rank(), 8, accum)
 }
 
+// groupByRank groups by rank
 func groupByRank(feature featureType, us Color, bb Bitboard, accum *Accum) {
 	for bb != BbEmpty {
 		sq := bb.Pop()
@@ -271,7 +280,7 @@ func pawnsHash(pos *Position) uint64 {
 	return h
 }
 
-// stub
+// prefetch stub
 func prefetch(e *hashEntry) {}
 
 // split splits lock into a lock and two hash table indexes
@@ -286,7 +295,7 @@ func split(lock uint64, mask uint32) (uint32, uint32, uint32) {
 
 // NewHashTable builds transposition table that takes up to hashSizeMB megabytes
 func NewHashTable(hashSizeMB int) *HashTable {
-	// Choose hashSize such that it is a power of two.
+	// choose hashSize such that it is a power of two
 	hashEntrySize := uint64(unsafe.Sizeof(hashEntry{}))
 	hashSize := uint64(hashSizeMB) << 20 / hashEntrySize
 
@@ -353,6 +362,7 @@ func isFutile(pos *Position, static, α, margin int32, m Move) bool {
 	return static+δ+margin < α
 }
 
+// seeScore return see score
 func seeScore(m Move) int32 {
 	score := seeBonus[m.Capture().Figure()]
 	if m.MoveType() == Promotion {
