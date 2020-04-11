@@ -370,6 +370,121 @@ func (pos *Position) LegalMoves() []Move {
 	return legalMoves
 }
 
+// CreateLegalMoveBuff creates a move buffer for all legal moves, with SAN and UCI
+// sorted by SAN
+func (pos *Position) CreateLegalMoveBuff() {
+	lms := pos.LegalMoves()
+	pos.LegalMoveBuff = MoveBuff{}
+	for _, lm := range lms {
+		mbi := MoveBuffItem{
+			Move:  lm,
+			San:   lm.LAN(), // use LAN for meaningful initialization
+			Algeb: lm.UCI(),
+		}
+
+		pos.LegalMoveBuff = append(pos.LegalMoveBuff, mbi)
+
+		sort.Sort(MoveBuffBySan(pos.LegalMoveBuff))
+	}
+}
+
+// InitMoveToSan should be called before batch calls to MoveToSanBatch
+func (pos *Position) InitMoveToSan() {
+	pos.CreateLegalMoveBuff()
+	for i, mbi := range pos.LegalMoveBuff {
+		mbi.San = pos.MoveToSanBatch(mbi.Move)
+		pos.LegalMoveBuff[i] = mbi
+	}
+	sort.Sort(MoveBuffBySan(pos.LegalMoveBuff))
+}
+
+// MoveToSanBatch returns the move in SAN notation
+// provided that InitMoveToSan was called for the position
+func (pos *Position) MoveToSanBatch(move Move) string {
+	canditates := MoveBuff{}
+
+	for _, mbi := range pos.LegalMoveBuff {
+		if (mbi.Move.Piece() == move.Piece()) && (mbi.Move.To() == move.To()) {
+			canditates = append(canditates, mbi)
+		}
+	}
+
+	if len(canditates) == 0 {
+		// move not found among legal moves
+		return "-"
+	}
+
+	sameFile := false
+	sameRank := false
+	files := map[int]bool{}
+	ranks := map[int]bool{}
+
+	for _, candidate := range canditates {
+		file := candidate.Move.From().File()
+		rank := candidate.Move.From().Rank()
+
+		_, hasFile := files[file]
+		_, hasRank := ranks[rank]
+
+		if hasFile {
+			sameFile = true
+		} else {
+			files[file] = true
+		}
+
+		if hasRank {
+			sameRank = true
+		} else {
+			ranks[rank] = true
+		}
+	}
+
+	// full qualifier
+	qualifier := move.From().String()
+
+	if len(canditates) == 1 {
+		// no qualifier for only one move
+		qualifier = ""
+	} else {
+		if (!sameFile) && (!sameRank) {
+			// default is qualify by file
+			qualifier = qualifier[0:1]
+		} else if sameFile && sameRank {
+			// nothing to do; qualifier is should be left full, as already initialized
+		} else if sameFile {
+			// has same files, needs to be qualified by rank
+			qualifier = qualifier[1:2]
+		} else {
+			// same rank, has to be qualified by file
+			qualifier = qualifier[0:1]
+		}
+	}
+
+	letter := lanFigureToSymbol[move.Piece().Figure()]
+	if move.Figure() == Pawn {
+		letter = ""
+	}
+	capture := ""
+	if move.Capture() != NoPiece {
+		capture = "x"
+	}
+	toAlgeb := move.To().String()
+	prom := ""
+	if move.Promotion() != NoPiece {
+		prom = "=" + lanFigureToSymbol[move.Promotion().Figure()]
+	}
+
+	san := letter + qualifier + capture + toAlgeb + prom
+
+	return san
+}
+
+// MoveToSan returns the move in SAN notation
+func (pos *Position) MoveToSan(move Move) string {
+	pos.InitMoveToSan()
+	return pos.MoveToSanBatch(move)
+}
+
 // InsufficientMaterial returns true if the position is theoretical draw
 func (pos *Position) InsufficientMaterial() bool {
 	// K vs K is draw
@@ -499,21 +614,11 @@ func (pos *Position) GivesCheck(m Move) bool {
 	return false
 }
 
-// SortedLegalMoves returns the legal moves from the position sorted by SAN
-func (pos *Position) SortedLegalMoves() MoveBuff {
-	legalMoves := pos.LegalMoves()
-	mb := MoveBuff{}
-	for _, m := range legalMoves {
-		mb = append(mb, MoveBuffItem{Move: m, San: m.LAN(), Algeb: m.UCI()})
-	}
-	sort.Sort(mb)
-	return mb
-}
-
 // LegalMovesString lists the legal moves fromt the position numbered and sorted by SAN as string
 func (pos *Position) LegalMovesString() string {
 	buff := ""
-	for i, mbi := range pos.SortedLegalMoves() {
+	pos.InitMoveToSan()
+	for i, mbi := range pos.LegalMoveBuff {
 		buff += fmt.Sprintf("%d. %s [ %s ] ", i+1, mbi.San, mbi.Algeb)
 	}
 	return buff

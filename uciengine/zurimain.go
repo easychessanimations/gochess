@@ -559,21 +559,38 @@ func (uci *UCI) InteractiveMode() error {
 func (uci *UCI) MakeMoveByIndex(cmd string) error {
 	pos := uci.Engine.Position
 
-	lms := pos.LegalMoves()
+	pos.InitMoveToSan()
 
-	if len(lms) == 0 {
+	lmb := pos.LegalMoveBuff
+
+	if len(lmb) == 0 {
+		// no legal move to make
 		return nil
 	}
 
 	i, err := strconv.ParseInt(cmd, 10, 32)
 
+	foundMoveIndex := -1
+
 	if err != nil {
-		i = int64(rand.Intn(len(lms)))
+		// use random index if cmd did not parse as a number
+		i = int64(rand.Intn(len(lmb)))
+
+		// try to look up move by notation
+		for testI, lmbi := range lmb {
+			if (lmbi.San == cmd) || (lmbi.Algeb == cmd) {
+				foundMoveIndex = testI
+			}
+		}
 	} else {
 		i--
 	}
 
-	move := lms[i]
+	move := lmb[i].Move
+
+	if foundMoveIndex >= 0 {
+		move = lmb[foundMoveIndex].Move
+	}
 
 	pos.DoMove(move)
 

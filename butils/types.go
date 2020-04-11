@@ -82,6 +82,7 @@ type Position struct {
 	fullmoveCounter int                    // fullmove counter, incremented after black move
 	states          []state                // a state for each Ply
 	curr            *state                 // current state
+	LegalMoveBuff   MoveBuff               // buffer to store legal moves; for sorting by SAN
 }
 
 // castle info
@@ -100,15 +101,16 @@ type MoveBuffItem struct {
 
 // MoveBuff holds a list of MoveBuffItems
 type MoveBuff []MoveBuffItem
+type MoveBuffBySan []MoveBuffItem
 
 // sorting functions to sort MoveBuff by SAN
-func (mb MoveBuff) Len() int {
+func (mb MoveBuffBySan) Len() int {
 	return len(mb)
 }
-func (mb MoveBuff) Swap(i, j int) {
+func (mb MoveBuffBySan) Swap(i, j int) {
 	mb[i], mb[j] = mb[j], mb[i]
 }
-func (mb MoveBuff) Less(i, j int) bool {
+func (mb MoveBuffBySan) Less(i, j int) bool {
 	return mb[i].San < mb[j].San
 }
 
