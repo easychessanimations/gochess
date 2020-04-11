@@ -84,20 +84,25 @@ func (m Move) IsQuiet() bool {
 // the protocol specification at http://wbec-ridderkerk.nl/html/UCIProtocol.html
 // incorrectly states that this is the long algebraic notation (LAN)
 func (m Move) UCI() string {
-	return m.From().String() + m.To().String() + uciFigureToSymbol[m.Promotion().Figure()]
+	buff := m.From().String() + m.To().String()
+	promFigure := m.Promotion().Figure()
+	if promFigure != NoFigure {
+		buff += promFigure.Symbol()
+	}
+	return buff
 }
 
 // LAN converts a move to Long Algebraic Notation
 // http://en.wikipedia.org/wiki/Algebraic_notation_%28chess%29#Long_algebraic_notation
 // e.g. a2-a3, b7-b8Q, Nb1xc3, Ke1-c1 (white king queen side castling)
 func (m Move) LAN() string {
-	r := lanFigureToSymbol[m.Piece().Figure()] + m.From().String()
+	r := m.Piece().SanLetter() + m.From().String()
 	if m.Capture() != NoPiece {
 		r += "x"
 	} else {
 		r += "-"
 	}
-	r += m.To().String() + lanFigureToSymbol[m.Promotion().Figure()]
+	r += m.To().String() + m.Promotion().SanLetter()
 	return r
 }
 

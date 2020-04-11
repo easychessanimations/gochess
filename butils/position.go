@@ -460,7 +460,7 @@ func (pos *Position) MoveToSanBatch(move Move) string {
 		}
 	}
 
-	letter := lanFigureToSymbol[move.Piece().Figure()]
+	letter := move.Piece().SanLetter()
 	if move.Figure() == Pawn {
 		letter = ""
 	}
@@ -471,7 +471,7 @@ func (pos *Position) MoveToSanBatch(move Move) string {
 	toAlgeb := move.To().String()
 	prom := ""
 	if move.Promotion() != NoPiece {
-		prom = "=" + lanFigureToSymbol[move.Promotion().Figure()]
+		prom = "=" + move.Promotion().SanLetter()
 	}
 
 	san := letter + qualifier + capture + toAlgeb + prom
@@ -635,7 +635,7 @@ func (pos *Position) PrettyPrintString() string {
 			if pos.IsEnpassantSquare(sq) {
 				line += ","
 			} else {
-				line += prettyPieceToSymbol[pos.Get(sq)]
+				line += pos.Get(sq).PrettySymbol()
 			}
 		}
 		if r == HomeRank(pos.Us()) {

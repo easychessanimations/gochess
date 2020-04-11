@@ -6,6 +6,7 @@ package butils
 import (
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 /////////////////////////////////////////////////////////////////////
@@ -251,20 +252,9 @@ func ParsePiecePlacement(str string, pos *Position) error {
 	return nil
 }
 
-// PieceToSymbol return the symbol for the piece
-func PieceToSymbol(pi Piece) string {
-	symbol, ok := pieceToSymbol[pi]
-
-	if ok {
-		return symbol
-	}
-
-	return "?"
-}
-
 // SymbolToFigure returns the Figure for the symbol
 func SymbolToFigure(symbol string) Figure {
-	figure, ok := symbolToFigure[symbol]
+	figure, ok := SymbolToFigureMap[symbol]
 
 	if ok {
 		return figure
@@ -275,10 +265,17 @@ func SymbolToFigure(symbol string) Figure {
 
 // SymbolToPiece returns the Piece for the symbol
 func SymbolToPiece(symbol string) Piece {
-	piece, ok := symbolToPiece[symbol]
+	color := Black
+
+	if (symbol[0] >= 'A') && (symbol[0] <= 'Z') {
+		color = White
+		symbol = strings.ToLower(symbol)
+	}
+
+	figure, ok := SymbolToFigureMap[symbol]
 
 	if ok {
-		return piece
+		return ColorFigure(color, figure)
 	}
 
 	return NoPiece
@@ -299,7 +296,7 @@ func FormatPiecePlacement(pos *Position) string {
 					s += strconv.Itoa(space)
 					space = 0
 				}
-				s += PieceToSymbol(pi)
+				s += pi.FenSymbol()
 			}
 		}
 
