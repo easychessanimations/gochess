@@ -158,6 +158,13 @@ func (uci *UCI) Execute(line string) error {
 	case "r":
 		uci.position("position startpos")
 		return uci.InteractiveMode()
+	case "t":
+		err := uci.position("position fen jlsesqkbnr/pppppppp/8/8/8/8/PPPPPPPP/JLneSQKBNR w KQkq - 0 1")
+		if err != nil {
+			return err
+		} else {
+			return uci.InteractiveMode()
+		}
 	case "stop":
 		return uci.stop(line)
 	case "s":

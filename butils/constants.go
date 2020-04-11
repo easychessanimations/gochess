@@ -11,10 +11,10 @@ package butils
 const (
 	// set of possible chess colors
 
-	NoColor Color = iota
-	Black
-	White
-	_
+	NoColor    Color = iota // 0
+	Black                   // 1
+	White                   // 2
+	DummyColor              // 3
 
 	ColorArraySize = int(iota)
 	ColorMinValue  = Black
@@ -67,7 +67,7 @@ const (
 // http://hgm.nubati.net/book_format.html
 const (
 	NoPiece       Piece = iota // 0
-	_                          // 1
+	DummyPiece                 // 1
 	BlackPawn                  // 2
 	WhitePawn                  // 3
 	BlackKnight                // 4
@@ -264,8 +264,24 @@ const (
 
 var (
 	// maps figures to symbols for move notations
-	lanFigureToSymbol = [...]string{"", "", "N", "B", "R", "Q", "K"}
-	uciFigureToSymbol = [...]string{"", "", "n", "b", "r", "q", "k"}
+	lanFigureToSymbol = [...]string{
+		"",  // 0
+		"",  // 1
+		"N", // 2
+		"B", // 3
+		"R", // 4
+		"Q", // 5
+		"K", // 6
+	}
+	uciFigureToSymbol = [...]string{
+		"",  // 0
+		"",  // 1
+		"n", // 2
+		"b", // 3
+		"r", // 4
+		"q", // 5
+		"k", // 6
+	}
 )
 
 const (
@@ -324,19 +340,127 @@ var (
 	zobristColor     [ColorArraySize]uint64
 
 	// maps runes to figures
-	symbolToFigure = [256]Figure{
+	/*symbolToFigure = [256]Figure{
 		'p': Pawn, 'n': Knight, 'b': Bishop, 'r': Rook, 'q': Queen, 'k': King,
 		'P': Pawn, 'N': Knight, 'B': Bishop, 'R': Rook, 'Q': Queen, 'K': King,
+	}*/
+	symbolToFigure = map[string]Figure{
+		".":   NoFigure, // 0
+		"?":   NoFigure, // 0
+		"p":   Pawn,     // 1
+		"P":   Pawn,     // 1
+		"n":   Knight,   // 2
+		"N":   Knight,   // 2
+		"b":   Bishop,   // 3
+		"B":   Bishop,   // 3
+		"r":   Rook,     // 4
+		"R":   Rook,     // 4
+		"q":   Queen,    // 5
+		"Q":   Queen,    // 5
+		"k":   King,     // 6
+		"K":   King,     // 6
+		"j":   Jailer,   // 7
+		"J":   Jailer,   // 7
+		"ln":  LancerN,  // 8
+		"Ln":  LancerN,  // 8
+		"lne": LancerNE, // 9
+		"Lne": LancerNE, // 9
+		"le":  LancerE,  // 10
+		"Le":  LancerE,  // 10
+		"lse": LancerSE, // 11
+		"Lse": LancerSE, // 11
+		"ls":  LancerS,  // 12
+		"Ls":  LancerS,  // 12
+		"lsw": LancerSW, // 13
+		"Lsw": LancerSW, // 13
+		"lw":  LancerW,  // 14
+		"Lw":  LancerW,  // 14
+		"lnw": LancerNW, // 15
+		"Lnw": LancerNW, // 15
+		"s":   Sentry,   // 16
+		"S":   Sentry,   // 16
+	}
+	// maps Piece to fen piece letter
+	pieceToSymbol = map[Piece]string{
+		NoPiece:       ".",   // 0
+		DummyPiece:    "?",   // 1
+		BlackPawn:     "p",   // 2
+		WhitePawn:     "P",   // 3
+		BlackKnight:   "n",   // 4
+		WhiteKnight:   "N",   // 5
+		BlackBishop:   "b",   // 6
+		WhiteBishop:   "B",   // 7
+		BlackRook:     "r",   // 8
+		WhiteRook:     "R",   // 9
+		BlackQueen:    "q",   // 10
+		WhiteQueen:    "Q",   // 11
+		BlackKing:     "k",   // 12
+		WhiteKing:     "K",   // 13
+		BlackJailer:   "j",   // 14
+		WhiteJailer:   "J",   // 15
+		BlackLancerN:  "ln",  // 16
+		WhiteLancerN:  "Ln",  // 17
+		BlackLancerNE: "lne", // 18
+		WhiteLancerNE: "Lne", // 19
+		BlackLancerE:  "le",  // 21
+		WhiteLancerE:  "Le",  // 21
+		BlackLancerSE: "lse", // 22
+		WhiteLancerSE: "Lse", // 23
+		BlackLancerS:  "ls",  // 24
+		WhiteLancerS:  "Ls",  // 25
+		BlackLancerSW: "lsw", // 26
+		WhiteLancerSW: "Lsw", // 27
+		BlackLancerW:  "lw",  // 28
+		WhiteLancerW:  "Lw",  // 29
+		BlackLancerNW: "lnw", // 31
+		WhiteLancerNW: "Lnw", // 31
+		BlackSentry:   "s",   // 32
+		WhiteSentry:   "S",   // 33
 	}
 	// maps pieces to symbols
 	//prettyPieceToSymbol = []string{".", "?", "♟", "♙", "♞", "♘", "♝", "♗", "♜", "♖", "♛", "♕", "♚", "♔"}
-	prettyPieceToSymbol = []string{" . ", " ? ", " p ", " P ", " n ", " N ", " b ", " B ", " r ", " R ", " q ", " Q ", " k ", " K "}
+	prettyPieceToSymbol = []string{
+		" . ", // 0
+		" ? ", // 1
+		" p ", // 2
+		" P ", // 3
+		" n ", // 4
+		" N ", // 5
+		" b ", // 6
+		" B ", // 7
+		" r ", // 8
+		" R ", // 9
+		" q ", // 10
+		" Q ", // 11
+		" k ", // 12
+		" K ", // 13
+		" j ", // 14
+		" J ", // 15
+		"ln ", // 16
+		"Ln ", // 17
+		"lne", // 18
+		"Lne", // 19
+		"le ", // 20
+		"Le ", // 21
+		"lse", // 22
+		"Lse", // 23
+		"ls ", // 24
+		"Ls ", // 25
+		"lsw", // 26
+		"Lsw", // 27
+		"lw ", // 28
+		"Lw ", // 29
+		"lnw", // 30
+		"Lnw", // 31
+		" s ", // 32
+		" S ", // 33
+	}
 )
 
 // conversions
 var (
-	colorToSymbol      = "?bw"
-	pieceToSymbol      = ".?pPnNbBrRqQkK"
+	colorToSymbol = "?bw"
+	//pieceToSymbol      = ".?pPnNbBrRqQkK"
 	symbolToCastleInfo = map[rune]castleInfo{
 		'K': castleInfo{
 			Castle: WhiteOO,
@@ -363,7 +487,7 @@ var (
 		"w": White,
 		"b": Black,
 	}
-	symbolToPiece = map[rune]Piece{
+	/*symbolToPiece = map[rune]Piece{
 		'p': BlackPawn,
 		'n': BlackKnight,
 		'b': BlackBishop,
@@ -377,6 +501,42 @@ var (
 		'R': WhiteRook,
 		'Q': WhiteQueen,
 		'K': WhiteKing,
+	}*/
+	symbolToPiece = map[string]Piece{
+		".":   NoPiece,       // 0
+		"?":   DummyPiece,    // 1
+		"p":   BlackPawn,     // 2
+		"P":   WhitePawn,     // 3
+		"n":   BlackKnight,   // 4
+		"N":   WhiteKnight,   // 5
+		"b":   BlackBishop,   // 6
+		"B":   WhiteBishop,   // 7
+		"r":   BlackRook,     // 8
+		"R":   WhiteRook,     // 9
+		"q":   BlackQueen,    // 10
+		"Q":   WhiteQueen,    // 11
+		"k":   BlackKing,     // 12
+		"K":   WhiteKing,     // 13
+		"j":   BlackJailer,   // 14
+		"J":   WhiteJailer,   // 15
+		"ln":  BlackLancerN,  // 16
+		"Ln":  WhiteLancerN,  // 17
+		"lne": BlackLancerNE, // 18
+		"Lne": WhiteLancerNE, // 19
+		"le":  BlackLancerE,  // 20
+		"Le":  WhiteLancerE,  // 21
+		"lse": BlackLancerSE, // 22
+		"Lse": WhiteLancerSE, // 23
+		"ls":  BlackLancerS,  // 24
+		"Ls":  WhiteLancerS,  // 25
+		"lsw": BlackLancerSW, // 26
+		"Lsw": WhiteLancerSW, // 27
+		"lw":  BlackLancerW,  // 28
+		"Lw":  WhiteLancerW,  // 29
+		"lnw": BlackLancerNW, // 30
+		"Lnw": WhiteLancerNW, // 31
+		"s":   BlackSentry,   // 32
+		"S":   WhiteSentry,   // 33
 	}
 )
 

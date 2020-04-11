@@ -692,7 +692,7 @@ func (pos *Position) UCIToMove(s string) (Move, error) {
 			return NullMove, fmt.Errorf("%s doesn't have a promotion piece", s)
 		}
 		moveType = Promotion
-		target = ColorFigure(pos.Us(), symbolToFigure[s[4]])
+		target = ColorFigure(pos.Us(), SymbolToFigure(s[4:5]))
 	} else {
 		if len(s) != 4 {
 			return NullMove, fmt.Errorf("%s move is too long", s)
