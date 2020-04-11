@@ -31,16 +31,16 @@ const (
 	Rook                   // 4
 	Queen                  // 5
 	King                   // 6
-	_                      // 7
-	_                      // 8
-	_                      // 9
-	_                      // 10
-	_                      // 11
-	_                      // 12
-	_                      // 13
-	_                      // 14
-	_                      // 15
-	_                      // 16
+	Jailer                 // 7
+	LancerN                // 8
+	LancerNE               // 9
+	LancerE                // 10
+	LancerSE               // 11
+	LancerS                // 12
+	LancerSW               // 13
+	LancerW                // 14
+	LancerNW               // 15
+	Sentry                 // 16
 	_                      // 17
 	_                      // 18
 	_                      // 19
@@ -66,70 +66,70 @@ const (
 // the order of pieces must match Polyglot format:
 // http://hgm.nubati.net/book_format.html
 const (
-	NoPiece     Piece = iota // 0
-	_                        // 1
-	BlackPawn                // 2
-	WhitePawn                // 3
-	BlackKnight              // 4
-	WhiteKnight              // 5
-	BlackBishop              // 6
-	WhiteBishop              // 7
-	BlackRook                // 8
-	WhiteRook                // 9
-	BlackQueen               // 10
-	WhiteQueen               // 11
-	BlackKing                // 12
-	WhiteKing                // 13
-	_                        // 14
-	_                        // 15
-	_                        // 16
-	_                        // 17
-	_                        // 18
-	_                        // 19
-	_                        // 20
-	_                        // 21
-	_                        // 22
-	_                        // 23
-	_                        // 24
-	_                        // 25
-	_                        // 26
-	_                        // 27
-	_                        // 28
-	_                        // 29
-	_                        // 30
-	_                        // 31
-	_                        // 32
-	_                        // 33
-	_                        // 34
-	_                        // 35
-	_                        // 36
-	_                        // 37
-	_                        // 38
-	_                        // 39
-	_                        // 40
-	_                        // 41
-	_                        // 42
-	_                        // 43
-	_                        // 44
-	_                        // 45
-	_                        // 46
-	_                        // 47
-	_                        // 48
-	_                        // 49
-	_                        // 50
-	_                        // 51
-	_                        // 52
-	_                        // 53
-	_                        // 54
-	_                        // 55
-	_                        // 56
-	_                        // 57
-	_                        // 58
-	_                        // 59
-	_                        // 60
-	_                        // 61
-	_                        // 62
-	_                        // 63
+	NoPiece       Piece = iota // 0
+	_                          // 1
+	BlackPawn                  // 2
+	WhitePawn                  // 3
+	BlackKnight                // 4
+	WhiteKnight                // 5
+	BlackBishop                // 6
+	WhiteBishop                // 7
+	BlackRook                  // 8
+	WhiteRook                  // 9
+	BlackQueen                 // 10
+	WhiteQueen                 // 11
+	BlackKing                  // 12
+	WhiteKing                  // 13
+	BlackJailer                // 14
+	WhiteJailer                // 15
+	BlackLancerN               // 16
+	WhiteLancerN               // 17
+	BlackLancerNE              // 18
+	WhiteLancerNE              // 19
+	BlackLancerE               // 20
+	WhiteLancerE               // 21
+	BlackLancerSE              // 22
+	WhiteLancerSE              // 23
+	BlackLancerS               // 24
+	WhiteLancerS               // 25
+	BlackLancerSW              // 26
+	WhiteLancerSW              // 27
+	BlackLancerW               // 28
+	WhiteLancerW               // 29
+	BlackLancerNW              // 30
+	WhiteLancerNW              // 31
+	BlackSentry                // 32
+	WhiteSentry                // 33
+	_                          // 34
+	_                          // 35
+	_                          // 36
+	_                          // 37
+	_                          // 38
+	_                          // 39
+	_                          // 40
+	_                          // 41
+	_                          // 42
+	_                          // 43
+	_                          // 44
+	_                          // 45
+	_                          // 46
+	_                          // 47
+	_                          // 48
+	_                          // 49
+	_                          // 50
+	_                          // 51
+	_                          // 52
+	_                          // 53
+	_                          // 54
+	_                          // 55
+	_                          // 56
+	_                          // 57
+	_                          // 58
+	_                          // 59
+	_                          // 60
+	_                          // 61
+	_                          // 62
+	_                          // 63
 
 	PieceArraySize = int(iota) // 64
 	PieceMinValue  = BlackPawn // 2
