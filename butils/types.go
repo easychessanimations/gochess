@@ -97,6 +97,7 @@ type MoveBuffItem struct {
 	Move  Move
 	San   string
 	Algeb string
+	Lan   string
 }
 
 // MoveBuff holds a list of MoveBuffItems

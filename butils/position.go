@@ -380,6 +380,7 @@ func (pos *Position) CreateLegalMoveBuff() {
 			Move:  lm,
 			San:   lm.LAN(), // use LAN for meaningful initialization
 			Algeb: lm.UCI(),
+			Lan:   lm.LAN(),
 		}
 
 		pos.LegalMoveBuff = append(pos.LegalMoveBuff, mbi)
@@ -619,7 +620,7 @@ func (pos *Position) LegalMovesString() string {
 	buff := ""
 	pos.InitMoveToSan()
 	for i, mbi := range pos.LegalMoveBuff {
-		buff += fmt.Sprintf("%d. %s [ %s ] ", i+1, mbi.San, mbi.Algeb)
+		buff += fmt.Sprintf("%d. %s [ %s , %s ] ", i+1, mbi.San, mbi.Algeb, mbi.Lan)
 	}
 	return buff
 }

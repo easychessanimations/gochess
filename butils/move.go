@@ -102,7 +102,11 @@ func (m Move) LAN() string {
 	} else {
 		r += "-"
 	}
-	r += m.To().String() + m.Promotion().SanLetter()
+	r += m.To().String()
+	promPiece := m.Promotion()
+	if promPiece != NoPiece {
+		r += promPiece.SanLetter()
+	}
 	return r
 }
 
