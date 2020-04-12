@@ -972,6 +972,10 @@ func (pos *Position) genPieceMoves(fig Figure, mask Bitboard, moves *[]Move) {
 			att = QueenMobility(from, all)
 		case King:
 			att = KingMobility(from)
+		case Sentry:
+			att = BishopMobility(from, all)
+		case Jailer:
+			att = RookMobility(from, all)
 		}
 		pos.genBitboardMoves(pi, from, att&mask, moves)
 	}
@@ -1091,6 +1095,9 @@ func (pos *Position) GenerateMoves(kind int, moves *[]Move) {
 	for lancer := LancerMinValue; lancer <= LancerMaxValue; lancer++ {
 		pos.genLancerMoves(lancer, mask, moves)
 	}
+
+	pos.genPieceMoves(Sentry, mask, moves)
+	pos.genPieceMoves(Jailer, mask, moves)
 
 	pos.genPieceMoves(Rook, mask, moves)
 	pos.genPieceMoves(Bishop, mask, moves)
