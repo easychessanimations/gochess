@@ -493,7 +493,19 @@ func (pos *Position) MoveToSanBatch(move Move) string {
 
 	san := letter + qualifier + capture + toAlgeb + prom
 
-	return san
+	check := ""
+
+	pos.DoMove(move)
+	if pos.IsChecked(pos.Us()) {
+		check = "+"
+		lms := pos.LegalMoves()
+		if len(lms) == 0 {
+			check = "#"
+		}
+	}
+	pos.UndoMove()
+
+	return san + check
 }
 
 // MoveToSan returns the move in SAN notation
