@@ -60,6 +60,8 @@ const (
 	FigureArraySize = int(iota) // 32
 	FigureMinValue  = Pawn      // 1
 	FigureMaxValue  = King      // 6
+	LancerMinValue  = LancerN   // 8
+	LancerMaxValue  = LancerNW  // 15
 )
 
 var FigureToSymbol = []string{

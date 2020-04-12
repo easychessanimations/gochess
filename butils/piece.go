@@ -23,6 +23,12 @@ func (f Figure) IsLancer() bool {
 	return (f & LANCER_MASK) == Lancer
 }
 
+// Figure.LancerDirection determines the lancer direction of the figure
+// figure has to be a lancer
+func (lancer Figure) LancerDirection() int {
+	return int(lancer & LANCER_DIRECTION_MASK)
+}
+
 // Figure.BaseFigure returns the base figure of the figure
 // apart from lancer it is the same as figure
 func (f Figure) BaseFigure() Figure {
@@ -100,6 +106,12 @@ func (pi Piece) AlgebLetter() string {
 // convenience function
 func (pi Piece) SanLetter() string {
 	return pi.Figure().SanLetter()
+}
+
+// Piece.LancerDirection determines the lancer direction of the piece
+// convenience function
+func (lancer Piece) LancerDirection() int {
+	return lancer.Figure().LancerDirection()
 }
 
 /////////////////////////////////////////////////////////////////////

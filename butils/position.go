@@ -966,6 +966,26 @@ func (pos *Position) genPieceMoves(fig Figure, mask Bitboard, moves *[]Move) {
 	}
 }
 
+func (pos *Position) genLancerMoves(lancer Figure, mask Bitboard, moves *[]Move) {
+	lancerDirection := lancer.LancerDirection()
+	pi := ColorFigure(pos.Us(), lancer)
+	// lancer can jump over own pieces, so all occupancy is just that of opponent
+	all := pos.ByColor(pos.Them())
+	for bb := pos.ByPiece(pos.Us(), lancer); bb != 0; {
+		from := bb.Pop()
+		var att Bitboard
+		att = QueenMobility(from, all)
+		// attacks have to be masked by lancer direction
+		att = att & LancerDirectionMasksForSquares[from][lancerDirection]
+		// remove jumping on own pieces from attacks
+		att = att &^ pos.ByColor(pos.Us())
+		for att != 0 {
+			to := att.Pop()
+			*moves = append(*moves, MakeMove(Normal, from, to, pos.Get(to), pi))
+		}
+	}
+}
+
 func (pos *Position) genKingCastles(kind int, moves *[]Move) {
 	// skip if we only generate violent or evasion moves
 	if kind&Quiet == 0 || pos.curr.IsChecked {
@@ -1053,6 +1073,12 @@ func (pos *Position) GenerateMoves(kind int, moves *[]Move) {
 	pos.genPieceMoves(King, mask, moves)
 	pos.genKingCastles(kind, moves)
 	pos.genPieceMoves(Queen, mask, moves)
+
+	// generate lancer moves for all possible directions
+	for lancer := LancerMinValue; lancer <= LancerMaxValue; lancer++ {
+		pos.genLancerMoves(lancer, mask, moves)
+	}
+
 	pos.genPieceMoves(Rook, mask, moves)
 	pos.genPieceMoves(Bishop, mask, moves)
 	pos.genPieceMoves(Knight, mask, moves)
