@@ -33,6 +33,54 @@ func (e Eval) GetCentipawnsScore() int32 {
 	return scaleToCentipawns(score)
 }
 
+// EvalExtra calculates additional Eval of extra pieces
+func EvalExtra(pos *Position) Eval {
+	e := Eval{position: pos}
+
+	e.Accum[White] = evaluateExtra(pos, White)
+	e.Accum[Black] = evaluateExtra(pos, Black)
+
+	return e
+}
+
+// extra piece values
+const LANCER_VALUE_NATIVE_M = 200000
+const LANCER_VALUE_NATIVE_E = 200000
+const SENTRY_VALUE_NATIVE_M = 100000
+const SENTRY_VALUE_NATIVE_E = 100000
+const JAILER_VALUE_NATIVE_M = 150000
+const JAILER_VALUE_NATIVE_E = 150000
+
+// evaluateExtra calculates additional Accum of extra pieces for a side
+func evaluateExtra(pos *Position, us Color) Accum {
+	var accum Accum
+
+	for ld := 0; ld < NUM_LANCER_DIRECTIONS; ld++ {
+		lancers := pos.ByPiece(us, MakeLancer(us, ld).Figure())
+
+		numLancers := lancers.Count()
+
+		accum.M += numLancers * LANCER_VALUE_NATIVE_M
+		accum.E += numLancers * LANCER_VALUE_NATIVE_E
+	}
+
+	sentries := pos.ByPiece(us, Sentry)
+
+	numSentries := sentries.Count()
+
+	accum.M += numSentries * LANCER_VALUE_NATIVE_M
+	accum.E += numSentries * LANCER_VALUE_NATIVE_E
+
+	jailers := pos.ByPiece(us, Jailer)
+
+	numJailers := jailers.Count()
+
+	accum.M += numJailers * LANCER_VALUE_NATIVE_M
+	accum.E += numJailers * LANCER_VALUE_NATIVE_E
+
+	return accum
+}
+
 // Evaluate evaluates the position pos
 func Evaluate(pos *Position) Eval {
 	e := Eval{position: pos}
@@ -43,6 +91,11 @@ func Evaluate(pos *Position) Eval {
 	wps, bps := pawnsAndShelterCache.load(pos)
 	e.Accum[White].merge(wps)
 	e.Accum[Black].merge(bps)
+
+	// extra
+	ee := EvalExtra(pos)
+	e.Accum[White].merge(ee.Accum[White])
+	e.Accum[Black].merge(ee.Accum[Black])
 
 	e.Accum[NoColor].merge(e.Accum[White])
 	e.Accum[NoColor].deduct(e.Accum[Black])
