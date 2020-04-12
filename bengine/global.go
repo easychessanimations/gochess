@@ -16,8 +16,43 @@ import (
 /////////////////////////////////////////////////////////////////////
 // global variables
 
+const LANCER_MVVLVA_BONUS = 100
+
 // mvvlva values based on one pawn = 10
-var mvvlvaBonus = [...]int16{0, 10, 40, 45, 68, 145, 256}
+var mvvlvaBonus = [...]int16{
+	0,                   // 0 NoFigure
+	10,                  // 1 Pawn
+	40,                  // 2 Knight
+	45,                  // 3 Bishop
+	68,                  // 4 Rook
+	145,                 // 5 Queen
+	256,                 // 6 King
+	0,                   // 7 Lancer ( abstract )
+	LANCER_MVVLVA_BONUS, // 8 LancerN
+	LANCER_MVVLVA_BONUS, // 9 LancerNE
+	LANCER_MVVLVA_BONUS, // 10 LancerE
+	LANCER_MVVLVA_BONUS, // 11 LancerSE
+	LANCER_MVVLVA_BONUS, // 12 LancerS
+	LANCER_MVVLVA_BONUS, // 13 LancerSW
+	LANCER_MVVLVA_BONUS, // 14 LancerW
+	LANCER_MVVLVA_BONUS, // 15 LancerNW
+	50,                  // 16 Sentry
+	60,                  // 17 Jailer
+	0,                   // 18
+	0,                   // 19
+	0,                   // 20
+	0,                   // 21
+	0,                   // 22
+	0,                   // 23
+	0,                   // 24
+	0,                   // 25
+	0,                   // 26
+	0,                   // 27
+	0,                   // 28
+	0,                   // 29
+	0,                   // 30
+	0,                   // 31
+}
 
 // piece bonuses when calulating the see
 // the values are fixed to approximatively the figure bonus in mid game
