@@ -38,10 +38,29 @@ var LANCER_DIRECTION_TO_DELTA = [NUM_LANCER_DIRECTIONS][2]int{
 // LancerDirectionMasksForSquares maps squares and lancer directions to lancer attack masks
 var LancerDirectionMasksForSquares [SquareArraySize][NUM_LANCER_DIRECTIONS]Bitboard
 
+const BaseLancer = LancerMinValue
+
 /////////////////////////////////////////////////////////////////////
 
 /////////////////////////////////////////////////////////////////////
-// global functioons
+// global functions
+
+// MakeLancer creates a lancer piece from color and direction
+func MakeLancer(color Color, direction int) Piece {
+	figure := BaseLancer | Figure(direction)
+
+	return ColorFigure(color, figure)
+}
+
+// MakeLancerMove constructs a lancer move
+func MakeLancerMove(from, to Square, piece, capture, target Piece) Move {
+	return Move(from)<<MOVE_FROM_SHIFT +
+		Move(to)<<MOVE_TO_SHIFT +
+		Move(Promotion)<<MOVE_TYPE_SHIFT +
+		Move(target)<<MOVE_TARGET_SHIFT +
+		Move(capture)<<MOVE_CAPTURE_SHIFT +
+		Move(piece)<<MOVE_PIECE_SHIFT
+}
 
 /////////////////////////////////////////////////////////////////////
 

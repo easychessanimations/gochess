@@ -18,6 +18,13 @@ func (f Figure) Symbol() string {
 	return FigureToSymbol[f]
 }
 
+// Figure.SanSymbol returns the san symbol of the figure ( letter upper case )
+func (f Figure) SanSymbol() string {
+	symbol := f.Symbol()
+
+	return fmt.Sprintf("%s%s", strings.ToUpper(symbol[0:1]), symbol[1:])
+}
+
 // Figure.IsLancer determines whether figure is lancer
 func (f Figure) IsLancer() bool {
 	return (f & LANCER_MASK) == Lancer
@@ -74,7 +81,7 @@ func (pi Piece) AlgebSymbol() string {
 	return pi.Figure().Symbol()
 }
 
-// FenSymbol returns the fen symbol of the piece
+// FenSymbol returns the fen symbol of the piece ( letter case depends on color )
 func (pi Piece) FenSymbol() string {
 	symbol := pi.AlgebSymbol()
 
@@ -112,6 +119,12 @@ func (pi Piece) SanLetter() string {
 // convenience function
 func (lancer Piece) LancerDirection() int {
 	return lancer.Figure().LancerDirection()
+}
+
+// Piece.SanSymbol returns the san symbol of the piece ( letter upper case )
+// convenience function
+func (pi Piece) SanSymbol() string {
+	return pi.Figure().SanSymbol()
 }
 
 /////////////////////////////////////////////////////////////////////

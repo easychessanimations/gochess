@@ -472,7 +472,7 @@ func (pos *Position) MoveToSanBatch(move Move) string {
 	toAlgeb := move.To().String()
 	prom := ""
 	if move.Promotion() != NoPiece {
-		prom = "=" + move.Promotion().SanLetter()
+		prom = "=" + move.Promotion().SanSymbol()
 	}
 
 	san := letter + qualifier + capture + toAlgeb + prom
@@ -620,7 +620,8 @@ func (pos *Position) LegalMovesString() string {
 	buff := ""
 	pos.InitMoveToSan()
 	for i, mbi := range pos.LegalMoveBuff {
-		buff += fmt.Sprintf("%d. %s [ %s , %s ] ", i+1, mbi.San, mbi.Algeb, mbi.Lan)
+		//buff += fmt.Sprintf("%d. %s [ %s , %s ] ", i+1, mbi.San, mbi.Algeb, mbi.Lan)
+		buff += fmt.Sprintf("%d. %s %s ", i+1, mbi.San, mbi.Algeb)
 	}
 	return buff
 }
@@ -981,7 +982,9 @@ func (pos *Position) genLancerMoves(lancer Figure, mask Bitboard, moves *[]Move)
 		att = att &^ pos.ByColor(pos.Us())
 		for att != 0 {
 			to := att.Pop()
-			*moves = append(*moves, MakeMove(Normal, from, to, pos.Get(to), pi))
+			for ld := 0; ld < NUM_LANCER_DIRECTIONS; ld++ {
+				*moves = append(*moves, MakeLancerMove(from, to, pi, pos.Get(to), MakeLancer(pos.Us(), ld)))
+			}
 		}
 	}
 }
