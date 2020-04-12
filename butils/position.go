@@ -414,9 +414,15 @@ func (pos *Position) InitMoveToSan() {
 func (pos *Position) MoveToSanBatch(move Move) string {
 	canditates := MoveBuff{}
 
+	seenSquares := make(map[Square]bool)
+
 	for _, mbi := range pos.LegalMoveBuff {
 		if (mbi.Move.Piece() == move.Piece()) && (mbi.Move.To() == move.To()) {
-			canditates = append(canditates, mbi)
+			_, seen := seenSquares[mbi.Move.From()]
+			if !seen {
+				seenSquares[mbi.Move.From()] = true
+				canditates = append(canditates, mbi)
+			}
 		}
 	}
 
