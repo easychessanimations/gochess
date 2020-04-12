@@ -27,7 +27,7 @@ func (f Figure) SanSymbol() string {
 
 // Figure.IsLancer determines whether figure is lancer
 func (f Figure) IsLancer() bool {
-	return (f & LANCER_MASK) == Lancer
+	return (f & LANCER_MASK) == BaseLancer
 }
 
 // Figure.LancerDirection determines the lancer direction of the figure

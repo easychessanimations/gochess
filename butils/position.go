@@ -121,7 +121,8 @@ func (pos *Position) IsPseudoLegal(m Move) bool {
 	from, to := m.From(), m.To()
 	all := pos.ByColor(White) | pos.ByColor(Black)
 
-	switch m.Figure() {
+	// use base figure here instead of figure
+	switch m.Figure().BaseFigure() {
 	case Pawn:
 		// pawn move is tested above, promotion is always correct
 		if m.MoveType() == Enpassant && !pos.IsEnpassantSquare(m.To()) {
@@ -187,7 +188,16 @@ func (pos *Position) IsPseudoLegal(m Move) bool {
 			pos.GetAttacker(m.To(), them) != NoFigure {
 			return false
 		}
+	// fake validation for extra pieces, for search to work
+	// TODO: do real validation
+	case Lancer:
+		return true
+	case Sentry:
+		return true
+	case Jailer:
+		return true
 	default:
+		fmt.Println(m.Figure().BaseFigure())
 		panic("unreachable")
 	}
 
