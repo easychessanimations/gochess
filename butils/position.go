@@ -1046,19 +1046,23 @@ func (pos *Position) genPieceMoves(fig Figure, mask Bitboard, moves *[]Move) {
 	}
 }
 
+// UsBb returns the bitboard for us
+func (pos *Position) UsBb() Bitboard {
+	return pos.ByColor(pos.Us())
+}
+
+// ThemBb returns the bitboard for them
+func (pos *Position) ThemBb() Bitboard {
+	return pos.ByColor(pos.Them())
+}
+
+// genLancerMoves generates lancer moves
 func (pos *Position) genLancerMoves(lancer Figure, mask Bitboard, moves *[]Move) {
-	lancerDirection := lancer.LancerDirection()
+	ld := lancer.LancerDirection()
 	pi := ColorFigure(pos.Us(), lancer)
-	// lancer can jump over own pieces, so all occupancy is just that of opponent
-	all := pos.ByColor(pos.Them())
 	for bb := pos.ByPiece(pos.Us(), lancer); bb != 0; {
 		from := bb.Pop()
-		var att Bitboard
-		att = QueenMobility(from, all)
-		// attacks have to be masked by lancer direction
-		att = att & LancerDirectionMasksForSquares[from][lancerDirection]
-		// remove jumping on own pieces from attacks
-		att = att &^ pos.ByColor(pos.Us())
+		att := LancerMobility(from, ld, pos.UsBb(), pos.ThemBb()) & mask
 		for att != 0 {
 			to := att.Pop()
 			for ld := 0; ld < NUM_LANCER_DIRECTIONS; ld++ {

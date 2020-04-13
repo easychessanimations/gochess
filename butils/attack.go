@@ -329,4 +329,16 @@ func KingMobility(sq Square) Bitboard {
 	return bbKingAttack[sq]
 }
 
+// LancerMobility returns all squares the lancer of color us and of direction ld can reach from sq
+func LancerMobility(sq Square, ld int, us Bitboard, them Bitboard) Bitboard {
+	var att Bitboard
+	// lancer can jump over own pieces, so all occupancy is just that of opponent
+	att = QueenMobility(sq, them)
+	// attacks have to be masked by lancer direction
+	att = att & LancerDirectionMasksForSquares[sq][ld]
+	// remove jumping on own pieces from attacks
+	att = att &^ us
+	return att
+}
+
 /////////////////////////////////////////////////////////////////////
