@@ -51,6 +51,17 @@ const SENTRY_VALUE_NATIVE_E = 100000
 const JAILER_VALUE_NATIVE_M = 150000
 const JAILER_VALUE_NATIVE_E = 150000
 
+const BASE_LANCER_BONUS = 50000
+
+// PawnStartRank tells the pawn start rank for a given color
+func PawnStartRank(color Color) Bitboard {
+	mask := BbWhiteSquares
+	if color == Black {
+		mask = BbBlackSquares
+	}
+	return BbPawnStartRank & mask
+}
+
 // evaluateExtra calculates additional Accum of extra pieces for a side
 func evaluateExtra(pos *Position, us Color) Accum {
 	var accum Accum
@@ -62,6 +73,19 @@ func evaluateExtra(pos *Position, us Color) Accum {
 
 		accum.M += numLancers * LANCER_VALUE_NATIVE_M
 		accum.E += numLancers * LANCER_VALUE_NATIVE_E
+
+		baseLancers := lancers & PawnStartRank(us)
+
+		for bb := baseLancers; bb != 0; {
+			sq := bb.Pop()
+
+			lancer := pos.Get(sq).Figure()
+
+			if ((sq.File() <= 5) && (lancer == LancerE)) || ((sq.File() >= 3) && (lancer == LancerW)) {
+				// add middle game bonus for lancer protecting their own second rank
+				accum.M += BASE_LANCER_BONUS
+			}
+		}
 	}
 
 	sentries := pos.ByPiece(us, Sentry)
