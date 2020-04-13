@@ -345,6 +345,8 @@ var (
 	// bbKingAttack contains king's attack tables (excluding castling)
 	bbKingAttack [64]Bitboard
 	bbKingArea   [64]Bitboard
+	// bbJailerAdjacent contains jailer adjacent squares
+	bbJailerAdjacent [64]Bitboard
 	// bbSuperAttack contains queen piece's attack tables. This queen can jump
 	bbSuperAttack [64]Bitboard
 

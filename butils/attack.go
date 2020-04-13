@@ -19,6 +19,7 @@ func init() {
 	//fmt.Println("init attacks")
 	initBbPawnAttack()
 	initBbKnightAttack()
+	initBbJailerAdjacent()
 	initBbKingAttack()
 	initBbKingArea()
 	initBbSuperAttack()
@@ -53,6 +54,13 @@ func initBbKnightAttack() {
 		{-1, -2}, {-1, +2}, {+1, -2}, {+1, +2},
 	}
 	initJumpAttack(knightJump, bbKnightAttack[:])
+}
+
+func initBbJailerAdjacent() {
+	jailerAdjacent := [][2]int{
+		{+1, 0}, {0, +1}, {-1, 0}, {0, -1},
+	}
+	initJumpAttack(jailerAdjacent, bbJailerAdjacent[:])
 }
 
 func initBbKingAttack() {

@@ -608,12 +608,27 @@ func (pos *Position) FiftyMoveRule() bool {
 	return pos.curr.HalfmoveClock >= 100
 }
 
+// WhereIsKing tells the position of the king for color
+func (pos *Position) WhereIsKing(color Color) Square {
+	return pos.ByPiece(color, King).AsSquare()
+}
+
+// WhereIsOurKing tells the position of our king
+func (pos *Position) WhereIsOurKing() Square {
+	return pos.ByPiece(pos.Us(), King).AsSquare()
+}
+
+// WhereIsTheirKing tells the position of their king
+func (pos *Position) WhereTheirKing() Square {
+	return pos.ByPiece(pos.Them(), King).AsSquare()
+}
+
 // IsChecked returns true if side's king is checked
 func (pos *Position) IsChecked(col Color) bool {
 	if pos.Us() == col && pos.curr.IsCheckedKnown {
 		return pos.curr.IsChecked
 	}
-	kingSq := pos.ByPiece(col, King).AsSquare()
+	kingSq := pos.WhereIsKing(col)
 	isChecked := pos.GetAttacker(kingSq, col.Opposite()) != NoFigure
 	if pos.Us() == col {
 		pos.curr.IsCheckedKnown = true
@@ -825,6 +840,9 @@ func (pos *Position) DoMove(move Move) {
 	curr.IsChecked = curr.IsCheckedKnown && pos.curr.GivesCheckResult
 	curr.GivesCheckMove = NullMove
 	curr.GivesCheckResult = false
+
+	// calculate jailed squares
+	pos.calcJailedSquares()
 }
 
 // InvertSideToMove inverts the side to move
@@ -863,6 +881,36 @@ func (pos *Position) UndoMoveSafe() {
 	pos.UndoMove()
 }
 
+// JailedForColor tells squares jailed for color
+func (pos *Position) JailedForColor(color Color) Bitboard {
+	return pos.curr.JailedForColor[color]
+}
+
+// JailedForUs tells squares jailed for us
+func (pos *Position) JailedForUs() Bitboard {
+	return pos.curr.JailedForColor[pos.Us()]
+}
+
+// JailedForThem tells squares jailed for them
+func (pos *Position) JailedForThem() Bitboard {
+	return pos.curr.JailedForColor[pos.Them()]
+}
+
+// IsSquareJailedForColor tells whether a square is jailed for color
+func (pos *Position) IsSquareJailedForColor(sq Square, color Color) bool {
+	return (pos.JailedForColor(color) & sq.Bitboard()) != 0
+}
+
+// IsSquareJailedForUs tells whether a square is jailed for us
+func (pos *Position) IsSquareJailedForUs(sq Square) bool {
+	return (pos.JailedForColor(pos.Us()) & sq.Bitboard()) != 0
+}
+
+// IsSquareJailedForThem tells whether a square is jailed for them
+func (pos *Position) IsSquareJailedForThem(sq Square) bool {
+	return (pos.JailedForColor(pos.Them()) & sq.Bitboard()) != 0
+}
+
 // genPawnPromotions generates pawn promotions of kind with from squares limited to limitFrom
 func (pos *Position) genPawnPromotions(kind int, moves *[]Move, limitFrom Bitboard) {
 	// minimum and maximum promotion pieces
@@ -879,7 +927,7 @@ func (pos *Position) genPawnPromotions(kind int, moves *[]Move, limitFrom Bitboa
 	// get the pawns that can be promoted
 	us, them := pos.Us(), pos.Them()
 	all := pos.ByColor(White) | pos.ByColor(Black)
-	ours := pos.ByPiece(us, Pawn) & limitFrom
+	ours := pos.ByPiece(us, Pawn) & limitFrom &^ pos.JailedForUs()
 	theirs := pos.ByColor(them) // their pieces
 
 	forward := Square(0)
@@ -923,7 +971,7 @@ func (pos *Position) genPawnAdvanceMoves(kind int, mask Bitboard, moves *[]Move,
 		return
 	}
 
-	ours := pos.ByPiece(pos.Us(), Pawn) & limitFrom
+	ours := pos.ByPiece(pos.Us(), Pawn) & limitFrom &^ pos.JailedForUs()
 	occu := pos.ByColor(White) | pos.ByColor(Black)
 	pawn := ColorFigure(pos.Us(), Pawn)
 
@@ -971,7 +1019,7 @@ func (pos *Position) genPawnAttackMoves(kind int, moves *[]Move, limitFrom Bitbo
 
 	forward := 0
 	pawn := ColorFigure(pos.Us(), Pawn)
-	ours := pos.ByPiece(pos.Us(), Pawn) & limitFrom
+	ours := pos.ByPiece(pos.Us(), Pawn) & limitFrom &^ pos.JailedForUs()
 	if pos.Us() == White {
 		ours = ours &^ BbRank7
 		theirs = South(theirs)
@@ -1031,7 +1079,7 @@ func (pos *Position) getMask(kind int) Bitboard {
 func (pos *Position) genPieceMoves(fig Figure, mask Bitboard, moves *[]Move, limitFrom Bitboard) {
 	pi := ColorFigure(pos.Us(), fig)
 	all := pos.ByColor(White) | pos.ByColor(Black)
-	squares := pos.ByPiece(pos.Us(), fig) & limitFrom
+	squares := pos.ByPiece(pos.Us(), fig) & limitFrom &^ pos.JailedForUs()
 	for bb := squares; bb != 0; {
 		from := bb.Pop()
 		var att Bitboard
@@ -1071,7 +1119,7 @@ func (pos *Position) ThemBb() Bitboard {
 func (pos *Position) genLancerMoves(lancer Figure, mask Bitboard, moves *[]Move, limitFrom Bitboard) {
 	ld := lancer.LancerDirection()
 	pi := ColorFigure(pos.Us(), lancer)
-	squares := pos.ByPiece(pos.Us(), lancer) & limitFrom
+	squares := pos.ByPiece(pos.Us(), lancer) & limitFrom &^ pos.JailedForUs()
 	for bb := squares; bb != 0; {
 		from := bb.Pop()
 		att := LancerMobility(from, ld, pos.UsBb(), pos.ThemBb()) & mask
@@ -1092,7 +1140,32 @@ func (pos *Position) genAllLancerMoves(mask Bitboard, moves *[]Move, limitFrom B
 	}
 }
 
+// IsKingJailed tells whether king is jailed for color
+func (pos *Position) IsKingJailed(color Color) bool {
+	wk := pos.WhereIsKing(color)
+
+	return pos.IsSquareJailedForColor(wk, color)
+}
+
+// IsOurKingJailed tells whether our king is jailed
+func (pos *Position) IsOurKingJailed() bool {
+	wk := pos.WhereIsKing(pos.Us())
+
+	return pos.IsSquareJailedForColor(wk, pos.Us())
+}
+
+// IsTheirKingJailed tells whether their king is jailed
+func (pos *Position) IsTheirKingJailed() bool {
+	wk := pos.WhereIsKing(pos.Them())
+
+	return pos.IsSquareJailedForColor(wk, pos.Them())
+}
+
 func (pos *Position) genKingCastles(kind int, moves *[]Move) {
+	// no castling for jailed king
+	if pos.IsOurKingJailed() {
+		return
+	}
 	// skip if we only generate violent or evasion moves
 	if kind&Quiet == 0 || pos.curr.IsChecked {
 		return
@@ -1148,7 +1221,7 @@ func (pos *Position) RetrieveSideToMove() {
 
 // GetAttacker returns the smallest figure of color them that attacks sq
 func (pos *Position) GetAttacker(sq Square, them Color) Figure {
-	enemy := pos.ByColor(them)
+	enemy := pos.ByColor(them) &^ pos.JailedForThem()
 	if PawnThreats(pos, them).Has(sq) {
 		return Pawn
 	}
@@ -1193,6 +1266,22 @@ func (pos *Position) GetAttacker(sq Square, them Color) Figure {
 		return King
 	}
 	return NoFigure
+}
+
+// calcJailedSquares calculates jailed squares for all colors
+func (pos *Position) calcJailedSquares() {
+	for color := ColorMinValue; color <= ColorMaxValue; color++ {
+		pos.curr.JailedForColor[color] = BbEmpty
+
+		squares := pos.ByPiece(color.Opposite(), Jailer)
+		for bb := squares; bb != 0; {
+			sq := bb.Pop()
+
+			jailed := bbJailerAdjacent[sq]
+
+			pos.curr.JailedForColor[color] |= jailed
+		}
+	}
 }
 
 // generateMoves appends to moves all moves valid from pos

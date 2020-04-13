@@ -164,6 +164,8 @@ func PositionFromFEN(fen string) (*Position, error) {
 	if pos.Us() == Black {
 		pos.Ply++
 	}
+	// calculate jailed square
+	pos.calcJailedSquares()
 	return pos, nil
 }
 

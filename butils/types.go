@@ -66,6 +66,7 @@ type state struct {
 	CastlingAbility Castle                    // remaining castling rights
 	ByFigure        [FigureArraySize]Bitboard // bitboards of square occupancy by figure
 	ByColor         [ColorArraySize]Bitboard  // bitboards of square occupancy by color
+	JailedForColor  [ColorArraySize]Bitboard  // biboards for jailed squares
 
 	IsCheckedKnown   bool // true if it's known whether the current player is in check or not
 	IsChecked        bool // true if current player is in check; if true then IsCheckedKnown is also true
