@@ -42,7 +42,7 @@ type MoveType uint8
 type Move uint64
 
 // piece mask
-const PIECE_MASK = PieceArraySize - 1
+const PIECE_MASK = (1 << PIECE_ARRAY_SIZE_IN_BITS) - 1
 
 // constants for recording the shifts of move representation parts
 const MOVE_FROM_SHIFT = 0

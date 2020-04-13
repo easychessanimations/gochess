@@ -1,17 +1,8 @@
 package bengine
 
 import (
-	"testing"
-
 	. "github.com/easychessanimations/gochess/butils"
 )
-
-func TestPieceSize(t *testing.T) {
-	shouldBe := (1 << PIECE_ARRAY_SIZE_IN_BITS)
-	if PieceArraySize != shouldBe {
-		t.Errorf("( PieceArraySize = %d ) != ( 2 ^ ( PIECE_ARRAY_SIZE_IN_BITS = %d ) = %d )", PieceArraySize, PIECE_ARRAY_SIZE_IN_BITS, shouldBe)
-	}
-}
 
 /*
 func TestGame(t *testing.T) {

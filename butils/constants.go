@@ -11,12 +11,11 @@ package butils
 const (
 	// set of possible chess colors
 
-	NoColor    Color = iota // 0
-	Black                   // 1
-	White                   // 2
-	DummyColor              // 3
+	NoColor Color = iota // 0
+	Black                // 1
+	White                // 2
 
-	ColorArraySize = int(iota)
+	ColorArraySize = int(iota) // 3
 	ColorMinValue  = Black
 	ColorMaxValue  = White
 )
@@ -42,24 +41,8 @@ const (
 	LancerNW               // 15
 	Sentry                 // 16
 	Jailer                 // 17
-	_                      // 18
-	_                      // 19
-	_                      // 20
-	_                      // 21
-	_                      // 22
-	_                      // 23
-	_                      // 24
-	_                      // 25
-	_                      // 26
-	_                      // 27
-	_                      // 28
-	_                      // 29
-	_                      // 30
-	_                      // 31
 
-	FigureArraySize = int(iota) // 32
-	FigureMinValue  = Pawn      // 1
-	FigureMaxValue  = King      // 6
+	FigureArraySize = int(iota) // 18
 	LancerMinValue  = LancerN   // 8
 	LancerMaxValue  = LancerNW  // 15
 )
@@ -83,32 +66,6 @@ var FigureToSymbol = []string{
 	"lnw", // 15
 	"s",   // 16
 	"j",   // 17
-	"?",   // 18
-	"?",   // 19
-	"?",   // 20
-	"?",   // 21
-	"?",   // 22
-	"?",   // 23
-	"?",   // 24
-	"?",   // 25
-	"?",   // 26
-	"?",   // 27
-	"?",   // 28
-	"?",   // 29
-	"?",   // 30
-	"?",   // 31
-}
-
-// SymbolToFigureMap is a mapping from symbol to figure
-var SymbolToFigureMap map[string]Figure
-
-// init SymbolToFigureMap
-func init() {
-	SymbolToFigureMap = make(map[string]Figure)
-	for i := 0; i < FigureArraySize; i++ {
-		symbol := FigureToSymbol[i]
-		SymbolToFigureMap[symbol] = Figure(i)
-	}
 }
 
 // piece constants must stay in sync with ColorFigure
@@ -151,41 +108,13 @@ const (
 	WhiteSentry                // 33
 	BlackJailer                // 34
 	WhiteJailer                // 35
-	_                          // 36
-	_                          // 37
-	_                          // 38
-	_                          // 39
-	_                          // 40
-	_                          // 41
-	_                          // 42
-	_                          // 43
-	_                          // 44
-	_                          // 45
-	_                          // 46
-	_                          // 47
-	_                          // 48
-	_                          // 49
-	_                          // 50
-	_                          // 51
-	_                          // 52
-	_                          // 53
-	_                          // 54
-	_                          // 55
-	_                          // 56
-	_                          // 57
-	_                          // 58
-	_                          // 59
-	_                          // 60
-	_                          // 61
-	_                          // 62
-	_                          // 63
 
-	PieceArraySize = int(iota) // 64
-	PieceMinValue  = BlackPawn // 2
-	PieceMaxValue  = WhiteKing // 13
+	PieceArraySize = int(iota)   // 36
+	PieceMinValue  = BlackPawn   // 2
+	PieceMaxValue  = WhiteJailer // 35
 )
 
-// PieceArraySize = 2 ^ PIECE_ARRAY_SIZE_IN_BITS
+// PIECE_ARRAY_SIZE_IN_BITS tells how many bits to use for representing a piece
 const PIECE_ARRAY_SIZE_IN_BITS = 6
 
 // lancer mask
@@ -194,8 +123,9 @@ const LANCER_MASK = 0b11000
 // lancer direction mask
 const LANCER_DIRECTION_MASK = 0b111
 
-// move types
 const (
+	// move types
+
 	NoMove    MoveType = iota // no move or null move
 	Normal                    // regular move
 	Promotion                 // pawn is promoted. Move.Promotion() gives the new piece
@@ -203,8 +133,9 @@ const (
 	Enpassant                 // pawn takes enpassant
 )
 
-// null move is a move that does nothing, its value is 0
 const (
+	// null move is a move that does nothing, its value is 0
+
 	NullMove = Move(0)
 )
 
@@ -372,35 +303,37 @@ var (
 	//prettyPieceToSymbol = []string{".", "?", "♟", "♙", "♞", "♘", "♝", "♗", "♜", "♖", "♛", "♕", "♚", "♔"}
 )
 
-// conversions
 var (
+	// conversions
+
 	colorToSymbol = "?bw"
-	//pieceToSymbol      = ".?pPnNbBrRqQkK"
+
+	symbolToColor = map[string]Color{
+		"w": White,
+		"b": Black,
+	}
+
 	symbolToCastleInfo = map[rune]castleInfo{
-		'K': castleInfo{
+		'K': {
 			Castle: WhiteOO,
 			Piece:  [2]Piece{WhiteKing, WhiteRook},
 			Square: [2]Square{SquareE1, SquareH1},
 		},
-		'k': castleInfo{
+		'k': {
 			Castle: BlackOO,
 			Piece:  [2]Piece{BlackKing, BlackRook},
 			Square: [2]Square{SquareE8, SquareH8},
 		},
-		'Q': castleInfo{
+		'Q': {
 			Castle: WhiteOOO,
 			Piece:  [2]Piece{WhiteKing, WhiteRook},
 			Square: [2]Square{SquareE1, SquareA1},
 		},
-		'q': castleInfo{
+		'q': {
 			Castle: BlackOOO,
 			Piece:  [2]Piece{BlackKing, BlackRook},
 			Square: [2]Square{SquareE8, SquareA8},
 		},
-	}
-	symbolToColor = map[string]Color{
-		"w": White,
-		"b": Black,
 	}
 )
 
