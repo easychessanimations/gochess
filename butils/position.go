@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"sort"
 	"strconv"
+	"time"
 )
 
 /////////////////////////////////////////////////////////////////////
@@ -378,6 +379,52 @@ func (pos *Position) LegalMoves() []Move {
 	}
 
 	return legalMoves
+}
+
+func (pos *Position) PerftRec(depth int, maxDepth int) {
+	pos.Nodes++
+
+	if depth >= maxDepth {
+		return
+	}
+
+	lms := pos.LegalMoves()
+
+	for _, move := range lms {
+		pos.DoMove(move)
+		pos.PerftRec(depth+1, maxDepth)
+		pos.UndoMove()
+	}
+}
+
+func (pos *Position) Perft(maxDepth int, verbose bool) int {
+	pos.Nodes = 0
+
+	lms := pos.LegalMoves()
+
+	timeStart := time.Now()
+
+	for _, move := range lms {
+		pos.DoMove(move)
+		if verbose {
+			fmt.Printf("perft %s : ", move.UCI())
+		}
+		nodesOrig := pos.Nodes
+		pos.PerftRec(0, maxDepth-1)
+		if verbose {
+			fmt.Printf("%d\n", pos.Nodes-nodesOrig)
+		}
+		pos.UndoMove()
+	}
+
+	elapsed := float32(time.Now().Sub(timeStart)) / 1e9
+	nps := float32(pos.Nodes) / elapsed
+
+	if verbose {
+		fmt.Printf("total %d elapsed %.0f nps %.0f\n", pos.Nodes, elapsed, nps)
+	}
+
+	return pos.Nodes
 }
 
 // CreateLegalMoveBuff creates a move buffer for all legal moves, with SAN and UCI

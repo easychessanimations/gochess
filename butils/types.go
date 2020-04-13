@@ -77,6 +77,7 @@ type state struct {
 type Position struct {
 	sideToMove Color // which side is to move. sideToMove is updated by DoMove and UndoMove
 	Ply        int   // current ply
+	Nodes      int   // Perft nodes
 
 	pieces          [SquareArraySize]Piece // tracks pieces at each square
 	fullmoveCounter int                    // fullmove counter, incremented after black move

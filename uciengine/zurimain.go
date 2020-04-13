@@ -288,6 +288,7 @@ func (uci *UCI) go_(line string) error {
 	uci.timeControl = NewTimeControl(uci.Engine.Position, predicted)
 	uci.rootMoves = uci.rootMoves[:0]
 	ponder := false
+	perft := 0
 
 	args := strings.Fields(line)[1:]
 	for i := 0; i < len(args); i++ {
@@ -340,9 +341,18 @@ func (uci *UCI) go_(line string) error {
 		case "nodes", "mate":
 			log.Println(args[i], "not implemented. Ignoring")
 			i++
+		case "perft":
+			i++
+			perft, _ = strconv.Atoi(args[i])
+			break
 		default:
 			return fmt.Errorf("invalid go command %s", args[i])
 		}
+	}
+
+	if perft > 0 {
+		uci.Engine.Position.Perft(perft, true)
+		return nil
 	}
 
 	if ponder {

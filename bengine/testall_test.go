@@ -1,8 +1,28 @@
 package bengine
 
 import (
+	"testing"
+
 	. "github.com/easychessanimations/gochess/butils"
 )
+
+const PERFT_4_EXPECTED_NODES = 206603
+
+func TestPerft(t *testing.T) {
+	pos, _ := PositionFromFEN(FENStartPos)
+
+	nodes := pos.Perft(4, false)
+
+	if nodes != PERFT_4_EXPECTED_NODES {
+		t.Errorf("Perft 4 returned nodes %d, expected %d\n", nodes, PERFT_4_EXPECTED_NODES)
+	}
+}
+
+func BenchmarkPerft(b *testing.B) {
+	pos, _ := PositionFromFEN(FENStartPos)
+
+	pos.Perft(4, false)
+}
 
 /*
 func TestGame(t *testing.T) {
