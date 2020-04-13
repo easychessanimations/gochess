@@ -859,7 +859,8 @@ func (pos *Position) UndoMoveSafe() {
 	pos.UndoMove()
 }
 
-func (pos *Position) genPawnPromotions(kind int, moves *[]Move) {
+// genPawnPromotions generates pawn promotions of kind with from squares limited to limitFrom
+func (pos *Position) genPawnPromotions(kind int, moves *[]Move, limitFrom Bitboard) {
 	// minimum and maximum promotion pieces
 	// Quiet -> Knight - Rook
 	// Violent -> Queen
@@ -874,7 +875,7 @@ func (pos *Position) genPawnPromotions(kind int, moves *[]Move) {
 	// get the pawns that can be promoted
 	us, them := pos.Us(), pos.Them()
 	all := pos.ByColor(White) | pos.ByColor(Black)
-	ours := pos.ByPiece(us, Pawn)
+	ours := pos.ByPiece(us, Pawn) & limitFrom
 	theirs := pos.ByColor(them) // their pieces
 
 	forward := Square(0)
@@ -910,14 +911,15 @@ func (pos *Position) genPawnPromotions(kind int, moves *[]Move) {
 	}
 }
 
-// genPawnAdvanceMoves moves pawns forward one or two squares
+// genPawnAdvanceMoves generates pawns forward one or two squares moves of kind
+// with from squares limited to limitFrom
 // does not generate promotions nor attacks
-func (pos *Position) genPawnAdvanceMoves(kind int, mask Bitboard, moves *[]Move) {
+func (pos *Position) genPawnAdvanceMoves(kind int, mask Bitboard, moves *[]Move, limitFrom Bitboard) {
 	if kind&Quiet == 0 {
 		return
 	}
 
-	ours := pos.ByPiece(pos.Us(), Pawn)
+	ours := pos.ByPiece(pos.Us(), Pawn) & limitFrom
 	occu := pos.ByColor(White) | pos.ByColor(Black)
 	pawn := ColorFigure(pos.Us(), Pawn)
 
@@ -950,9 +952,10 @@ func (pos *Position) pawnCapture(to Square) (MoveType, Piece) {
 	return Normal, pos.Get(to)
 }
 
-// generate pawn attacks moves
+// generate pawn attacks moves of kind
 // does not generate promotions
-func (pos *Position) genPawnAttackMoves(kind int, moves *[]Move) {
+// from squares limited to limitFrom
+func (pos *Position) genPawnAttackMoves(kind int, moves *[]Move, limitFrom Bitboard) {
 	if kind&Violent == 0 {
 		return
 	}
@@ -964,7 +967,7 @@ func (pos *Position) genPawnAttackMoves(kind int, moves *[]Move) {
 
 	forward := 0
 	pawn := ColorFigure(pos.Us(), Pawn)
-	ours := pos.ByPiece(pos.Us(), Pawn)
+	ours := pos.ByPiece(pos.Us(), Pawn) & limitFrom
 	if pos.Us() == White {
 		ours = ours &^ BbRank7
 		theirs = South(theirs)
@@ -1020,10 +1023,12 @@ func (pos *Position) getMask(kind int) Bitboard {
 	return mask
 }
 
-func (pos *Position) genPieceMoves(fig Figure, mask Bitboard, moves *[]Move) {
+// genPieceMoves generate piece moves for fig with occupance mask for squares limitFrom
+func (pos *Position) genPieceMoves(fig Figure, mask Bitboard, moves *[]Move, limitFrom Bitboard) {
 	pi := ColorFigure(pos.Us(), fig)
 	all := pos.ByColor(White) | pos.ByColor(Black)
-	for bb := pos.ByPiece(pos.Us(), fig); bb != 0; {
+	squares := pos.ByPiece(pos.Us(), fig) & limitFrom
+	for bb := squares; bb != 0; {
 		from := bb.Pop()
 		var att Bitboard
 		switch fig {
@@ -1056,11 +1061,13 @@ func (pos *Position) ThemBb() Bitboard {
 	return pos.ByColor(pos.Them())
 }
 
-// genLancerMoves generates lancer moves
-func (pos *Position) genLancerMoves(lancer Figure, mask Bitboard, moves *[]Move) {
+// genLancerMoves generates lancer moves for lancer masked by mask
+// with from sqaures limited to limitFrom
+func (pos *Position) genLancerMoves(lancer Figure, mask Bitboard, moves *[]Move, limitFrom Bitboard) {
 	ld := lancer.LancerDirection()
 	pi := ColorFigure(pos.Us(), lancer)
-	for bb := pos.ByPiece(pos.Us(), lancer); bb != 0; {
+	squares := pos.ByPiece(pos.Us(), lancer) & limitFrom
+	for bb := squares; bb != 0; {
 		from := bb.Pop()
 		att := LancerMobility(from, ld, pos.UsBb(), pos.ThemBb()) & mask
 		for att != 0 {
@@ -1069,6 +1076,14 @@ func (pos *Position) genLancerMoves(lancer Figure, mask Bitboard, moves *[]Move)
 				*moves = append(*moves, MakeLancerMove(from, to, pi, pos.Get(to), MakeLancer(pos.Us(), ld)))
 			}
 		}
+	}
+}
+
+// genAllLancerMoves generates lancer moves for all directions masked by mask
+// with from sqaures limited to limitFrom
+func (pos *Position) genAllLancerMoves(mask Bitboard, moves *[]Move, limitFrom Bitboard) {
+	for lancer := LancerMinValue; lancer <= LancerMaxValue; lancer++ {
+		pos.genLancerMoves(lancer, mask, moves, limitFrom)
 	}
 }
 
@@ -1155,47 +1170,45 @@ func (pos *Position) GenerateMoves(kind int, moves *[]Move) {
 	mask := pos.getMask(kind)
 	// order of the moves is important because the last quiet
 	// moves will be reduced less.
-	pos.genPawnPromotions(kind, moves)
-	pos.genPieceMoves(King, mask, moves)
+	pos.genPawnPromotions(kind, moves, BbFull)
+	pos.genPieceMoves(King, mask, moves, BbFull)
 	pos.genKingCastles(kind, moves)
-	pos.genPieceMoves(Queen, mask, moves)
+	pos.genPieceMoves(Queen, mask, moves, BbFull)
 
-	// generate lancer moves for all possible directions
-	for lancer := LancerMinValue; lancer <= LancerMaxValue; lancer++ {
-		pos.genLancerMoves(lancer, mask, moves)
-	}
+	pos.genAllLancerMoves(mask, moves, BbFull)
 
-	pos.genPieceMoves(Sentry, mask, moves)
-	pos.genPieceMoves(Jailer, mask, moves)
+	pos.genPieceMoves(Sentry, mask, moves, BbFull)
+	pos.genPieceMoves(Jailer, mask, moves, BbFull)
 
-	pos.genPieceMoves(Rook, mask, moves)
-	pos.genPieceMoves(Bishop, mask, moves)
-	pos.genPieceMoves(Knight, mask, moves)
-	pos.genPawnAdvanceMoves(kind, mask, moves)
-	pos.genPawnAttackMoves(kind, moves)
+	pos.genPieceMoves(Rook, mask, moves, BbFull)
+	pos.genPieceMoves(Bishop, mask, moves, BbFull)
+	pos.genPieceMoves(Knight, mask, moves, BbFull)
+	pos.genPawnAdvanceMoves(kind, mask, moves, BbFull)
+	pos.genPawnAttackMoves(kind, moves, BbFull)
 }
 
-// GenerateFigureMoves generate moves for a given figure
+// GenerateFigureMoves generate moves of kind for a given figure
 // the generated moves are pseudo-legal, i.e. they can leave the king in check.
 // kind is Quiet or Violent, or both
-func (pos *Position) GenerateFigureMoves(fig Figure, kind int, moves *[]Move) {
+// limitFrom limits from squares
+func (pos *Position) GenerateFigureMoves(fig Figure, kind int, moves *[]Move, limitFrom Bitboard) {
 	mask := pos.getMask(kind)
 	switch fig {
 	case Pawn:
-		pos.genPawnAdvanceMoves(kind, mask, moves)
-		pos.genPawnAttackMoves(kind, moves)
-		pos.genPawnPromotions(kind, moves)
-	case Knight:
-		pos.genPieceMoves(Knight, mask, moves)
-	case Bishop:
-		pos.genPieceMoves(Bishop, mask, moves)
-	case Rook:
-		pos.genPieceMoves(Rook, mask, moves)
-	case Queen:
-		pos.genPieceMoves(Queen, mask, moves)
+		pos.genPawnAdvanceMoves(kind, mask, moves, limitFrom)
+		pos.genPawnAttackMoves(kind, moves, limitFrom)
+		pos.genPawnPromotions(kind, moves, limitFrom)
+		return
+	case Knight, Bishop, Rook, Queen, Sentry, Jailer:
+		pos.genPieceMoves(fig, mask, moves, limitFrom)
+		return
 	case King:
-		pos.genPieceMoves(King, mask, moves)
+		pos.genPieceMoves(King, mask, moves, limitFrom)
 		pos.genKingCastles(kind, moves)
+		return
+	case Lancer:
+		pos.genLancerMoves(fig, mask, moves, limitFrom)
+		return
 	}
 }
 
