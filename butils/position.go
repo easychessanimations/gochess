@@ -189,14 +189,13 @@ func (pos *Position) IsPseudoLegal(m Move) bool {
 			pos.GetAttacker(m.To(), them) != NoFigure {
 			return false
 		}
-	// fake validation for extra pieces, for search to work
-	// TODO: do real validation
 	case Lancer:
-		return true
+		return LancerMobility(from, m.Figure().LancerDirection(), pos.UsBb(), pos.ThemBb()).Has(to)
 	case Sentry:
-		return true
+		// TODO: check if sentry can capture
+		return BishopMobility(from, all).Has(to)
 	case Jailer:
-		return true
+		return JailerMobility(from, pos.UsBb(), pos.ThemBb()).Has(to)
 	default:
 		fmt.Println(m.Figure().BaseFigure())
 		panic("unreachable")
@@ -1048,9 +1047,10 @@ func (pos *Position) genPieceMoves(fig Figure, mask Bitboard, moves *[]Move, lim
 		case King:
 			att = KingMobility(from)
 		case Sentry:
+			// TODO: generate proper sentry moves
 			att = BishopMobility(from, all)
 		case Jailer:
-			att = RookMobility(from, all)
+			att = JailerMobility(from, pos.UsBb(), pos.ThemBb())
 		}
 		pos.genBitboardMoves(pi, from, att&mask, moves)
 	}

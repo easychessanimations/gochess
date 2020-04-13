@@ -313,6 +313,16 @@ func RookMobility(sq Square, all Bitboard) Bitboard {
 	return rookMagic[sq].Attack(all)
 }
 
+// JailerMobility returns the squares a jailer can reach from sq given all pieces
+func JailerMobility(sq Square, us Bitboard, them Bitboard) Bitboard {
+	var att Bitboard
+	all := us | them
+	att = rookMagic[sq].Attack(all)
+	// jailer cannot capture
+	att &^= them
+	return att
+}
+
 // QueenMobility returns the squares a queen can reach from sq given all pieces
 func QueenMobility(sq Square, all Bitboard) Bitboard {
 	return rookMagic[sq].Attack(all) | bishopMagic[sq].Attack(all)
