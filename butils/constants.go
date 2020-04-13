@@ -245,6 +245,9 @@ const (
 	SquareMaxValue  = SquareH8
 )
 
+// NO_SQUARE represents an invalid square
+const NO_SQUARE = Square(SquareArraySize + 1)
+
 const (
 	// WhiteOO indicates that White can castle on King side
 	WhiteOO Castle = 1 << iota

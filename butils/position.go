@@ -790,7 +790,7 @@ func (pos *Position) UCIToMove(s string) (Move, error) {
 		}
 	}
 
-	move := MakeMove(moveType, from, to, capt, target)
+	move := MakeMove(moveType, from, to, capt, target, NO_SQUARE)
 	if !pos.IsPseudoLegal(move) {
 		return NullMove, fmt.Errorf("%s is not a valid move", s)
 	}
@@ -945,19 +945,19 @@ func (pos *Position) genPawnPromotions(kind int, moves *[]Move, limitFrom Bitboa
 
 		if !all.Has(to) { // advance front
 			for p := pMin; p <= pMax; p++ {
-				*moves = append(*moves, MakeMove(Promotion, from, to, NoPiece, ColorFigure(us, p)))
+				*moves = append(*moves, MakeMove(Promotion, from, to, NoPiece, ColorFigure(us, p), NO_SQUARE))
 			}
 		}
 		if to.File() != 0 && theirs.Has(to-1) { // take west
 			capt := pos.Get(to - 1)
 			for p := pMin; p <= pMax; p++ {
-				*moves = append(*moves, MakeMove(Promotion, from, to-1, capt, ColorFigure(us, p)))
+				*moves = append(*moves, MakeMove(Promotion, from, to-1, capt, ColorFigure(us, p), NO_SQUARE))
 			}
 		}
 		if to.File() != 7 && theirs.Has(to+1) { // take east
 			capt := pos.Get(to + 1)
 			for p := pMin; p <= pMax; p++ {
-				*moves = append(*moves, MakeMove(Promotion, from, to+1, capt, ColorFigure(us, p)))
+				*moves = append(*moves, MakeMove(Promotion, from, to+1, capt, ColorFigure(us, p), NO_SQUARE))
 			}
 		}
 	}
@@ -988,11 +988,11 @@ func (pos *Position) genPawnAdvanceMoves(kind int, mask Bitboard, moves *[]Move,
 		from := ours.Pop()
 		to := from + forward
 		if mask.Has(to) {
-			*moves = append(*moves, MakeMove(Normal, from, to, NoPiece, pawn))
+			*moves = append(*moves, MakeMove(Normal, from, to, NoPiece, pawn, NO_SQUARE))
 		}
 		to += forward
 		if mask.Has(to) && from.Rank() == HomeRank(pos.Us())^1 && !occu.Has(to) {
-			*moves = append(*moves, MakeMove(Normal, from, to, NoPiece, pawn))
+			*moves = append(*moves, MakeMove(Normal, from, to, NoPiece, pawn, NO_SQUARE))
 		}
 	}
 }
@@ -1036,7 +1036,7 @@ func (pos *Position) genPawnAttackMoves(kind int, moves *[]Move, limitFrom Bitbo
 		from := bbl.Pop()
 		to := from + att
 		mt, capt := pos.pawnCapture(to)
-		*moves = append(*moves, MakeMove(mt, from, to, capt, pawn))
+		*moves = append(*moves, MakeMove(mt, from, to, capt, pawn, NO_SQUARE))
 	}
 
 	// right
@@ -1045,14 +1045,14 @@ func (pos *Position) genPawnAttackMoves(kind int, moves *[]Move, limitFrom Bitbo
 		from := bbr.Pop()
 		to := from + att
 		mt, capt := pos.pawnCapture(to)
-		*moves = append(*moves, MakeMove(mt, from, to, capt, pawn))
+		*moves = append(*moves, MakeMove(mt, from, to, capt, pawn, NO_SQUARE))
 	}
 }
 
 func (pos *Position) genBitboardMoves(pi Piece, from Square, att Bitboard, moves *[]Move) {
 	for att != 0 {
 		to := att.Pop()
-		*moves = append(*moves, MakeMove(Normal, from, to, pos.Get(to), pi))
+		*moves = append(*moves, MakeMove(Normal, from, to, pos.Get(to), pi, NO_SQUARE))
 	}
 }
 
@@ -1186,7 +1186,7 @@ func (pos *Position) genKingCastles(kind int, moves *[]Move) {
 			if pos.GetAttacker(r4, pos.Them()) == NoFigure &&
 				pos.GetAttacker(r5, pos.Them()) == NoFigure &&
 				pos.GetAttacker(r6, pos.Them()) == NoFigure {
-				*moves = append(*moves, MakeMove(Castling, r4, r6, NoPiece, ColorFigure(pos.Us(), King)))
+				*moves = append(*moves, MakeMove(Castling, r4, r6, NoPiece, ColorFigure(pos.Us(), King), NO_SQUARE))
 			}
 		}
 	}
@@ -1201,7 +1201,7 @@ func (pos *Position) genKingCastles(kind int, moves *[]Move) {
 			if pos.GetAttacker(r4, pos.Them()) == NoFigure &&
 				pos.GetAttacker(r3, pos.Them()) == NoFigure &&
 				pos.GetAttacker(r2, pos.Them()) == NoFigure {
-				*moves = append(*moves, MakeMove(Castling, r4, r2, NoPiece, ColorFigure(pos.Us(), King)))
+				*moves = append(*moves, MakeMove(Castling, r4, r2, NoPiece, ColorFigure(pos.Us(), King), NO_SQUARE))
 			}
 		}
 	}

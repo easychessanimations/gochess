@@ -10,12 +10,12 @@ package butils
 
 // From returns the starting square
 func (m Move) From() Square {
-	return Square(m >> 0 & 0x3f)
+	return Square(m >> 0 & Move(SQUARE_MASK))
 }
 
 // To returns the destination square
 func (m Move) To() Square {
-	return Square(m >> 8 & 0x3f)
+	return Square(m >> 8 & Move(SQUARE_MASK))
 }
 
 // MoveType returns the move type
@@ -45,6 +45,11 @@ func (m Move) Target() Piece {
 // Piece returns the piece moved
 func (m Move) Piece() Piece {
 	return Piece((m >> MOVE_PIECE_SHIFT) & Move(PIECE_MASK))
+}
+
+// PromotionSquare returns the promotion square of the move
+func (m Move) PromotionSquare() Square {
+	return Square(m >> MOVE_PROMOTION_SQUARE_SHIFT & Move(SQUARE_MASK))
 }
 
 // Color returns which player is moving
