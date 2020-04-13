@@ -192,6 +192,13 @@ func ParsePiecePlacement(str string, pos *Position) error {
 		}
 
 		if '1' <= p && p <= '8' {
+			// if we have a lancer accumulated and file is ok, we should put it
+			if (parseLancer > 0) && (f < 8) {
+				pos.Put(RankFile(7-r, f), SymbolToPiece(lancerAccum))
+				parseLancer = 0
+				lancerAccum = ""
+				f++
+			}
 			f += int(p) - int('0')
 			continue
 		}

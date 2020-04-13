@@ -590,15 +590,22 @@ func (uci *UCI) MakeMoveByIndex(cmd string) error {
 	foundMoveIndex := -1
 
 	if err != nil {
+		if cmd != "" {
+			// try to look up move by notation
+			for testI, lmbi := range lmb {
+				if (lmbi.San == cmd) || (lmbi.Algeb == cmd) {
+					foundMoveIndex = testI
+				}
+			}
+			if foundMoveIndex < 0 {
+				fmt.Println("illegal move")
+				return nil
+			}
+		}
+
 		// use random index if cmd did not parse as a number
 		i = int64(rand.Intn(len(lmb)))
 
-		// try to look up move by notation
-		for testI, lmbi := range lmb {
-			if (lmbi.San == cmd) || (lmbi.Algeb == cmd) {
-				foundMoveIndex = testI
-			}
-		}
 	} else {
 		i--
 	}

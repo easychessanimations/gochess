@@ -819,7 +819,7 @@ func (pos *Position) DoMove(move Move) {
 	pos.Remove(move.From(), pi)
 	pos.Remove(move.CaptureSquare(), move.Capture())
 	pos.Put(move.To(), move.Target())
-	pos.SetSideToMove(pos.Them())
+	pos.InvertSideToMove()
 
 	curr.Move = move
 	curr.IsCheckedKnown = move != NullMove && pos.curr.GivesCheckMove == move
@@ -828,10 +828,15 @@ func (pos *Position) DoMove(move Move) {
 	curr.GivesCheckResult = false
 }
 
+// InvertSideToMove inverts the side to move
+func (pos *Position) InvertSideToMove() {
+	pos.SetSideToMove(pos.Them())
+}
+
 // UndoMove takes back the last move, there should be at least one move on the stack
 func (pos *Position) UndoMove() {
 	move := pos.LastMove()
-	pos.SetSideToMove(pos.Them())
+	pos.InvertSideToMove()
 
 	if move != NullMove {
 		pos.pieces[move.From()] = move.Piece()
@@ -1061,7 +1066,7 @@ func (pos *Position) ThemBb() Bitboard {
 	return pos.ByColor(pos.Them())
 }
 
-// genLancerMoves generates lancer moves for lancer masked by mask
+// genLancerMoves generates lancer moves  for lancer masked by mask
 // with from sqaures limited to limitFrom
 func (pos *Position) genLancerMoves(lancer Figure, mask Bitboard, moves *[]Move, limitFrom Bitboard) {
 	ld := lancer.LancerDirection()
@@ -1129,6 +1134,18 @@ func (pos *Position) genKingCastles(kind int, moves *[]Move) {
 	}
 }
 
+// SaveSideToMove saves side to move
+// for switching turn for move generation
+func (pos *Position) SaveSideToMove() {
+	pos.oldSideToMove = pos.sideToMove
+}
+
+// RetrieveSideToMove retrieves side to move
+// for switching turn for move generation
+func (pos *Position) RetrieveSideToMove() {
+	pos.sideToMove = pos.oldSideToMove
+}
+
 // GetAttacker returns the smallest figure of color them that attacks sq
 func (pos *Position) GetAttacker(sq Square, them Color) Figure {
 	enemy := pos.ByColor(them)
@@ -1154,6 +1171,21 @@ func (pos *Position) GetAttacker(sq Square, them Color) Figure {
 	if enemy&pos.ByFigure(Rook)&rook != 0 {
 		return Rook
 	}
+
+	// primitive check of wheter there is a lancer attack on the square
+	// TODO: find a better way
+	pos.SaveSideToMove()
+	pos.SetSideToMove(them)
+	var moves []Move
+	pos.genAllLancerMoves(pos.getMask(Violent), &moves, BbFull)
+	for _, move := range moves {
+		if move.To() == sq {
+			pos.RetrieveSideToMove()
+			return Lancer
+		}
+	}
+	pos.RetrieveSideToMove()
+
 	if enemy&pos.ByFigure(Queen)&(bishop|rook) != 0 {
 		return Queen
 	}

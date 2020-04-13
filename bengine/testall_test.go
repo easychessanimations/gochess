@@ -8,6 +8,13 @@ import (
 
 const PERFT_4_EXPECTED_NODES = 206603
 
+/*
+testpositions
+
+lancer check
+j1sqkb1r/ppppnppp/8/4Ln3/5ln2/P7/1PPPPPPP/J1SQKBNR w KQkq - 1 4
+*/
+
 func TestPerft(t *testing.T) {
 	pos, _ := PositionFromFEN(FENStartPos)
 

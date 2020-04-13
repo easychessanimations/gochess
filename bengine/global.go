@@ -27,7 +27,7 @@ var mvvlvaBonus = [...]int16{
 	68,                  // 4 Rook
 	145,                 // 5 Queen
 	256,                 // 6 King
-	0,                   // 7 Lancer ( abstract )
+	LANCER_MVVLVA_BONUS, // 7 Lancer ( abstract )
 	LANCER_MVVLVA_BONUS, // 8 LancerN
 	LANCER_MVVLVA_BONUS, // 9 LancerNE
 	LANCER_MVVLVA_BONUS, // 10 LancerE
