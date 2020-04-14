@@ -121,7 +121,11 @@ func CastlingRook(kingEnd Square) (Piece, Square, Square) {
 	// if kingEnd == C1 == b010, then rookEnd == D1 == b011
 	// if kingEnd == G1 == b110, then rookEnd == F1 == b101
 	// so bit 3 will invert bit 2, bit 1 is always set
-	piece := Piece(Rook<<1) + (1 - Piece(kingEnd>>5))
+	fig := Rook
+	if kingEnd.File() < 4 {
+		fig = Jailer
+	}
+	piece := Piece(fig<<1) + (1 - Piece(kingEnd>>5))
 	rookStart := kingEnd&^3 | (kingEnd & 4 >> 1) | (kingEnd & 4 >> 2)
 	rookEnd := kingEnd ^ (kingEnd & 4 >> 1) | 1
 	return piece, rookStart, rookEnd

@@ -350,12 +350,12 @@ var (
 		},
 		'Q': {
 			Castle: WhiteOOO,
-			Piece:  [2]Piece{WhiteKing, WhiteRook},
+			Piece:  [2]Piece{WhiteKing, WhiteJailer},
 			Square: [2]Square{SquareE1, SquareA1},
 		},
 		'q': {
 			Castle: BlackOOO,
-			Piece:  [2]Piece{BlackKing, BlackRook},
+			Piece:  [2]Piece{BlackKing, BlackJailer},
 			Square: [2]Square{SquareE8, SquareA8},
 		},
 	}

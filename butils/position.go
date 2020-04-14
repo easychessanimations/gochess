@@ -571,6 +571,14 @@ func (pos *Position) MoveToSanBatch(move Move) string {
 	}
 	pos.UndoMove()
 
+	if move.MoveType() == Castling {
+		san = "O-O"
+
+		if move.To().File() < 4 {
+			san = "O-O-O"
+		}
+	}
+
 	return san + check
 }
 
