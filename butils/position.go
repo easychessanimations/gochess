@@ -968,8 +968,9 @@ func (pos *Position) IsSquareJailedForThem(sq Square) bool {
 // AppendMove appends a move to a move list
 // if the move is a disabled move, it does nothing
 func (pos *Position) AppendMove(move Move, moves *[]Move) {
-	if !pos.curr.HasDisabledMove {
-		// position has no disabled move, append and return
+	if (!pos.curr.HasDisabledMove) || move.Piece().Figure() == Pawn {
+		// position has no disabled move, or figure is pawn which cannot be disabled
+		// append and return
 		*moves = append(*moves, move)
 		return
 	}
@@ -993,7 +994,7 @@ func (pos *Position) AppendMove(move Move, moves *[]Move) {
 	// no exact match, so any non sliding piece's move can be appended
 	fig := move.Piece().Figure()
 
-	if fig == Pawn || fig == Knight || fig == King {
+	if fig == Knight || fig == King {
 		// non sliding piece with free move, append and return
 		*moves = append(*moves, move)
 		return
@@ -1076,7 +1077,8 @@ func (pos *Position) genPawnPromotions(kind int, moves *[]Move, limitFrom Bitboa
 // genPawnAdvanceMoves generates pawns forward one or two squares moves of kind masked by mask
 // with from squares limited to limitFrom
 // does not generate promotions nor attacks
-func (pos *Position) genPawnAdvanceMoves(kind int, mask Bitboard, moves *[]Move, limitFrom Bitboard, allowPushByTwo bool) {
+// disablePromotions when true disables promotions, false only when generating sentry pushes
+func (pos *Position) genPawnAdvanceMoves(kind int, mask Bitboard, moves *[]Move, limitFrom Bitboard, allowPushByTwo bool, disablePromotion bool) {
 	if kind&Quiet == 0 {
 		return
 	}
@@ -1087,10 +1089,16 @@ func (pos *Position) genPawnAdvanceMoves(kind int, mask Bitboard, moves *[]Move,
 
 	var forward Square
 	if pos.Us() == White {
-		ours = ours &^ South(occu) &^ BbRank7
+		ours = ours &^ South(occu)
+		if disablePromotion {
+			ours &^= BbRank7
+		}
 		forward = RankFile(+1, 0)
 	} else {
-		ours = ours &^ North(occu) &^ BbRank2
+		ours = ours &^ North(occu)
+		if disablePromotion {
+			ours &^= BbRank2
+		}
 		forward = RankFile(-1, 0)
 	}
 
@@ -1119,7 +1127,8 @@ func (pos *Position) pawnCapture(to Square) (MoveType, Piece) {
 // generate pawn attacks moves of kind
 // does not generate promotions
 // from squares limited to limitFrom
-func (pos *Position) genPawnAttackMoves(kind int, moves *[]Move, limitFrom Bitboard) {
+// disablePromotions when true disables promotions, false only when generating sentry pushes
+func (pos *Position) genPawnAttackMoves(kind int, moves *[]Move, limitFrom Bitboard, disablePromotions bool) {
 	if kind&Violent == 0 {
 		return
 	}
@@ -1133,11 +1142,15 @@ func (pos *Position) genPawnAttackMoves(kind int, moves *[]Move, limitFrom Bitbo
 	pawn := ColorFigure(pos.Us(), Pawn)
 	ours := pos.ByPiece(pos.Us(), Pawn) & limitFrom &^ pos.JailedForUs()
 	if pos.Us() == White {
-		ours = ours &^ BbRank7
+		if disablePromotions {
+			ours &^= BbRank7
+		}
 		theirs = South(theirs)
 		forward = +1
 	} else {
-		ours = ours &^ BbRank2
+		if disablePromotions {
+			ours &^= BbRank2
+		}
 		theirs = North(theirs)
 		forward = -1
 	}
@@ -1311,8 +1324,8 @@ func (pos *Position) genSentryMoves(mask Bitboard, moves *[]Move, limitFrom Bitb
 					pos.GenerateFigureMoves(Sentry, Quiet, &pushMoves, to.Bitboard())
 				} else if top.Figure() == Pawn {
 					// pushed pawn cannot move by two
-					pos.genPawnAdvanceMoves(Quiet, BbFull, &pushMoves, to.Bitboard(), false)
-					pos.genPawnAttackMoves(Violent, &pushMoves, to.Bitboard())
+					pos.genPawnAdvanceMoves(Quiet, BbFull, &pushMoves, to.Bitboard(), false, false)
+					pos.genPawnAttackMoves(Violent, &pushMoves, to.Bitboard(), false)
 					// cannot push pawn to promotion
 				} else if top.BaseFigure() == Lancer {
 					pos.genLancerMoves(top.Figure(), pos.getMask(Violent|Quiet), &pushMoves, to.Bitboard(), true)
@@ -1540,8 +1553,8 @@ func (pos *Position) GenerateMoves(kind int, moves *[]Move) {
 	pos.genPieceMoves(Rook, mask, moves, BbFull)
 	pos.genPieceMoves(Bishop, mask, moves, BbFull)
 	pos.genPieceMoves(Knight, mask, moves, BbFull)
-	pos.genPawnAdvanceMoves(kind, mask, moves, BbFull, true)
-	pos.genPawnAttackMoves(kind, moves, BbFull)
+	pos.genPawnAdvanceMoves(kind, mask, moves, BbFull, true, true)
+	pos.genPawnAttackMoves(kind, moves, BbFull, true)
 }
 
 // GenerateFigureMoves generate moves of kind for a given figure
@@ -1552,8 +1565,8 @@ func (pos *Position) GenerateFigureMoves(fig Figure, kind int, moves *[]Move, li
 	mask := pos.getMask(kind)
 	switch fig.BaseFigure() {
 	case Pawn:
-		pos.genPawnAdvanceMoves(kind, mask, moves, limitFrom, true)
-		pos.genPawnAttackMoves(kind, moves, limitFrom)
+		pos.genPawnAdvanceMoves(kind, mask, moves, limitFrom, true, true)
+		pos.genPawnAttackMoves(kind, moves, limitFrom, true)
 		pos.genPawnPromotions(kind, moves, limitFrom)
 		return
 	case Knight, Bishop, Rook, Queen, Jailer:
