@@ -1223,14 +1223,39 @@ func (pos *Position) genLancerMoves(lancer Figure, mask Bitboard, moves *[]Move,
 	squares := pos.ByPiece(pos.Us(), lancer) & limitFrom &^ pos.JailedForUs()
 	for bb := squares; bb != 0; {
 		from := bb.Pop()
-		att := LancerMobility(from, ld, pos.UsBb(), pos.ThemBb()) & mask
-		for att != 0 {
-			to := att.Pop()
-			if keepDirection {
-				pos.AppendMove(MakeLancerMove(from, to, pi, pos.Get(to), pi), moves)
-			} else {
-				for ld := 0; ld < NUM_LANCER_DIRECTIONS; ld++ {
-					pos.AppendMove(MakeLancerMove(from, to, pi, pos.Get(to), MakeLancer(pos.Us(), ld)), moves)
+		if pos.curr.HasDisabledMove && pos.curr.DisableFromSquare == from {
+			// nudged lancer
+			for ldn := 0; ldn < NUM_LANCER_DIRECTIONS; ldn++ {
+				att := LancerMobility(from, ldn, pos.UsBb(), pos.ThemBb()) & mask
+				for att != 0 {
+					to := att.Pop()
+					targetLancer := MakeLancer(pos.Us(), ldn)
+					if ldn == ld {
+						// lancer's own direction
+						if keepDirection {
+							pos.AppendMove(MakeLancerMove(from, to, pi, pos.Get(to), targetLancer), moves)
+						} else {
+							for ldi := 0; ldi < NUM_LANCER_DIRECTIONS; ldi++ {
+								pos.AppendMove(MakeLancerMove(from, to, pi, pos.Get(to), MakeLancer(pos.Us(), ldi)), moves)
+							}
+						}
+					} else {
+						// other direction, this can be only one move
+						pos.AppendMove(MakeLancerMove(from, to, pi, pos.Get(to), targetLancer), moves)
+					}
+				}
+			}
+		} else {
+			// regular lancer
+			att := LancerMobility(from, ld, pos.UsBb(), pos.ThemBb()) & mask
+			for att != 0 {
+				to := att.Pop()
+				if keepDirection {
+					pos.AppendMove(MakeLancerMove(from, to, pi, pos.Get(to), pi), moves)
+				} else {
+					for ldi := 0; ldi < NUM_LANCER_DIRECTIONS; ldi++ {
+						pos.AppendMove(MakeLancerMove(from, to, pi, pos.Get(to), MakeLancer(pos.Us(), ldi)), moves)
+					}
 				}
 			}
 		}
