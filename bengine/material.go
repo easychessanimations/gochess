@@ -51,7 +51,11 @@ const SENTRY_VALUE_NATIVE_E = 100000
 const JAILER_VALUE_NATIVE_M = 150000
 const JAILER_VALUE_NATIVE_E = 150000
 
-const BASE_LANCER_BONUS = 50000
+const LANCER_TOWARDS_EDGE_DEDUCTION_M = 10000
+const LANCER_TOWARDS_EDGE_DEDUCTION_E = 10000
+
+const BASE_LANCER_BONUS_M = 50000
+const BASE_LANCER_BONUS_E = 0
 
 // PawnStartRank tells the pawn start rank for a given color
 func PawnStartRank(color Color) Bitboard {
@@ -74,6 +78,55 @@ func evaluateExtra(pos *Position, us Color) Accum {
 		accum.M += numLancers * LANCER_VALUE_NATIVE_M
 		accum.E += numLancers * LANCER_VALUE_NATIVE_E
 
+		// deductions for lancer facing the edge of the board
+		for bb := lancers; bb != 0; {
+			sq := bb.Pop()
+
+			sqRank := sq.Rank()
+			sqFile := sq.File()
+
+			delta := LANCER_DIRECTION_TO_DELTA[ld]
+
+			deduction := 0
+
+			// super deduction is for lancers facing out of the board
+			// except for opponent sentry push these lancers cannot move any more
+			// so they are practically lost
+			superDeduction := false
+
+			if delta[0] > 0 {
+				deduction += sqRank
+				if sqRank == 7 {
+					superDeduction = true
+				}
+			} else if delta[0] < 0 {
+				deduction += 7 - sqRank
+				if sqRank == 0 {
+					superDeduction = true
+				}
+			}
+
+			if delta[1] > 0 {
+				deduction += sqFile
+				if sqFile == 7 {
+					superDeduction = true
+				}
+			} else if delta[1] < 0 {
+				deduction += 7 - sqFile
+				if sqFile == 0 {
+					superDeduction = true
+				}
+			}
+
+			if superDeduction {
+				accum.M -= LANCER_VALUE_NATIVE_M
+				accum.E -= LANCER_VALUE_NATIVE_E
+			} else {
+				accum.M -= int32(deduction * LANCER_TOWARDS_EDGE_DEDUCTION_M)
+				accum.E -= int32(deduction * LANCER_TOWARDS_EDGE_DEDUCTION_E)
+			}
+		}
+
 		baseLancers := lancers & PawnStartRank(us)
 
 		for bb := baseLancers; bb != 0; {
@@ -83,7 +136,8 @@ func evaluateExtra(pos *Position, us Color) Accum {
 
 			if ((sq.File() <= 5) && (lancer == LancerE)) || ((sq.File() >= 3) && (lancer == LancerW)) {
 				// add middle game bonus for lancer protecting their own second rank
-				accum.M += BASE_LANCER_BONUS
+				accum.M += BASE_LANCER_BONUS_M
+				accum.E += BASE_LANCER_BONUS_E
 			}
 		}
 	}

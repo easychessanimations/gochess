@@ -1231,6 +1231,8 @@ func (pos *Position) genLancerMoves(lancer Figure, mask Bitboard, moves *[]Move,
 	}
 }
 
+const ALLOW_SENTRY_PUSH = false
+
 // genSentryMoves generates snetry moves for sentry masked by mask
 // with from squares limited to limitFrom
 func (pos *Position) genSentryMoves(mask Bitboard, moves *[]Move, limitFrom Bitboard) {
@@ -1245,7 +1247,7 @@ func (pos *Position) genSentryMoves(mask Bitboard, moves *[]Move, limitFrom Bitb
 			top := pos.Get(to)
 			if top == NoPiece {
 				pos.AppendMove(MakeMove(Normal, from, to, NoPiece, pi, NO_SQUARE, NoPiece), moves)
-			} else {
+			} else if ALLOW_SENTRY_PUSH {
 				// sentry push
 				// remove sentry so that pushed piece can move to its square
 				pos.Remove(from, pi)
