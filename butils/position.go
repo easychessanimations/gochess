@@ -16,6 +16,15 @@ import (
 /////////////////////////////////////////////////////////////////////
 // member functions
 
+// FormatDisabledMove formats disabled move as FEN field
+func (pos *Position) FormatDisabledMove() string {
+	if !pos.curr.HasDisabledMove {
+		return "-"
+	}
+
+	return pos.curr.DisableFromSquare.String() + pos.curr.DisableToSquare.String()
+}
+
 // String returns position in FEN format
 // for table format use PrettyPrint
 func (pos *Position) String() string {
@@ -25,6 +34,7 @@ func (pos *Position) String() string {
 	s += " " + FormatEnpassantSquare(pos)
 	s += " " + strconv.Itoa(pos.curr.HalfmoveClock)
 	s += " " + strconv.Itoa(pos.fullmoveCounter)
+	s += " " + pos.FormatDisabledMove()
 	return s
 }
 
@@ -840,10 +850,18 @@ func (pos *Position) DoMove(move Move) {
 	pos.Remove(move.CaptureSquare(), move.Capture())
 	pos.Put(move.To(), move.Target())
 
+	// delete any former disabled move
+	pos.curr.HasDisabledMove = false
+
 	if move.MoveType() == SentryPush {
 		promSq := move.PromotionSquare()
 		pos.Remove(promSq, pos.Get(promSq))
 		pos.Put(promSq, move.Capture())
+
+		// set disabled move
+		pos.curr.HasDisabledMove = true
+		pos.curr.DisableFromSquare = move.PromotionSquare()
+		pos.curr.DisableToSquare = move.To()
 	}
 
 	// invert side to move

@@ -64,14 +64,17 @@ type Castle uint
 
 // state
 type state struct {
-	Zobrist         uint64                    // Zobrist key, can be zero
-	Move            Move                      // last move played
-	HalfmoveClock   int                       // last ply when a pawn was moved or a capture was made
-	EnpassantSquare Square                    // en passant square; if no e.p, then SquareA1
-	CastlingAbility Castle                    // remaining castling rights
-	ByFigure        [FigureArraySize]Bitboard // bitboards of square occupancy by figure
-	ByColor         [ColorArraySize]Bitboard  // bitboards of square occupancy by color
-	JailedForColor  [ColorArraySize]Bitboard  // biboards for jailed squares
+	Zobrist           uint64                    // Zobrist key, can be zero
+	Move              Move                      // last move played
+	HalfmoveClock     int                       // last ply when a pawn was moved or a capture was made
+	EnpassantSquare   Square                    // en passant square; if no e.p, then SquareA1
+	DisableFromSquare Square                    // disabled move from square
+	DisableToSquare   Square                    // disabled move to square
+	HasDisabledMove   bool                      // has disabled move
+	CastlingAbility   Castle                    // remaining castling rights
+	ByFigure          [FigureArraySize]Bitboard // bitboards of square occupancy by figure
+	ByColor           [ColorArraySize]Bitboard  // bitboards of square occupancy by color
+	JailedForColor    [ColorArraySize]Bitboard  // biboards for jailed squares
 
 	IsCheckedKnown   bool // true if it's known whether the current player is in check or not
 	IsChecked        bool // true if current player is in check; if true then IsCheckedKnown is also true

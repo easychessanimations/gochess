@@ -105,11 +105,11 @@ func NewPosition() *Position {
 // fen must contain the position using Forsyth–Edwards Notation
 // http://en.wikipedia.org/wiki/Forsyth%E2%80%93Edwards_Notation
 func PositionFromFEN(fen string) (*Position, error) {
-	// split fen into 6 fields
+	// split fen into 7 fields
 	// same as string.Fields() but creates much less garbage
 	// the optimization is important when a huge number of positions
 	// need to be evaluated
-	f, p := [6]string{}, 0
+	f, p := [7]string{}, 0
 	for i := 0; i < len(fen); {
 		// find the start and end of the token
 		for ; i < len(fen) && fen[i] == ' '; i++ {
@@ -128,8 +128,8 @@ func PositionFromFEN(fen string) (*Position, error) {
 		f[p] = fen[start:limit]
 		p++
 	}
-	if p != 4 && p != 6 {
-		return nil, fmt.Errorf("FEN has wrong number of fields, expected 4 or 6")
+	if p != 4 && p != 6 && p != 7 {
+		return nil, fmt.Errorf("FEN has wrong number of fields, expected 4, 6 or 7")
 	}
 
 	// parse each field
@@ -146,7 +146,13 @@ func PositionFromFEN(fen string) (*Position, error) {
 	if err := ParseEnpassantSquare(f[3], pos); err != nil {
 		return nil, err
 	}
-	if p == 6 {
+	// despite being required the last two or three fields of the FEN string
+	// are often omitted; if the FEN is incomplete, provide default
+	// values for halfmove clock, full move counter and disable squares
+	pos.curr.HalfmoveClock = 0
+	pos.fullmoveCounter = 1
+	pos.curr.HasDisabledMove = false
+	if p == 6 || p == 7 {
 		var err error
 		if pos.curr.HalfmoveClock, err = strconv.Atoi(f[4]); err != nil {
 			return nil, err
@@ -154,12 +160,24 @@ func PositionFromFEN(fen string) (*Position, error) {
 		if pos.fullmoveCounter, err = strconv.Atoi(f[5]); err != nil {
 			return nil, err
 		}
-	} else {
-		// despite being required the last two fields of the FEN string
-		// are often omitted; if the FEN is incomplete, provide default
-		// values for halfmove clock and full move counter
-		pos.curr.HalfmoveClock = 0
-		pos.fullmoveCounter = 1
+		if p == 7 {
+			if f[6] != "-" {
+				if len(f[6]) < 4 {
+					return nil, fmt.Errorf("invalid disabled move %s", f[6])
+				}
+				sq, err := SquareFromString(f[6][0:2])
+				if err != nil {
+					return nil, err
+				}
+				pos.curr.DisableFromSquare = sq
+				sq, err = SquareFromString(f[6][2:4])
+				if err != nil {
+					return nil, err
+				}
+				pos.curr.DisableToSquare = sq
+				pos.curr.HasDisabledMove = true
+			}
+		}
 	}
 
 	pos.Ply = (pos.fullmoveCounter - 1) * 2
