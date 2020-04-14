@@ -726,7 +726,7 @@ func (pos *Position) LegalMovesString() string {
 	pos.InitMoveToSan()
 	for i, mbi := range pos.LegalMoveBuff {
 		//buff += fmt.Sprintf("%d. %s [ %s , %s ] ", i+1, mbi.San, mbi.Algeb, mbi.Lan)
-		buff += fmt.Sprintf("%d. %s %s ", i+1, mbi.San, mbi.Algeb)
+		buff += fmt.Sprintf("%d. %s ", i+1, mbi.San)
 	}
 	return buff
 }
@@ -806,7 +806,7 @@ func (pos *Position) UCIToMove(s string) (Move, error) {
 		}
 	}
 
-	move := MakeMove(moveType, from, to, capt, target, NO_SQUARE, NoPiece)
+	move := MakeMove(moveType, from, to, target, capt, pi, NO_SQUARE, NoPiece)
 	if !pos.IsPseudoLegal(move) {
 		return NullMove, fmt.Errorf("%s is not a valid move", s)
 	}
@@ -845,23 +845,29 @@ func (pos *Position) DoMove(move Move) {
 		pos.Put(end, rook)
 	}
 
-	// update the pieces on the chess board
-	pos.Remove(move.From(), pi)
-	pos.Remove(move.CaptureSquare(), move.Capture())
-	pos.Put(move.To(), move.Target())
-
 	// delete any former disabled move
 	pos.curr.HasDisabledMove = false
 
+	// update the pieces on the chess board
 	if move.MoveType() == SentryPush {
+		pos.Remove(move.From(), pi)
+
+		pos.Remove(move.To(), move.Capture())
+		pos.Put(move.To(), pi)
+
 		promSq := move.PromotionSquare()
-		pos.Remove(promSq, pos.Get(promSq))
-		pos.Put(promSq, move.Capture())
+		pos.Remove(promSq, move.PromotionCapture())
+		pos.Put(promSq, move.Target())
 
 		// set disabled move
 		pos.curr.HasDisabledMove = true
 		pos.curr.DisableFromSquare = move.PromotionSquare()
 		pos.curr.DisableToSquare = move.To()
+	} else {
+		pos.Remove(move.From(), pi)
+
+		pos.Remove(move.CaptureSquare(), move.Capture())
+		pos.Put(move.To(), move.Target())
 	}
 
 	// invert side to move
@@ -1040,19 +1046,19 @@ func (pos *Position) genPawnPromotions(kind int, moves *[]Move, limitFrom Bitboa
 
 		if !all.Has(to) { // advance front
 			for p := pMin; p <= pMax; p++ {
-				pos.AppendMove(MakeMove(Promotion, from, to, NoPiece, ColorFigure(us, p), NO_SQUARE, NoPiece), moves)
+				pos.AppendMove(MakeMove(Promotion, from, to, ColorFigure(us, p), NoPiece, ColorFigure(us, Pawn), NO_SQUARE, NoPiece), moves)
 			}
 		}
 		if to.File() != 0 && theirs.Has(to-1) { // take west
 			capt := pos.Get(to - 1)
 			for p := pMin; p <= pMax; p++ {
-				pos.AppendMove(MakeMove(Promotion, from, to-1, capt, ColorFigure(us, p), NO_SQUARE, NoPiece), moves)
+				pos.AppendMove(MakeMove(Promotion, from, to-1, ColorFigure(us, p), capt, ColorFigure(us, Pawn), NO_SQUARE, NoPiece), moves)
 			}
 		}
 		if to.File() != 7 && theirs.Has(to+1) { // take east
 			capt := pos.Get(to + 1)
 			for p := pMin; p <= pMax; p++ {
-				pos.AppendMove(MakeMove(Promotion, from, to+1, capt, ColorFigure(us, p), NO_SQUARE, NoPiece), moves)
+				pos.AppendMove(MakeMove(Promotion, from, to+1, ColorFigure(us, p), capt, ColorFigure(us, Pawn), NO_SQUARE, NoPiece), moves)
 			}
 		}
 	}
@@ -1083,12 +1089,12 @@ func (pos *Position) genPawnAdvanceMoves(kind int, mask Bitboard, moves *[]Move,
 		from := ours.Pop()
 		to := from + forward
 		if mask.Has(to) {
-			pos.AppendMove(MakeMove(Normal, from, to, NoPiece, pawn, NO_SQUARE, NoPiece), moves)
+			pos.AppendMove(MakeMove(Normal, from, to, pawn, NoPiece, pawn, NO_SQUARE, NoPiece), moves)
 		}
 		if allowPushByTwo {
 			to += forward
 			if mask.Has(to) && from.Rank() == HomeRank(pos.Us())^1 && !occu.Has(to) {
-				pos.AppendMove(MakeMove(Normal, from, to, NoPiece, pawn, NO_SQUARE, NoPiece), moves)
+				pos.AppendMove(MakeMove(Normal, from, to, pawn, NoPiece, pawn, NO_SQUARE, NoPiece), moves)
 			}
 		}
 	}
@@ -1133,7 +1139,7 @@ func (pos *Position) genPawnAttackMoves(kind int, moves *[]Move, limitFrom Bitbo
 		from := bbl.Pop()
 		to := from + att
 		mt, capt := pos.pawnCapture(to)
-		pos.AppendMove(MakeMove(mt, from, to, capt, pawn, NO_SQUARE, NoPiece), moves)
+		pos.AppendMove(MakeMove(mt, from, to, pawn, capt, pawn, NO_SQUARE, NoPiece), moves)
 	}
 
 	// right
@@ -1142,14 +1148,14 @@ func (pos *Position) genPawnAttackMoves(kind int, moves *[]Move, limitFrom Bitbo
 		from := bbr.Pop()
 		to := from + att
 		mt, capt := pos.pawnCapture(to)
-		pos.AppendMove(MakeMove(mt, from, to, capt, pawn, NO_SQUARE, NoPiece), moves)
+		pos.AppendMove(MakeMove(mt, from, to, pawn, capt, pawn, NO_SQUARE, NoPiece), moves)
 	}
 }
 
 func (pos *Position) genBitboardMoves(pi Piece, from Square, att Bitboard, moves *[]Move) {
 	for att != 0 {
 		to := att.Pop()
-		pos.AppendMove(MakeMove(Normal, from, to, pos.Get(to), pi, NO_SQUARE, NoPiece), moves)
+		pos.AppendMove(MakeMove(Normal, from, to, pi, pos.Get(to), pi, NO_SQUARE, NoPiece), moves)
 	}
 }
 
@@ -1231,7 +1237,12 @@ func (pos *Position) genLancerMoves(lancer Figure, mask Bitboard, moves *[]Move,
 	}
 }
 
-const ALLOW_SENTRY_PUSH = false
+// IsSquareEmpty tells whether a square is empty
+func (pos *Position) IsSquareEmpty(sq Square) bool {
+	return pos.Get(sq) == NoPiece
+}
+
+const ALLOW_SENTRY_PUSH = true
 
 // genSentryMoves generates snetry moves for sentry masked by mask
 // with from squares limited to limitFrom
@@ -1246,7 +1257,7 @@ func (pos *Position) genSentryMoves(mask Bitboard, moves *[]Move, limitFrom Bitb
 			to := att.Pop()
 			top := pos.Get(to)
 			if top == NoPiece {
-				pos.AppendMove(MakeMove(Normal, from, to, NoPiece, pi, NO_SQUARE, NoPiece), moves)
+				pos.AppendMove(MakeMove(Normal, from, to, pi, NoPiece, pi, NO_SQUARE, NoPiece), moves)
 			} else if ALLOW_SENTRY_PUSH {
 				// sentry push
 				// remove sentry so that pushed piece can move to its square
@@ -1271,13 +1282,26 @@ func (pos *Position) genSentryMoves(mask Bitboard, moves *[]Move, limitFrom Bitb
 					// cannot push pawn to promotion
 				} else if top.BaseFigure() == Lancer {
 					pos.genLancerMoves(top.Figure(), pos.getMask(Violent|Quiet), &pushMoves, to.Bitboard(), true)
+
+					for ld := 0; ld < NUM_LANCER_DIRECTIONS; ld++ {
+						// only generate nudges of direction different from the lancer's own direction
+						// as the former one has already been generated
+						if ld != top.LancerDirection() {
+							nudgeTo := to.AddDelta(LANCER_DIRECTION_TO_DELTA[ld])
+
+							// for nudge to adjacent square the square has to be empty
+							if pos.IsSquareEmpty(nudgeTo) {
+								pos.AppendMove(MakeMove(SentryPush, from, to, MakeLancer(pos.Them(), ld), top, pi, nudgeTo, NoPiece), moves)
+							}
+						}
+					}
 				} else {
 					pos.GenerateFigureMoves(top.Figure(), Violent|Quiet, &pushMoves, to.Bitboard())
 				}
 
 				for _, pushMove := range pushMoves {
 					promCapture := pos.Get(pushMove.To())
-					pos.AppendMove(MakeMove(SentryPush, from, to, top, pi, pushMove.To(), promCapture), moves)
+					pos.AppendMove(MakeMove(SentryPush, from, to, top, top, pi, pushMove.To(), promCapture), moves)
 				}
 
 				// undo all removals / replacements
@@ -1344,7 +1368,7 @@ func (pos *Position) genKingCastles(kind int, moves *[]Move) {
 			if pos.GetAttacker(r4, pos.Them()) == NoFigure &&
 				pos.GetAttacker(r5, pos.Them()) == NoFigure &&
 				pos.GetAttacker(r6, pos.Them()) == NoFigure {
-				pos.AppendMove(MakeMove(Castling, r4, r6, NoPiece, ColorFigure(pos.Us(), King), NO_SQUARE, NoPiece), moves)
+				pos.AppendMove(MakeMove(Castling, r4, r6, ColorFigure(pos.Us(), King), NoPiece, ColorFigure(pos.Us(), King), NO_SQUARE, NoPiece), moves)
 			}
 		}
 	}
@@ -1359,7 +1383,7 @@ func (pos *Position) genKingCastles(kind int, moves *[]Move) {
 			if pos.GetAttacker(r4, pos.Them()) == NoFigure &&
 				pos.GetAttacker(r3, pos.Them()) == NoFigure &&
 				pos.GetAttacker(r2, pos.Them()) == NoFigure {
-				pos.AppendMove(MakeMove(Castling, r4, r2, NoPiece, ColorFigure(pos.Us(), King), NO_SQUARE, NoPiece), moves)
+				pos.AppendMove(MakeMove(Castling, r4, r2, ColorFigure(pos.Us(), King), NoPiece, ColorFigure(pos.Us(), King), NO_SQUARE, NoPiece), moves)
 			}
 		}
 	}

@@ -74,12 +74,7 @@ func NormalizedDelta(fromSq, toSq Square) ([2]int, error) {
 }
 
 // MakeMove constructs a move
-func MakeMove(moveType MoveType, from, to Square, capture, target Piece, promSquare Square, promCapture Piece) Move {
-	piece := target
-	if moveType == Promotion {
-		piece = ColorFigure(target.Color(), Pawn)
-	}
-
+func MakeMove(moveType MoveType, from, to Square, target, capture, piece Piece, promSquare Square, promCapture Piece) Move {
 	return Move(from)<<MOVE_FROM_SHIFT +
 		Move(to)<<MOVE_TO_SHIFT +
 		Move(moveType)<<MOVE_TYPE_SHIFT +

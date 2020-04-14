@@ -69,10 +69,7 @@ func (m Move) Figure() Figure {
 
 // Promotion returns the promoted piece if any
 func (m Move) Promotion() Piece {
-	if m.MoveType() == SentryPush {
-		return m.Capture()
-	}
-	if m.MoveType() != Promotion {
+	if m.MoveType() != Promotion && m.MoveType() != SentryPush {
 		return NoPiece
 	}
 	return m.Target()
@@ -122,6 +119,9 @@ func (m Move) LAN() string {
 	promPiece := m.Promotion()
 	if promPiece != NoPiece {
 		r += promPiece.SanSymbol()
+	}
+	if m.MoveType() == SentryPush {
+		r += "@" + m.PromotionSquare().String()
 	}
 	return r
 }

@@ -36,4 +36,9 @@ func (sq Square) String() string {
 	return squareToString[sq*2 : sq*2+2]
 }
 
+// AddDelta adds a delta to the square
+func (sq Square) AddDelta(delta [2]int) Square {
+	return RankFile(sq.Rank()+delta[0], sq.File()+delta[1])
+}
+
 /////////////////////////////////////////////////////////////////////
