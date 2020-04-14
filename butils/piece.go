@@ -127,4 +127,9 @@ func (pi Piece) SanSymbol() string {
 	return pi.Figure().SanSymbol()
 }
 
+// ColorInverse returns the color inverse of the piece
+func (pi Piece) ColorInverse() Piece {
+	return ColorFigure(pi.Color().Opposite(), pi.Figure())
+}
+
 /////////////////////////////////////////////////////////////////////

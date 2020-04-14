@@ -126,11 +126,12 @@ const LANCER_DIRECTION_MASK = 0b111
 const (
 	// move types
 
-	NoMove    MoveType = iota // no move or null move
-	Normal                    // regular move
-	Promotion                 // pawn is promoted. Move.Promotion() gives the new piece
-	Castling                  // king castles
-	Enpassant                 // pawn takes enpassant
+	NoMove     MoveType = iota // no move or null move
+	Normal                     // regular move
+	Promotion                  // pawn is promoted. Move.Promotion() gives the new piece
+	Castling                   // king castles
+	Enpassant                  // pawn takes enpassant
+	SentryPush                 // sentry push
 )
 
 const (
@@ -245,8 +246,8 @@ const (
 	SquareMaxValue  = SquareH8
 )
 
-// NO_SQUARE represents an invalid square
-const NO_SQUARE = Square(SquareArraySize + 1)
+// NO_SQUARE to be used as a square argument where there is no need to supply a square
+const NO_SQUARE = Square(0)
 
 const (
 	// WhiteOO indicates that White can castle on King side

@@ -49,12 +49,13 @@ const SQUARE_MASK = SquareArraySize - 1
 
 // constants for recording the shifts of move representation parts
 const MOVE_FROM_SHIFT = 0
-const MOVE_TO_SHIFT = SQUARE_SIZE_IN_BITS                                       // originally 8
-const MOVE_TYPE_SHIFT = MOVE_TO_SHIFT + SQUARE_SIZE_IN_BITS                     // originally 16
-const MOVE_TARGET_SHIFT = MOVE_TYPE_SHIFT + PIECE_ARRAY_SIZE_IN_BITS            // originally 20
-const MOVE_CAPTURE_SHIFT = MOVE_TARGET_SHIFT + PIECE_ARRAY_SIZE_IN_BITS         // originally 24
-const MOVE_PIECE_SHIFT = MOVE_CAPTURE_SHIFT + PIECE_ARRAY_SIZE_IN_BITS          // originally 28
-const MOVE_PROMOTION_SQUARE_SHIFT = MOVE_PIECE_SHIFT + PIECE_ARRAY_SIZE_IN_BITS // new
+const MOVE_TO_SHIFT = SQUARE_SIZE_IN_BITS                                              // originally 8
+const MOVE_TYPE_SHIFT = MOVE_TO_SHIFT + SQUARE_SIZE_IN_BITS                            // originally 16
+const MOVE_TARGET_SHIFT = MOVE_TYPE_SHIFT + PIECE_ARRAY_SIZE_IN_BITS                   // originally 20
+const MOVE_CAPTURE_SHIFT = MOVE_TARGET_SHIFT + PIECE_ARRAY_SIZE_IN_BITS                // originally 24
+const MOVE_PIECE_SHIFT = MOVE_CAPTURE_SHIFT + PIECE_ARRAY_SIZE_IN_BITS                 // originally 28
+const MOVE_PROMOTION_SQUARE_SHIFT = MOVE_PIECE_SHIFT + PIECE_ARRAY_SIZE_IN_BITS        // new
+const MOVE_PROMOTION_CAPTURE_SHIFT = MOVE_PROMOTION_SQUARE_SHIFT + SQUARE_SIZE_IN_BITS // new
 
 // TODO: extend move to 64 bit, to allow for more move information
 

@@ -32,7 +32,7 @@ func RankFile(r, f int) Square {
 }
 
 // MakeMove constructs a move
-func MakeMove(moveType MoveType, from, to Square, capture, target Piece, promSquare Square) Move {
+func MakeMove(moveType MoveType, from, to Square, capture, target Piece, promSquare Square, promCapture Piece) Move {
 	piece := target
 	if moveType == Promotion {
 		piece = ColorFigure(target.Color(), Pawn)
@@ -44,7 +44,8 @@ func MakeMove(moveType MoveType, from, to Square, capture, target Piece, promSqu
 		Move(target)<<MOVE_TARGET_SHIFT +
 		Move(capture)<<MOVE_CAPTURE_SHIFT +
 		Move(piece)<<MOVE_PIECE_SHIFT +
-		Move(promSquare)<<MOVE_PROMOTION_SQUARE_SHIFT
+		Move(promSquare)<<MOVE_PROMOTION_SQUARE_SHIFT +
+		Move(promCapture)<<MOVE_PROMOTION_CAPTURE_SHIFT
 }
 
 // SquareFromString parses a square from a string

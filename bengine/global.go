@@ -511,7 +511,7 @@ func see(pos *Position, m Move) int32 {
 		// make a new pseudo-legal move of the smallest attacker
 		from := att.LSB()
 		attacker := ColorFigure(us, fig)
-		m := MakeMove(mt, from.AsSquare(), sq, target, attacker, NO_SQUARE)
+		m := MakeMove(mt, from.AsSquare(), sq, target, attacker, NO_SQUARE, NoPiece)
 		target = attacker // attacker becomes the new target
 
 		// update score

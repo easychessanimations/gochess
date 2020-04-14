@@ -52,6 +52,11 @@ func (m Move) PromotionSquare() Square {
 	return Square(m >> MOVE_PROMOTION_SQUARE_SHIFT & Move(SQUARE_MASK))
 }
 
+// PromotionCapture returns the promotion capture of the move
+func (m Move) PromotionCapture() Piece {
+	return Piece(m >> MOVE_PROMOTION_CAPTURE_SHIFT & Move(PIECE_MASK))
+}
+
 // Color returns which player is moving
 func (m Move) Color() Color {
 	return m.Piece().Color()
@@ -64,6 +69,9 @@ func (m Move) Figure() Figure {
 
 // Promotion returns the promoted piece if any
 func (m Move) Promotion() Piece {
+	if m.MoveType() == SentryPush {
+		return m.Capture()
+	}
 	if m.MoveType() != Promotion {
 		return NoPiece
 	}
@@ -93,6 +101,9 @@ func (m Move) UCI() string {
 	promFigure := m.Promotion().Figure()
 	if promFigure != NoFigure {
 		buff += promFigure.Symbol()
+	}
+	if m.MoveType() == SentryPush {
+		buff += "@" + m.PromotionSquare().String()
 	}
 	return buff
 }
