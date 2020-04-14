@@ -1003,7 +1003,7 @@ func (pos *Position) AppendMove(move Move, moves *[]Move) {
 	ndd, err := NormalizedDelta(disableFromSq, disableToSq)
 	if err != nil {
 		// disabled move has no normalized delta, this should be an error
-		panic("disabled move has no normalized delta")
+		panic(fmt.Sprintf("disabled move has no normalized delta, from %v to %v curr %v", disableFromSq, disableToSq, pos.curr))
 	}
 
 	if ndm != ndd {
@@ -1313,11 +1313,13 @@ func (pos *Position) genSentryMoves(mask Bitboard, moves *[]Move, limitFrom Bitb
 						// only generate nudges of direction different from the lancer's own direction
 						// as the former one has already been generated
 						if ld != top.LancerDirection() {
-							nudgeTo := to.AddDelta(LANCER_DIRECTION_TO_DELTA[ld])
+							nudgeTo, err := to.AddDelta(LANCER_DIRECTION_TO_DELTA[ld])
 
-							// for nudge to adjacent square the square has to be empty
-							if pos.IsSquareEmpty(nudgeTo) {
-								pos.AppendMove(MakeMove(SentryPush, from, to, MakeLancer(pos.Them(), ld), top, pi, nudgeTo, NoPiece), moves)
+							if err == nil {
+								// for nudge to adjacent square the square has to be empty
+								if pos.IsSquareEmpty(nudgeTo) {
+									pos.AppendMove(MakeMove(SentryPush, from, to, MakeLancer(pos.Them(), ld), top, pi, nudgeTo, NoPiece), moves)
+								}
 							}
 						}
 					}

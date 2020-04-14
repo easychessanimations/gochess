@@ -1,5 +1,7 @@
 package butils
 
+import "fmt"
+
 /////////////////////////////////////////////////////////////////////
 // imports
 
@@ -37,8 +39,14 @@ func (sq Square) String() string {
 }
 
 // AddDelta adds a delta to the square
-func (sq Square) AddDelta(delta [2]int) Square {
-	return RankFile(sq.Rank()+delta[0], sq.File()+delta[1])
+func (sq Square) AddDelta(delta [2]int) (Square, error) {
+	newRank := sq.Rank() + delta[0]
+	newFile := sq.File() + delta[1]
+	if newRank >= 0 && newRank <= 7 && newFile >= 0 && newFile <= 7 {
+		return RankFile(newRank, newFile), nil
+	}
+
+	return SquareA1, fmt.Errorf("adding delta resulted in invalid square, square %v delta %v", sq, delta)
 }
 
 /////////////////////////////////////////////////////////////////////
