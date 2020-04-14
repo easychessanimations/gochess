@@ -610,10 +610,17 @@ func (uci *UCI) MakeMoveByIndex(cmd string) error {
 		i--
 	}
 
-	move := lmb[i].Move
+	var move Move
 
 	if foundMoveIndex >= 0 {
 		move = lmb[foundMoveIndex].Move
+	} else {
+		if (i < 0) || (i >= int64(len(lmb))) {
+			fmt.Println("move index out of range")
+			return nil
+		}
+
+		move = lmb[i].Move
 	}
 
 	pos.DoMove(move)
