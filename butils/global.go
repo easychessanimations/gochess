@@ -31,6 +31,48 @@ func RankFile(r, f int) Square {
 	return Square(r*8 + f)
 }
 
+// NormalizedDelta returns the normalized delta of the move if the move is one of queen attacks
+// returns an error otherwise
+func NormalizedDelta(fromSq, toSq Square) ([2]int, error) {
+	rankDiff := toSq.Rank() - fromSq.Rank()
+	fileDiff := toSq.File() - fromSq.File()
+	if rankDiff == 0 && fileDiff == 0 {
+		return [2]int{}, fmt.Errorf("null difference cannot be normalized")
+	}
+	if rankDiff*rankDiff == fileDiff*fileDiff {
+		// bishop attack
+		if rankDiff > 0 {
+			if fileDiff > 0 {
+				return [2]int{1, 1}, nil
+			} else {
+				return [2]int{1, -1}, nil
+			}
+		} else {
+			if fileDiff > 0 {
+				return [2]int{-1, 1}, nil
+			} else {
+				return [2]int{-1, -1}, nil
+			}
+		}
+	}
+	if rankDiff == 0 || fileDiff == 0 {
+		// rook attack
+		if rankDiff > 0 {
+			return [2]int{1, 0}, nil
+		}
+		if rankDiff < 0 {
+			return [2]int{-1, 0}, nil
+		}
+		if fileDiff > 0 {
+			return [2]int{0, 1}, nil
+		}
+		if fileDiff < 0 {
+			return [2]int{0, -1}, nil
+		}
+	}
+	return [2]int{}, fmt.Errorf("non queen attack cannot be normalized")
+}
+
 // MakeMove constructs a move
 func MakeMove(moveType MoveType, from, to Square, capture, target Piece, promSquare Square, promCapture Piece) Move {
 	piece := target

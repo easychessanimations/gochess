@@ -947,6 +947,65 @@ func (pos *Position) IsSquareJailedForThem(sq Square) bool {
 	return (pos.JailedForColor(pos.Them()) & sq.Bitboard()) != 0
 }
 
+// AppendMove appends a move to a move list
+// if the move is a disabled move, it does nothing
+func (pos *Position) AppendMove(move Move, moves *[]Move) {
+	if !pos.curr.HasDisabledMove {
+		// position has no disabled move, append and return
+		*moves = append(*moves, move)
+		return
+	}
+
+	disableFromSq := pos.curr.DisableFromSquare
+	disableToSq := pos.curr.DisableToSquare
+
+	// check from square
+	if move.From() != disableFromSq {
+		// form square is not disabled, append and return
+		*moves = append(*moves, move)
+		return
+	}
+
+	// check exact match
+	if move.To() == disableToSq {
+		// exact match, return without appending
+		return
+	}
+
+	// no exact match, so any non sliding piece's move can be appended
+	fig := move.Piece().Figure()
+
+	if fig == Pawn || fig == Knight || fig == King {
+		// non sliding piece with free move, append and return
+		*moves = append(*moves, move)
+		return
+	}
+
+	ndm, err := NormalizedDelta(move.From(), move.To())
+	if err != nil {
+		// move has no normalized delta
+		// this should not happen with normal moves
+		// TODO: consider panic here
+		fmt.Println("warning, move has no normalized delta", move)
+		return
+	}
+
+	ndd, err := NormalizedDelta(disableFromSq, disableToSq)
+	if err != nil {
+		// disabled move has no normalized delta, this should be an error
+		panic("disabled move has no normalized delta")
+	}
+
+	if ndm != ndd {
+		// normalized deltas differ, safe to append move
+		*moves = append(*moves, move)
+		return
+	}
+
+	// return without appending
+	return
+}
+
 // genPawnPromotions generates pawn promotions of kind with from squares limited to limitFrom
 func (pos *Position) genPawnPromotions(kind int, moves *[]Move, limitFrom Bitboard) {
 	// minimum and maximum promotion pieces
@@ -981,19 +1040,19 @@ func (pos *Position) genPawnPromotions(kind int, moves *[]Move, limitFrom Bitboa
 
 		if !all.Has(to) { // advance front
 			for p := pMin; p <= pMax; p++ {
-				*moves = append(*moves, MakeMove(Promotion, from, to, NoPiece, ColorFigure(us, p), NO_SQUARE, NoPiece))
+				pos.AppendMove(MakeMove(Promotion, from, to, NoPiece, ColorFigure(us, p), NO_SQUARE, NoPiece), moves)
 			}
 		}
 		if to.File() != 0 && theirs.Has(to-1) { // take west
 			capt := pos.Get(to - 1)
 			for p := pMin; p <= pMax; p++ {
-				*moves = append(*moves, MakeMove(Promotion, from, to-1, capt, ColorFigure(us, p), NO_SQUARE, NoPiece))
+				pos.AppendMove(MakeMove(Promotion, from, to-1, capt, ColorFigure(us, p), NO_SQUARE, NoPiece), moves)
 			}
 		}
 		if to.File() != 7 && theirs.Has(to+1) { // take east
 			capt := pos.Get(to + 1)
 			for p := pMin; p <= pMax; p++ {
-				*moves = append(*moves, MakeMove(Promotion, from, to+1, capt, ColorFigure(us, p), NO_SQUARE, NoPiece))
+				pos.AppendMove(MakeMove(Promotion, from, to+1, capt, ColorFigure(us, p), NO_SQUARE, NoPiece), moves)
 			}
 		}
 	}
@@ -1024,12 +1083,12 @@ func (pos *Position) genPawnAdvanceMoves(kind int, mask Bitboard, moves *[]Move,
 		from := ours.Pop()
 		to := from + forward
 		if mask.Has(to) {
-			*moves = append(*moves, MakeMove(Normal, from, to, NoPiece, pawn, NO_SQUARE, NoPiece))
+			pos.AppendMove(MakeMove(Normal, from, to, NoPiece, pawn, NO_SQUARE, NoPiece), moves)
 		}
 		if allowPushByTwo {
 			to += forward
 			if mask.Has(to) && from.Rank() == HomeRank(pos.Us())^1 && !occu.Has(to) {
-				*moves = append(*moves, MakeMove(Normal, from, to, NoPiece, pawn, NO_SQUARE, NoPiece))
+				pos.AppendMove(MakeMove(Normal, from, to, NoPiece, pawn, NO_SQUARE, NoPiece), moves)
 			}
 		}
 	}
@@ -1074,7 +1133,7 @@ func (pos *Position) genPawnAttackMoves(kind int, moves *[]Move, limitFrom Bitbo
 		from := bbl.Pop()
 		to := from + att
 		mt, capt := pos.pawnCapture(to)
-		*moves = append(*moves, MakeMove(mt, from, to, capt, pawn, NO_SQUARE, NoPiece))
+		pos.AppendMove(MakeMove(mt, from, to, capt, pawn, NO_SQUARE, NoPiece), moves)
 	}
 
 	// right
@@ -1083,14 +1142,14 @@ func (pos *Position) genPawnAttackMoves(kind int, moves *[]Move, limitFrom Bitbo
 		from := bbr.Pop()
 		to := from + att
 		mt, capt := pos.pawnCapture(to)
-		*moves = append(*moves, MakeMove(mt, from, to, capt, pawn, NO_SQUARE, NoPiece))
+		pos.AppendMove(MakeMove(mt, from, to, capt, pawn, NO_SQUARE, NoPiece), moves)
 	}
 }
 
 func (pos *Position) genBitboardMoves(pi Piece, from Square, att Bitboard, moves *[]Move) {
 	for att != 0 {
 		to := att.Pop()
-		*moves = append(*moves, MakeMove(Normal, from, to, pos.Get(to), pi, NO_SQUARE, NoPiece))
+		pos.AppendMove(MakeMove(Normal, from, to, pos.Get(to), pi, NO_SQUARE, NoPiece), moves)
 	}
 }
 
@@ -1162,10 +1221,10 @@ func (pos *Position) genLancerMoves(lancer Figure, mask Bitboard, moves *[]Move,
 		for att != 0 {
 			to := att.Pop()
 			if keepDirection {
-				*moves = append(*moves, MakeLancerMove(from, to, pi, pos.Get(to), pi))
+				pos.AppendMove(MakeLancerMove(from, to, pi, pos.Get(to), pi), moves)
 			} else {
 				for ld := 0; ld < NUM_LANCER_DIRECTIONS; ld++ {
-					*moves = append(*moves, MakeLancerMove(from, to, pi, pos.Get(to), MakeLancer(pos.Us(), ld)))
+					pos.AppendMove(MakeLancerMove(from, to, pi, pos.Get(to), MakeLancer(pos.Us(), ld)), moves)
 				}
 			}
 		}
@@ -1185,7 +1244,7 @@ func (pos *Position) genSentryMoves(mask Bitboard, moves *[]Move, limitFrom Bitb
 			to := att.Pop()
 			top := pos.Get(to)
 			if top == NoPiece {
-				*moves = append(*moves, MakeMove(Normal, from, to, NoPiece, pi, NO_SQUARE, NoPiece))
+				pos.AppendMove(MakeMove(Normal, from, to, NoPiece, pi, NO_SQUARE, NoPiece), moves)
 			} else {
 				// sentry push
 				// remove sentry so that pushed piece can move to its square
@@ -1216,7 +1275,7 @@ func (pos *Position) genSentryMoves(mask Bitboard, moves *[]Move, limitFrom Bitb
 
 				for _, pushMove := range pushMoves {
 					promCapture := pos.Get(pushMove.To())
-					*moves = append(*moves, MakeMove(SentryPush, from, to, top, pi, pushMove.To(), promCapture))
+					pos.AppendMove(MakeMove(SentryPush, from, to, top, pi, pushMove.To(), promCapture), moves)
 				}
 
 				// undo all removals / replacements
@@ -1283,7 +1342,7 @@ func (pos *Position) genKingCastles(kind int, moves *[]Move) {
 			if pos.GetAttacker(r4, pos.Them()) == NoFigure &&
 				pos.GetAttacker(r5, pos.Them()) == NoFigure &&
 				pos.GetAttacker(r6, pos.Them()) == NoFigure {
-				*moves = append(*moves, MakeMove(Castling, r4, r6, NoPiece, ColorFigure(pos.Us(), King), NO_SQUARE, NoPiece))
+				pos.AppendMove(MakeMove(Castling, r4, r6, NoPiece, ColorFigure(pos.Us(), King), NO_SQUARE, NoPiece), moves)
 			}
 		}
 	}
@@ -1298,7 +1357,7 @@ func (pos *Position) genKingCastles(kind int, moves *[]Move) {
 			if pos.GetAttacker(r4, pos.Them()) == NoFigure &&
 				pos.GetAttacker(r3, pos.Them()) == NoFigure &&
 				pos.GetAttacker(r2, pos.Them()) == NoFigure {
-				*moves = append(*moves, MakeMove(Castling, r4, r2, NoPiece, ColorFigure(pos.Us(), King), NO_SQUARE, NoPiece))
+				pos.AppendMove(MakeMove(Castling, r4, r2, NoPiece, ColorFigure(pos.Us(), King), NO_SQUARE, NoPiece), moves)
 			}
 		}
 	}

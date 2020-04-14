@@ -13,6 +13,8 @@ testpositions
 
 lancer check
 j1sqkb1r/ppppnppp/8/4Ln3/5ln2/P7/1PPPPPPP/J1SQKBNR w KQkq - 1 4
+sentry push
+jlse1qkbnr/ppp1pppp/3pB3/8/8/6Ps/PPPPPP1P/JLneSQK1NR w KQkq - 0 3 e6h3
 */
 
 func TestPerft(t *testing.T) {
