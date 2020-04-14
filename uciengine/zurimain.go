@@ -128,7 +128,7 @@ func NewUCI() *UCI {
 	}
 }
 
-var reCmd = regexp.MustCompile(`^[[:word:]]+\b`)
+var reCmd = regexp.MustCompile(`^[^\s]+`)
 
 func (uci *UCI) Execute(line string) error {
 	line = strings.TrimSpace(line)
