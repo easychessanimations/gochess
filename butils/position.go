@@ -1268,7 +1268,7 @@ func (pos *Position) IsSquareEmpty(sq Square) bool {
 	return pos.Get(sq) == NoPiece
 }
 
-const ALLOW_SENTRY_PUSH = true
+const ALLOW_SENTRY_PUSH = false
 
 // genSentryMoves generates snetry moves for sentry masked by mask
 // with from squares limited to limitFrom
@@ -1520,6 +1520,7 @@ func (pos *Position) GenerateMoves(kind int, moves *[]Move) {
 	pos.genPawnPromotions(kind, moves, BbFull)
 	pos.genPieceMoves(King, mask, moves, BbFull)
 	pos.genKingCastles(kind, moves)
+	pos.genKingPassMove(kind, moves)
 	pos.genPieceMoves(Queen, mask, moves, BbFull)
 
 	pos.genAllLancerMoves(mask, moves, BbFull)
@@ -1553,6 +1554,7 @@ func (pos *Position) GenerateFigureMoves(fig Figure, kind int, moves *[]Move, li
 	case King:
 		pos.genPieceMoves(King, mask, moves, limitFrom)
 		pos.genKingCastles(kind, moves)
+		pos.genKingPassMove(kind, moves)
 		return
 	case Lancer:
 		pos.genLancerMoves(fig, mask, moves, limitFrom, false)
@@ -1560,6 +1562,17 @@ func (pos *Position) GenerateFigureMoves(fig Figure, kind int, moves *[]Move, li
 	case Sentry:
 		pos.genSentryMoves(mask, moves, limitFrom)
 		return
+	}
+}
+
+func (pos *Position) genKingPassMove(kind int, moves *[]Move) {
+	if kind&Quiet == 0 {
+		return
+	}
+	if pos.IsOurKingJailed() {
+		king := ColorFigure(pos.Us(), King)
+		wk := pos.WhereIsOurKing()
+		pos.AppendMove(MakeMove(Normal, wk, wk, king, king, king, NO_SQUARE, NoPiece), moves)
 	}
 }
 
