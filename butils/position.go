@@ -1276,7 +1276,7 @@ func (pos *Position) IsSquareEmpty(sq Square) bool {
 	return pos.Get(sq) == NoPiece
 }
 
-const ALLOW_SENTRY_PUSH = false
+const ALLOW_SENTRY_PUSH = true
 
 // genSentryMoves generates snetry moves for sentry masked by mask
 // with from squares limited to limitFrom
@@ -1434,7 +1434,7 @@ func (pos *Position) SaveSideToMove() {
 // RetrieveSideToMove retrieves side to move
 // for switching turn for move generation
 func (pos *Position) RetrieveSideToMove() {
-	pos.sideToMove = pos.oldSideToMove
+	pos.SetSideToMove(pos.oldSideToMove)
 }
 
 // GetAttacker returns the smallest figure of color them that attacks sq
