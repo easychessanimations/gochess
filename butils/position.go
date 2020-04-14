@@ -533,6 +533,10 @@ func (pos *Position) MoveToSanBatch(move Move) string {
 		}
 	}
 
+	if move.Piece().Figure() == Pawn && !pos.IsSquareEmpty(move.To()) {
+		qualifier = move.From().String()[0:1]
+	}
+
 	letter := move.Piece().SanLetter()
 	if move.Figure() == Pawn {
 		letter = ""
@@ -1014,15 +1018,12 @@ func (pos *Position) AppendMove(move Move, moves *[]Move) {
 
 // genPawnPromotions generates pawn promotions of kind with from squares limited to limitFrom
 func (pos *Position) genPawnPromotions(kind int, moves *[]Move, limitFrom Bitboard) {
-	// minimum and maximum promotion pieces
-	// Quiet -> Knight - Rook
-	// Violent -> Queen
-	pMin, pMax := Queen, Rook
+	promFigures := []Figure{}
 	if kind&Violent != 0 {
-		pMax = Queen
+		promFigures = append(promFigures, PROMOTION_FIGURES_VIOLENT...)
 	}
 	if kind&Quiet != 0 {
-		pMin = Knight
+		promFigures = append(promFigures, PROMOTION_FIGURES_QUIET...)
 	}
 
 	// get the pawns that can be promoted
@@ -1045,20 +1046,20 @@ func (pos *Position) genPawnPromotions(kind int, moves *[]Move, limitFrom Bitboa
 		to := from + forward
 
 		if !all.Has(to) { // advance front
-			for p := pMin; p <= pMax; p++ {
+			for _, p := range promFigures {
 				pos.AppendMove(MakeMove(Promotion, from, to, ColorFigure(us, p), NoPiece, ColorFigure(us, Pawn), NO_SQUARE, NoPiece), moves)
 			}
 		}
-		if to.File() != 0 && theirs.Has(to-1) { // take west
-			capt := pos.Get(to - 1)
-			for p := pMin; p <= pMax; p++ {
-				pos.AppendMove(MakeMove(Promotion, from, to-1, ColorFigure(us, p), capt, ColorFigure(us, Pawn), NO_SQUARE, NoPiece), moves)
-			}
-		}
-		if to.File() != 7 && theirs.Has(to+1) { // take east
-			capt := pos.Get(to + 1)
-			for p := pMin; p <= pMax; p++ {
-				pos.AppendMove(MakeMove(Promotion, from, to+1, ColorFigure(us, p), capt, ColorFigure(us, Pawn), NO_SQUARE, NoPiece), moves)
+		for fileDelta := -1; fileDelta <= 1; fileDelta += 2 {
+			captFile := to.File() + fileDelta
+			if captFile >= 0 && captFile <= 7 {
+				captSq := RankFile(to.Rank(), captFile)
+				if theirs.Has(captSq) {
+					capt := pos.Get(captSq)
+					for _, p := range promFigures {
+						pos.AppendMove(MakeMove(Promotion, from, captSq, ColorFigure(us, p), capt, ColorFigure(us, Pawn), NO_SQUARE, NoPiece), moves)
+					}
+				}
 			}
 		}
 	}

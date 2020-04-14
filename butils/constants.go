@@ -47,6 +47,26 @@ const (
 	LancerMaxValue  = LancerNW  // 15
 )
 
+var PROMOTION_FIGURES_QUIET = []Figure{
+	Knight, // 2
+	Bishop, // 3
+	Rook,   // 4
+	Sentry, // 16
+	Jailer, // 17
+}
+
+var PROMOTION_FIGURES_VIOLENT = []Figure{
+	Queen,    // 5
+	LancerN,  // 8
+	LancerNE, // 9
+	LancerE,  // 10
+	LancerSE, // 11
+	LancerS,  // 12
+	LancerSW, // 13
+	LancerW,  // 14
+	LancerNW, // 15
+}
+
 var FigureToSymbol = []string{
 	".",   // 0
 	"p",   // 1
