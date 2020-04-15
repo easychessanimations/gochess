@@ -4,6 +4,8 @@ package bengine
 // imports
 
 import (
+	"math/rand"
+
 	. "github.com/easychessanimations/gochess/butils"
 )
 
@@ -44,18 +46,37 @@ func EvalExtra(pos *Position) Eval {
 }
 
 // extra piece values
+const PAWN_VALUE_NATIVE_M = 30000
+const PAWN_VALUE_NATIVE_E = 40000
+const CENTER_PAWN_BONUS_NATIVE_M = 15000
+const CENTER_PAWN_BONUS_NATIVE_E = 0
+const KNIGHT_VALUE_NATIVE_M = 90000
+const KNIGHT_VALUE_NATIVE_E = 90000
+const KNIGHT_ON_EDGE_DEUDCTION_M = 10000
+const KNIGHT_ON_EDGE_DEUDCTION_E = 10000
+const BISHOP_VALUE_NATIVE_M = 90000
+const BISHOP_VALUE_NATIVE_E = 90000
+const ROOK_VALUE_NATIVE_M = 150000
+const ROOK_VALUE_NATIVE_E = 150000
+const QUEEN_VALUE_NATIVE_M = 270000
+const QUEEN_VALUE_NATIVE_E = 270000
 const LANCER_VALUE_NATIVE_M = 200000
 const LANCER_VALUE_NATIVE_E = 200000
-const SENTRY_VALUE_NATIVE_M = 100000
-const SENTRY_VALUE_NATIVE_E = 100000
-const JAILER_VALUE_NATIVE_M = 150000
-const JAILER_VALUE_NATIVE_E = 150000
+const SENTRY_VALUE_NATIVE_M = 110000
+const SENTRY_VALUE_NATIVE_E = 110000
+const JAILER_VALUE_NATIVE_M = 140000
+const JAILER_VALUE_NATIVE_E = 140000
 
 const LANCER_TOWARDS_EDGE_DEDUCTION_M = 10000
 const LANCER_TOWARDS_EDGE_DEDUCTION_E = 10000
 
 const BASE_LANCER_BONUS_M = 50000
 const BASE_LANCER_BONUS_E = 0
+
+const RANDOM_BONUS_NATIVE_M = 1
+const RANDOM_BONUS_NATIVE_E = 1
+
+var CENTER_PAWN_MASK = SquareE4.Bitboard() | SquareD4.Bitboard() | SquareE5.Bitboard() | SquareD5.Bitboard()
 
 // PawnStartRank tells the pawn start rank for a given color
 func PawnStartRank(color Color) Bitboard {
@@ -69,6 +90,69 @@ func PawnStartRank(color Color) Bitboard {
 // evaluateExtra calculates additional Accum of extra pieces for a side
 func evaluateExtra(pos *Position, us Color) Accum {
 	var accum Accum
+
+	pawns := pos.ByPiece(us, Pawn)
+
+	numPawns := pawns.Count()
+
+	accum.M += numPawns * PAWN_VALUE_NATIVE_M
+	accum.E += numPawns * PAWN_VALUE_NATIVE_E
+
+	centerPawns := pawns & CENTER_PAWN_MASK
+
+	numCenterPawns := centerPawns.Count()
+
+	accum.M += numCenterPawns * CENTER_PAWN_BONUS_NATIVE_M
+	accum.E += numCenterPawns * CENTER_PAWN_BONUS_NATIVE_E
+
+	knights := pos.ByPiece(us, Knight)
+
+	numKnights := knights.Count()
+
+	accum.M += numKnights * KNIGHT_VALUE_NATIVE_M
+	accum.E += numKnights * KNIGHT_VALUE_NATIVE_E
+
+	edgeKnights := knights & BbBorder
+
+	numEdgeKnights := edgeKnights.Count()
+
+	accum.M -= numEdgeKnights * KNIGHT_ON_EDGE_DEUDCTION_M
+	accum.E -= numEdgeKnights * KNIGHT_ON_EDGE_DEUDCTION_E
+
+	bishops := pos.ByPiece(us, Bishop)
+
+	numBishops := bishops.Count()
+
+	accum.M += numBishops * BISHOP_VALUE_NATIVE_M
+	accum.E += numBishops * BISHOP_VALUE_NATIVE_E
+
+	rooks := pos.ByPiece(us, Rook)
+
+	numRooks := rooks.Count()
+
+	accum.M += numRooks * ROOK_VALUE_NATIVE_M
+	accum.E += numRooks * ROOK_VALUE_NATIVE_E
+
+	queens := pos.ByPiece(us, Queen)
+
+	numQueens := queens.Count()
+
+	accum.M += numQueens * QUEEN_VALUE_NATIVE_M
+	accum.E += numQueens * QUEEN_VALUE_NATIVE_E
+
+	sentries := pos.ByPiece(us, Sentry)
+
+	numSentries := sentries.Count()
+
+	accum.M += numSentries * LANCER_VALUE_NATIVE_M
+	accum.E += numSentries * LANCER_VALUE_NATIVE_E
+
+	jailers := pos.ByPiece(us, Jailer)
+
+	numJailers := jailers.Count()
+
+	accum.M += numJailers * LANCER_VALUE_NATIVE_M
+	accum.E += numJailers * LANCER_VALUE_NATIVE_E
 
 	for ld := 0; ld < NUM_LANCER_DIRECTIONS; ld++ {
 		lancers := pos.ByPiece(us, MakeLancer(us, ld).Figure())
@@ -142,19 +226,8 @@ func evaluateExtra(pos *Position, us Color) Accum {
 		}
 	}
 
-	sentries := pos.ByPiece(us, Sentry)
-
-	numSentries := sentries.Count()
-
-	accum.M += numSentries * LANCER_VALUE_NATIVE_M
-	accum.E += numSentries * LANCER_VALUE_NATIVE_E
-
-	jailers := pos.ByPiece(us, Jailer)
-
-	numJailers := jailers.Count()
-
-	accum.M += numJailers * LANCER_VALUE_NATIVE_M
-	accum.E += numJailers * LANCER_VALUE_NATIVE_E
+	accum.M += int32(rand.Intn(RANDOM_BONUS_NATIVE_M))
+	accum.E += int32(rand.Intn(RANDOM_BONUS_NATIVE_E))
 
 	return accum
 }
@@ -171,6 +244,9 @@ func Evaluate(pos *Position) Eval {
 	e.Accum[Black].merge(bps)
 
 	// extra
+	// TODO: original evaluation is ignored here
+	e = Eval{position: pos}
+
 	ee := EvalExtra(pos)
 	e.Accum[White].merge(ee.Accum[White])
 	e.Accum[Black].merge(ee.Accum[Black])
@@ -334,12 +410,17 @@ func evaluate(pos *Position, us Color) Accum {
 // phase computes the progress of the game
 // 0 is opening, 256 is late end game
 func Phase(pos *Position) int32 {
-	total := int32(4*1 + 4*1 + 4*3 + 2*6)
+	total := int32(2*1 + 2*1 + 2*3 + 2*6 + 2*1 + 2*3 + 2*4)
 	curr := total
 	curr -= pos.ByFigure(Knight).Count() * 1
 	curr -= pos.ByFigure(Bishop).Count() * 1
 	curr -= pos.ByFigure(Rook).Count() * 3
 	curr -= pos.ByFigure(Queen).Count() * 6
+	curr -= pos.ByFigure(Sentry).Count() * 1
+	curr -= pos.ByFigure(Jailer).Count() * 3
+	for ld := 0; ld < NUM_LANCER_DIRECTIONS; ld++ {
+		curr -= pos.ByFigure(BaseLancerFigure+Figure(ld)).Count() * 4
+	}
 	curr = max(curr, 0)
 	return (curr*256 + total/2) / total
 }

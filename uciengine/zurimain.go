@@ -158,13 +158,6 @@ func (uci *UCI) Execute(line string) error {
 	case "r":
 		uci.position("position startpos")
 		return uci.InteractiveMode()
-	case "t":
-		err := uci.position("position fen jlsesqkbnr/pppppppp/8/8/8/8/PPPPPPPP/JLneSQKBNR w KQkq - 0 1")
-		if err != nil {
-			return err
-		} else {
-			return uci.InteractiveMode()
-		}
 	case "stop":
 		return uci.stop(line)
 	case "s":
@@ -535,6 +528,10 @@ func main() {
 
 	uci.Engine.UseAB = true
 
+	fmt.Println()
+
+	uci.InteractiveMode()
+
 	scan := bufio.NewScanner(os.Stdin)
 	for scan.Scan() {
 		line := scan.Text()
@@ -571,6 +568,8 @@ func (uci *UCI) InteractiveMode() error {
 	fmt.Println(
 		"Eval: All M = cp", ScaleToCentipawns(eval.Accum[NoColor].M), "nat", eval.Accum[NoColor].M,
 		", All E = cp", ScaleToCentipawns(eval.Accum[NoColor].E), "nat", eval.Accum[NoColor].E,
+		", Phase / 256 = ", Phase(uci.Engine.Position),
+		", Score = cp", uci.Engine.Score(),
 	)
 
 	return nil

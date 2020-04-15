@@ -38,8 +38,6 @@ var LANCER_DIRECTION_TO_DELTA = [NUM_LANCER_DIRECTIONS][2]int{
 // LancerDirectionMasksForSquares maps squares and lancer directions to lancer attack masks
 var LancerDirectionMasksForSquares [SquareArraySize][NUM_LANCER_DIRECTIONS]Bitboard
 
-const BaseLancer = LancerMinValue
-
 /////////////////////////////////////////////////////////////////////
 
 /////////////////////////////////////////////////////////////////////

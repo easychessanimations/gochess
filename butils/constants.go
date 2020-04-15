@@ -47,6 +47,9 @@ const (
 	LancerMaxValue  = LancerNW  // 15
 )
 
+const BaseLancer = LancerMinValue
+const BaseLancerFigure = Figure(LancerMinValue)
+
 var PROMOTION_FIGURES_QUIET = []Figure{
 	Knight, // 2
 	Bishop, // 3
@@ -304,7 +307,8 @@ const (
 
 var (
 	// FENStartPos is the FEN string of the starting position
-	FENStartPos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+	//FENStartPos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+	FENStartPos = "jlsesqkbnr/pppppppp/8/8/8/8/PPPPPPPP/JLneSQKBNR w KQkq - 0 1 -"
 
 	// which castle rights are lost when pieces are moved
 	lostCastleRights = [64]Castle{
