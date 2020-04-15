@@ -183,6 +183,8 @@ type Engine struct {
 	rootPly         int           // position's ply at the start of the search
 	stack           stack         // stack of moves
 	pvTable         pvTable       // principal variation table
+	pvTableAB       pvTableAB     // principal variation table for naive alphabeta
+	UseAB           bool          // whether to use naive alphabeta
 	history         *historyTable // keeps history of moves
 	ignoreRootMoves []Move        // moves to ignore at root
 	onlyRootMoves   []Move        // search only these root moves

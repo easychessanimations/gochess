@@ -387,12 +387,23 @@ func (eng *Engine) searchMultiPV(depth, estimated int32) (int32, []Move) {
 	pvs := make([]pv, 0, multiPV)
 	eng.ignoreRootMoves = eng.ignoreRootMoves[:0]
 	for p := 0; p < multiPV; p++ {
-		estimated = eng.search(depth, estimated)
+		if eng.UseAB {
+			// search using naive alphabeta
+			estimated = eng.searchAB(depth, estimated)
+		} else {
+			estimated = eng.search(depth, estimated)
+		}
 		if eng.stopped {
-			break // if eng has been stopped then this is not a legit pv.
+			break // if eng has been stopped then this is not a legit pv
 		}
 
-		moves := eng.pvTable.Get(eng.Position)
+		var moves []Move
+		if eng.UseAB {
+			// get pev from naive alphabeta's pv table
+			moves = eng.pvTableAB.Get(eng.Position)
+		} else {
+			moves = eng.pvTable.Get(eng.Position)
+		}
 		hasPV := len(moves) != 0 && !eng.isIgnoredRootMove(moves[0])
 		if p == 0 || hasPV { // at depth 0 we might not get a PV
 			pvs = append(pvs, pv{estimated, moves})
