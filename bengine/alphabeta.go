@@ -4,8 +4,6 @@ package bengine
 // imports
 
 import (
-	"fmt"
-
 	. "github.com/easychessanimations/gochess/butils"
 )
 
@@ -163,12 +161,12 @@ func (eng *Engine) searchAB(depth, estimated int32) int32 {
 		eng.pvTableAB.PositionEntries = make(map[uint64][]Move)
 	}
 	// delete root move
-	moveCount := 0
+	delete(eng.pvTableAB.PositionEntries, eng.Position.Zobrist())
+	/*moveCount := 0
 	for _, entry := range eng.pvTableAB.PositionEntries {
 		moveCount += len(entry)
 	}
-	fmt.Println("info string position entries", len(eng.pvTableAB.PositionEntries), "moves", moveCount)
-	delete(eng.pvTableAB.PositionEntries, eng.Position.Zobrist())
+	fmt.Println("info string position entries", len(eng.pvTableAB.PositionEntries), "moves", moveCount)	*/
 	return eng.alphaBetaRec(AlphaBetaInfo{
 		Alpha:        -1e5,
 		Beta:         1e5,

@@ -3,12 +3,12 @@ set GOBIN=C:\gomodules\modules\gochess
 set GOOS=linux
 set GOARCH=amd64
 
-go install uciengine/gochess.go
+go install uciengine/zurimain.go
 
 set GOOS=windows
 set GOARCH=amd64
 
-go install uciengine/gochess.go
+go install uciengine/zurimain.go
 
-copy gochess.exe %EASYCHESS_PATH%\resources\server\bin
-copy gochess %EASYCHESS_PATH%\resources\server\bin
+copy zurimain.exe %EASYCHESS_PATH%\resources\server\bin\gochess.exe
+copy zurimain %EASYCHESS_PATH%\resources\server\bin\gochess
