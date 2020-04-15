@@ -14,7 +14,7 @@ import (
 
 type pvTableAB struct {
 	// uint64 is the type of Zobrist key
-	PositionEntries map[uint64]Move
+	PositionEntries map[uint64][]Move
 }
 
 type AlphaBetaInfo struct {
@@ -34,12 +34,12 @@ func (pvt pvTableAB) GetRec(pos *Position, moves []Move, remainingDepth int) []M
 		return moves
 	}
 
-	move, ok := pvt.PositionEntries[pos.Zobrist()]
+	pvMoves, ok := pvt.PositionEntries[pos.Zobrist()]
 
 	if ok {
-		pos.DoMove(move)
+		pos.DoMove(pvMoves[0])
 
-		moves = pvt.GetRec(pos, append(moves, move), remainingDepth-1)
+		moves = pvt.GetRec(pos, append(moves, pvMoves[0]), remainingDepth-1)
 
 		pos.UndoMove()
 	}
@@ -79,14 +79,21 @@ func (eng *Engine) alphaBetaRec(abi AlphaBetaInfo) int32 {
 		}
 	}
 
-	pvMove, ok := eng.pvTableAB.PositionEntries[eng.Position.Zobrist()]
+	pvMoves, ok := eng.pvTableAB.PositionEntries[eng.Position.Zobrist()]
 
 	// start search with pv move if any
 	if ok {
-		newLms := []Move{pvMove}
+		newLms := pvMoves
 
 		for _, testMove := range lms {
-			if testMove != pvMove {
+			found := false
+			for _, testPvMove := range pvMoves {
+				if testMove == testPvMove {
+					found = true
+					break
+				}
+			}
+			if !found {
 				newLms = append(newLms, testMove)
 			}
 		}
@@ -122,7 +129,22 @@ func (eng *Engine) alphaBetaRec(abi AlphaBetaInfo) int32 {
 
 			if score > abi.Alpha {
 				// alpha improvement
-				eng.pvTableAB.PositionEntries[eng.Position.Zobrist()] = lm
+				pvMoves, ok := eng.pvTableAB.PositionEntries[eng.Position.Zobrist()]
+
+				if ok {
+					// sort entry with lm first
+					newPvMoves := []Move{lm}
+					for _, testPvMove := range pvMoves {
+						if testPvMove != lm {
+							newPvMoves = append(newPvMoves, testPvMove)
+						}
+					}
+
+					eng.pvTableAB.PositionEntries[eng.Position.Zobrist()] = newPvMoves
+				} else {
+					// add entry with single move lm
+					eng.pvTableAB.PositionEntries[eng.Position.Zobrist()] = []Move{lm}
+				}
 
 				abi.Alpha = score
 			}
@@ -135,13 +157,17 @@ func (eng *Engine) alphaBetaRec(abi AlphaBetaInfo) int32 {
 func (eng *Engine) searchAB(depth, estimated int32) int32 {
 	if eng.pvTableAB.PositionEntries == nil {
 		// initialize pv table
-		eng.pvTableAB.PositionEntries = make(map[uint64]Move)
+		eng.pvTableAB.PositionEntries = make(map[uint64][]Move)
 	} else if len(eng.pvTableAB.PositionEntries) > 1e7 {
 		// reset pv table if grown too large
-		eng.pvTableAB.PositionEntries = make(map[uint64]Move)
+		eng.pvTableAB.PositionEntries = make(map[uint64][]Move)
 	}
-	fmt.Println("info string position entries", len(eng.pvTableAB.PositionEntries))
 	// delete root move
+	moveCount := 0
+	for _, entry := range eng.pvTableAB.PositionEntries {
+		moveCount += len(entry)
+	}
+	fmt.Println("info string position entries", len(eng.pvTableAB.PositionEntries), "moves", moveCount)
 	delete(eng.pvTableAB.PositionEntries, eng.Position.Zobrist())
 	return eng.alphaBetaRec(AlphaBetaInfo{
 		Alpha:        -1e5,
