@@ -274,7 +274,7 @@ func ParsePiecePlacement(str string, pos *Position) error {
 				parsedPiece = false
 			} else {
 				if (p == 'e') || (p == 'w') {
-					pos.Put(RankFile(7-r, f), SymbolToPiece(lancerAccum))
+					pos.Put(RankFile(7-r, f), SymbolToPiece(lancerAccum+string(p)))
 					f++
 					parseLancer = 0
 					lancerAccum = ""
