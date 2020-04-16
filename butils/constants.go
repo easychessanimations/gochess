@@ -165,13 +165,15 @@ const (
 
 // useful bitboards
 const (
-	BbEmpty          Bitboard = 0x0000000000000000
-	BbFull           Bitboard = 0xffffffffffffffff
-	BbBorder         Bitboard = 0xff818181818181ff
-	BbPawnStartRank  Bitboard = 0x00ff00000000ff00
-	BbPawnDoubleRank Bitboard = 0x000000ffff000000
-	BbBlackSquares   Bitboard = 0xaa55aa55aa55aa55
-	BbWhiteSquares   Bitboard = 0x55aa55aa55aa55aa
+	BbEmpty              Bitboard = 0x0000000000000000
+	BbFull               Bitboard = 0xffffffffffffffff
+	BbBorder             Bitboard = 0xff818181818181ff
+	BbPawnStartRank      Bitboard = 0x00ff00000000ff00
+	BbPawnStartRankBlack Bitboard = 0x00ff000000000000
+	BbPawnStartRankWhite Bitboard = 0x000000000000ff00
+	BbPawnDoubleRank     Bitboard = 0x000000ffff000000
+	BbBlackSquares       Bitboard = 0xaa55aa55aa55aa55
+	BbWhiteSquares       Bitboard = 0x55aa55aa55aa55aa
 )
 
 const (

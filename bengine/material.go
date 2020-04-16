@@ -73,18 +73,17 @@ const LANCER_TOWARDS_EDGE_DEDUCTION_E = 10000
 const BASE_LANCER_BONUS_M = 50000
 const BASE_LANCER_BONUS_E = 0
 
-const RANDOM_BONUS_NATIVE_M = 1
-const RANDOM_BONUS_NATIVE_E = 1
+const RANDOM_BONUS_NATIVE_M = 10000
+const RANDOM_BONUS_NATIVE_E = 10000
 
 var CENTER_PAWN_MASK = SquareE4.Bitboard() | SquareD4.Bitboard() | SquareE5.Bitboard() | SquareD5.Bitboard()
 
 // PawnStartRank tells the pawn start rank for a given color
 func PawnStartRank(color Color) Bitboard {
-	mask := BbWhiteSquares
 	if color == Black {
-		mask = BbBlackSquares
+		return BbPawnStartRankBlack
 	}
-	return BbPawnStartRank & mask
+	return BbPawnStartRankWhite
 }
 
 // evaluateExtra calculates additional Accum of extra pieces for a side
@@ -236,7 +235,7 @@ func evaluateExtra(pos *Position, us Color) Accum {
 func Evaluate(pos *Position) Eval {
 	e := Eval{position: pos}
 
-	e.Accum[White] = evaluate(pos, White)
+	/*e.Accum[White] = evaluate(pos, White)
 	e.Accum[Black] = evaluate(pos, Black)
 
 	wps, bps := pawnsAndShelterCache.load(pos)
@@ -245,7 +244,7 @@ func Evaluate(pos *Position) Eval {
 
 	// extra
 	// TODO: original evaluation is ignored here
-	e = Eval{position: pos}
+	e = Eval{position: pos}*/
 
 	ee := EvalExtra(pos)
 	e.Accum[White].merge(ee.Accum[White])
