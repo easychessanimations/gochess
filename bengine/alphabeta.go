@@ -4,6 +4,8 @@ package bengine
 // imports
 
 import (
+	"fmt"
+
 	. "github.com/easychessanimations/gochess/butils"
 )
 
@@ -16,11 +18,19 @@ type pvTableAB struct {
 }
 
 type AlphaBetaInfo struct {
+	MaxDepth     uint8
+	CurrentDepth uint8
 	Alpha        int32
 	Beta         int32
-	MaxDepth     int32
-	CurrentDepth int32
 }
+
+type HashEntry struct {
+	MaxDepth     uint8
+	CurrentDepth uint8
+	Score        int
+}
+
+var ht map[uint64]HashEntry
 
 /////////////////////////////////////////////////////////////////////
 
@@ -61,8 +71,41 @@ func (eng *Engine) alphaBetaRec(abi AlphaBetaInfo) int32 {
 	eng.Stats.Nodes++
 	eng.Stats.SelDepth = eng.Stats.Depth
 
+	for i := abi.MaxDepth; len(ht) > 1e7 && i >= 0; i-- {
+		fmt.Println("info string clear hash at ply", i)
+		for k, e := range ht {
+			if e.CurrentDepth >= (i - 2) {
+				delete(ht, k)
+			}
+		}
+	}
+
+	he, ok := ht[eng.Position.Zobrist()]
+
+	if ok {
+		if he.CurrentDepth <= abi.CurrentDepth && he.MaxDepth >= abi.MaxDepth {
+			return int32(he.Score)
+		}
+	}
+
 	if abi.CurrentDepth >= abi.MaxDepth {
-		return eng.Score()
+		score := eng.Score()
+
+		newHe := HashEntry{
+			CurrentDepth: abi.CurrentDepth,
+			MaxDepth:     abi.MaxDepth,
+			Score:        int(score),
+		}
+
+		if ok {
+			if abi.CurrentDepth <= he.CurrentDepth && abi.MaxDepth >= he.MaxDepth {
+				ht[eng.Position.Zobrist()] = newHe
+			}
+		} else {
+			ht[eng.Position.Zobrist()] = newHe
+		}
+
+		return score
 	}
 
 	lms := eng.Position.LegalMoves()
@@ -70,7 +113,7 @@ func (eng *Engine) alphaBetaRec(abi AlphaBetaInfo) int32 {
 	if len(lms) == 0 {
 		if eng.Position.IsChecked(eng.Position.Us()) {
 			// mate
-			return -MateScore + abi.CurrentDepth
+			return -MateScore + int32(abi.CurrentDepth)
 		} else {
 			// stalemate
 			return 0
@@ -167,10 +210,13 @@ func (eng *Engine) searchAB(depth, estimated int32) int32 {
 		moveCount += len(entry)
 	}
 	fmt.Println("info string position entries", len(eng.pvTableAB.PositionEntries), "moves", moveCount)	*/
+
+	ht = make(map[uint64]HashEntry)
+
 	return eng.alphaBetaRec(AlphaBetaInfo{
 		Alpha:        -1e5,
 		Beta:         1e5,
-		MaxDepth:     depth,
+		MaxDepth:     uint8(depth),
 		CurrentDepth: 0,
 	})
 }
