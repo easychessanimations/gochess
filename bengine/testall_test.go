@@ -15,6 +15,10 @@ lancer check
 j1sqkb1r/ppppnppp/8/4Ln3/5ln2/P7/1PPPPPPP/J1SQKBNR w KQkq - 1 4
 sentry push
 jlse1qkbnr/ppp1pppp/3pB3/8/8/6Ps/PPPPPP1P/JLneSQK1NR w KQkq - 0 3 e6h3
+material
+j2qkbnr/p1le1pppp/1pp5/3p4/8/PPPP4/2Le1PPBP/J1SQK1NP w - - 1 7 -
+last castling right after sentry capture
+jlse1qkbnr/p1pppppp/1p6/8/8/2PPP3/PP3PsP/JLneSQKBNP w Qkq - 0 4 h1g2
 */
 
 func TestPerft(t *testing.T) {

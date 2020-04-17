@@ -143,15 +143,15 @@ func evaluateExtra(pos *Position, us Color) Accum {
 
 	numSentries := sentries.Count()
 
-	accum.M += numSentries * LANCER_VALUE_NATIVE_M
-	accum.E += numSentries * LANCER_VALUE_NATIVE_E
+	accum.M += numSentries * SENTRY_VALUE_NATIVE_M
+	accum.E += numSentries * SENTRY_VALUE_NATIVE_E
 
 	jailers := pos.ByPiece(us, Jailer)
 
 	numJailers := jailers.Count()
 
-	accum.M += numJailers * LANCER_VALUE_NATIVE_M
-	accum.E += numJailers * LANCER_VALUE_NATIVE_E
+	accum.M += numJailers * JAILER_VALUE_NATIVE_M
+	accum.E += numJailers * JAILER_VALUE_NATIVE_E
 
 	for ld := 0; ld < NUM_LANCER_DIRECTIONS; ld++ {
 		lancers := pos.ByPiece(us, MakeLancer(us, ld).Figure())

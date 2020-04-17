@@ -834,6 +834,9 @@ func (pos *Position) DoMove(move Move) {
 	pi := move.Piece()
 	if pi != NoPiece { // nullmove cannot change castling ability
 		pos.SetCastlingAbility(curr.CastlingAbility &^ lostCastleRights[move.From()] &^ lostCastleRights[move.To()])
+		if move.MoveType() == SentryPush {
+			pos.SetCastlingAbility(curr.CastlingAbility &^ lostCastleRights[move.PromotionSquare()])
+		}
 	}
 	// update fullmove counter
 	if pos.Us() == Black {
